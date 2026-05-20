@@ -52,7 +52,7 @@ export const createJob = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({
       projectId: z.string().uuid(),
-      engine: z.enum(["illustrator", "indesign", "figma", "canva", "mock"]),
+      engine: z.enum(["illustrator", "indesign", "figma", "canva", "hybrid", "mock"]),
       templateId: z.string().uuid().optional(),
       brief: z.record(z.unknown()).default({}),
       variables: z.record(z.unknown()).default({}),
