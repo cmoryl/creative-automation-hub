@@ -101,3 +101,55 @@ export const listAgentPairings = createServerFn({ method: "GET" })
     if (error) throw error;
     return data ?? [];
   });
+
+export const listJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("id, engine, status, created_at, completed_at, project_id, template_id, variables")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    return data ?? [];
+  });
+
+export const getShowcase = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const [tplRes, jobRes, outRes, projRes] = await Promise.all([
+      supabase
+        .from("templates")
+        .select("id, name, engine, preview_url, source_ref, variables")
+        .like("name", "[Example]%")
+        .order("engine"),
+      supabase
+        .from("jobs")
+        .select("id, engine, status, variables, template_id, project_id, completed_at")
+        .order("completed_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("outputs")
+        .select("id, kind, url, metadata, job_id")
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase
+        .from("projects")
+        .select("id, name, brief, status")
+        .like("name", "[Example]%")
+        .limit(5),
+    ]);
+    if (tplRes.error) throw tplRes.error;
+    if (jobRes.error) throw jobRes.error;
+    if (outRes.error) throw outRes.error;
+    if (projRes.error) throw projRes.error;
+    return {
+      templates: tplRes.data ?? [],
+      jobs: jobRes.data ?? [],
+      outputs: outRes.data ?? [],
+      projects: projRes.data ?? [],
+    };
+  });
+
