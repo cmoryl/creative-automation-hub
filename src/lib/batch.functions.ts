@@ -45,7 +45,7 @@ export const dispatchBatch = createServerFn({ method: "POST" })
     for (const group of data.groups) {
       const { data: tpl, error: tplErr } = await supabase
         .from("templates")
-        .select("id, name, workspace_id, preview_url")
+        .select("id, name, workspace_id, preview_url, variables")
         .eq("id", group.templateId)
         .single();
       if (tplErr) throw tplErr;
