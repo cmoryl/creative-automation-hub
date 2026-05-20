@@ -305,10 +305,31 @@ export const getTemplateBrandPrefill = createServerFn({ method: "GET" })
     if (tpl.product_id) {
       const { data: p } = await supabase
         .from("products")
-        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, parent_product_id")
         .eq("id", tpl.product_id)
         .maybeSingle();
-      product = (p as Kit | null) ?? null;
+      product = (p as (Kit & { parent_product_id?: string | null }) | null) ?? null;
+      // Walk up to parent product if present
+      const parentId = (p as { parent_product_id?: string | null } | null)?.parent_product_id;
+      if (parentId) {
+        const { data: pp } = await supabase
+          .from("products")
+          .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+          .eq("id", parentId)
+          .maybeSingle();
+        if (pp) {
+          // merge: child overrides parent
+          product = {
+            name: product?.name ?? (pp as Kit).name,
+            logo_url: product?.logo_url || (pp as Kit).logo_url,
+            primary_color: product?.primary_color || (pp as Kit).primary_color,
+            accent_color: product?.accent_color || (pp as Kit).accent_color,
+            font_family: product?.font_family || (pp as Kit).font_family,
+            contact_email: product?.contact_email || (pp as Kit).contact_email,
+            contact_url: product?.contact_url || (pp as Kit).contact_url,
+          };
+        }
+      }
     }
 
     const pick = (key: keyof Kit): string | null =>
