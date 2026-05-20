@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { generateClaudeCopy } from "./claude.functions";
 
-const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva"] as const;
+const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
 
 const rowSchema = z.object({
   label: z.string().min(1).max(200),
@@ -11,7 +12,7 @@ const rowSchema = z.object({
 
 const groupSchema = z.object({
   templateId: z.string().uuid(),
-  engines: z.array(z.enum(SUPPORTED_ENGINES)).min(1).max(4),
+  engines: z.array(z.enum(SUPPORTED_ENGINES)).min(1).max(5),
   rows: z.array(rowSchema).min(1).max(100),
 });
 
@@ -44,7 +45,7 @@ export const dispatchBatch = createServerFn({ method: "POST" })
     for (const group of data.groups) {
       const { data: tpl, error: tplErr } = await supabase
         .from("templates")
-        .select("id, name, workspace_id, preview_url")
+        .select("id, name, workspace_id, preview_url, variables")
         .eq("id", group.templateId)
         .single();
       if (tplErr) throw tplErr;
@@ -78,7 +79,8 @@ export const dispatchBatch = createServerFn({ method: "POST" })
         const jobIds: string[] = [];
         for (const engine of group.engines) {
           const needsBridge = engine === "illustrator" || engine === "indesign";
-          const willMock = !needsBridge;
+          const isClaude = engine === "claude";
+          const willMock = !needsBridge && !isClaude;
 
           const { data: job, error: jobErr } = await supabase
             .from("jobs")
@@ -88,7 +90,7 @@ export const dispatchBatch = createServerFn({ method: "POST" })
               template_id: tpl.id,
               engine,
               row_label: row.label,
-              status: willMock ? "completed" : "queued",
+              status: willMock || isClaude ? "completed" : "queued",
               brief: {
                 summary: data.briefSummary ?? "",
                 row: row.label,
@@ -106,7 +108,7 @@ export const dispatchBatch = createServerFn({ method: "POST" })
                   : null,
               } as never,
               variables: row.values as never,
-              completed_at: willMock ? new Date().toISOString() : null,
+              completed_at: willMock || isClaude ? new Date().toISOString() : null,
             })
             .select("id")
             .single();
@@ -127,6 +129,38 @@ export const dispatchBatch = createServerFn({ method: "POST" })
                 variables: row.values,
               } as never,
             });
+          }
+
+          if (isClaude) {
+            try {
+              const result = await generateClaudeCopy({
+                data: {
+                  templateName: tpl.name,
+                  variables: Array.isArray(tpl.variables) ? tpl.variables as { name: string; label?: string; type?: string }[] : [],
+                  brief: data.briefSummary ?? "",
+                  rowLabel: row.label,
+                },
+              });
+              await supabase.from("outputs").insert({
+                job_id: job.id,
+                kind: "text",
+                url: "",
+                metadata: {
+                  engine: "claude",
+                  row_label: row.label,
+                  batch_id: batchId,
+                  variables: row.values,
+                  generated: result.copy,
+                  raw: result.raw,
+                  fallback: result.usedFallback,
+                } as never,
+              });
+            } catch (e: any) {
+              await supabase.from("jobs").update({
+                status: "failed",
+                error: e.message ?? "Claude generation failed",
+              }).eq("id", job.id);
+            }
           }
         }
         created.push({

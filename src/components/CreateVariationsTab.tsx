@@ -49,11 +49,12 @@ type ChatMsg = { role: "user" | "assistant"; content: string };
 type InputMode = "form" | "batch" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
 
-const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: string }[] = [
+const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva" | "claude"; label: string }[] = [
   { id: "illustrator", label: "Illustrator" },
   { id: "indesign", label: "InDesign" },
   { id: "figma", label: "Figma" },
   { id: "canva", label: "Canva" },
+  { id: "claude", label: "Claude" },
 ];
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;

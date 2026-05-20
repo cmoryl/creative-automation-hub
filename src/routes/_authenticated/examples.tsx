@@ -5,7 +5,7 @@ import { getShowcase } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Figma, Palette, FileText, Layers, Sparkles, ExternalLink } from "lucide-react";
+import { Figma, Palette, FileText, Layers, Sparkles, ExternalLink, MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/examples")({
   component: ExamplesPage,
@@ -19,6 +19,7 @@ const ENGINE_META: Record<
   illustrator: { label: "Illustrator", icon: Palette, tone: "bg-orange-500/15 text-orange-300" },
   indesign: { label: "InDesign", icon: FileText, tone: "bg-pink-500/15 text-pink-300" },
   canva: { label: "Canva", icon: Layers, tone: "bg-cyan-500/15 text-cyan-300" },
+  claude: { label: "Claude", icon: MessageSquare, tone: "bg-emerald-500/15 text-emerald-300" },
   hybrid: { label: "Hybrid", icon: Sparkles, tone: "bg-primary/15 text-primary" },
   mock: { label: "Sandbox", icon: Sparkles, tone: "bg-muted text-muted-foreground" },
 };

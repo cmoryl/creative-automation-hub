@@ -4,8 +4,9 @@ import { z } from "zod";
 import { generateText, Output } from "ai";
 import Papa from "papaparse";
 import { createLovableAiGatewayProvider } from "./ai-gateway";
+import { generateClaudeCopy } from "./claude.functions";
 
-const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva"] as const;
+const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -155,7 +156,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: tpl, error: tplErr } = await supabase
       .from("templates")
-      .select("id, name, workspace_id, preview_url, source_ref")
+      .select("id, name, workspace_id, preview_url, source_ref, variables")
       .eq("id", data.templateId)
       .single();
     if (tplErr) throw tplErr;
@@ -190,7 +191,8 @@ export const dispatchVariations = createServerFn({ method: "POST" })
       const jobIds: string[] = [];
       for (const engine of data.engines) {
         const needsBridge = engine === "illustrator" || engine === "indesign";
-        const willMock = !needsBridge;
+        const isClaude = engine === "claude";
+        const willMock = !needsBridge && !isClaude;
 
         const { data: job, error: jobErr } = await supabase
           .from("jobs")
@@ -200,7 +202,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
             template_id: tpl.id,
             engine,
             row_label: row.label,
-            status: willMock ? "completed" : "queued",
+            status: willMock || isClaude ? "completed" : "queued",
             brief: {
               summary: data.briefSummary ?? "",
               row: row.label,
@@ -215,7 +217,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
                 : null,
             } as never,
             variables: row.values as never,
-            completed_at: willMock ? new Date().toISOString() : null,
+            completed_at: willMock || isClaude ? new Date().toISOString() : null,
           })
           .select("id")
           .single();
@@ -234,6 +236,37 @@ export const dispatchVariations = createServerFn({ method: "POST" })
               variables: row.values,
             } as never,
           });
+        }
+
+        if (isClaude) {
+          try {
+            const result = await generateClaudeCopy({
+              data: {
+                templateName: tpl.name,
+                variables: Array.isArray(tpl.variables) ? tpl.variables as { name: string; label?: string; type?: string }[] : [],
+                brief: data.briefSummary ?? "",
+                rowLabel: row.label,
+              },
+            });
+            await supabase.from("outputs").insert({
+              job_id: job.id,
+              kind: "text",
+              url: "",
+              metadata: {
+                engine: "claude",
+                row_label: row.label,
+                variables: row.values,
+                generated: result.copy,
+                raw: result.raw,
+                fallback: result.usedFallback,
+              } as never,
+            });
+          } catch (e: any) {
+            await supabase.from("jobs").update({
+              status: "failed",
+              error: e.message ?? "Claude generation failed",
+            }).eq("id", job.id);
+          }
         }
       }
       created.push({ projectId: proj.id, jobIds, label: row.label });

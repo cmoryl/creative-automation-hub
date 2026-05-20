@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/templates/batch")({
   component: TemplatesBatchPage,
 });
 
-const ENGINES = ["illustrator", "indesign", "figma", "canva"] as const;
+const ENGINES = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
 
 const engineColor: Record<string, string> = {
   canva: "bg-blue-500/10 text-blue-700 dark:text-blue-300",

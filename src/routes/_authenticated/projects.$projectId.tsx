@@ -110,7 +110,7 @@ function ProjectDetail() {
 
   const buildBrief = () => (briefFromChat ? { source: "chat", text: briefFromChat } : {});
 
-  const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "mock") => {
+  const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "claude" | "mock") => {
     try {
       const pre = await preflightFn({ data: { projectId, engine } });
       pre.warnings.forEach((w) => toast.warning(w));
