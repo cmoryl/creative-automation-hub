@@ -555,6 +555,7 @@ export function CreateVariationsTab({
           {(
             [
               { id: "form", icon: Sparkles, label: "Single brief" },
+              { id: "batch", icon: Layers, label: "Batch" },
               { id: "csv", icon: FileSpreadsheet, label: "Bulk CSV" },
             ] as const
           ).map((m) => (
