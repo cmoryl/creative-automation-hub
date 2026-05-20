@@ -20,10 +20,10 @@ your hosted Creative Automation Platform.
 - `list_jobs(projectId?)` →
   `GET {base}/api/public/v1/jobs?projectId=…`
 
-`engine` is one of: `illustrator | indesign | figma | canva | hybrid | mock`.
+`engine` is one of: `illustrator | indesign | figma | canva | claude | hybrid | mock`.
 
 Illustrator and InDesign jobs are picked up by the **local bridge agent**
-(see `/agent`). Figma and Canva run server-side. `hybrid` fans out per
+(see `/agent`). Figma, Canva and Claude run server-side. `hybrid` fans out per
 engine.
 
 ## Example
