@@ -1,114 +1,52 @@
-# Feature Buildout — Engines, Brands, Briefs, Batch
+# Chat-driven Multi-Engine Variation Flow
 
-Bring the v3 CreativeOS dashboard surface into the web app: dashboard with
-engine status, brands, brand batch, structured briefs, and a richer
-template/engine model. Builds on the existing Cloud schema and integrations.
+Goal: a user picks a template, chats with an AI agent to define the brief, optionally drops a CSV of rows (one variation per row) and reference images, and the system fans out a rendered "live file" for each engine the template targets (Illustrator, InDesign, Canva, Figma).
 
-## Scope
-
-### 1. Dashboard (`/dashboard`, becomes default authed landing)
+## User flow
 
 ```text
-+----------------------------------------------------------+
-| Creative Automation Platform     [Projects][Templates]...|
-| 0 of 5 engines ready                                     |
-+----------------------------------------------------------+
-| Engine cards: Illustrator | InDesign | Canva | Express | Figma
-|   each shows: connected? · template count · "Connect →"  |
-+----------------------------------------------------------+
-| Quick Actions          | Recent Projects                  |
-|  - Brand Generate      |  list + "New Project"            |
-|  - Brand Batch         |                                  |
-|  - New Project         |                                  |
-|  - Run Batch           |                                  |
-|  - Browse Templates    |                                  |
-|  - System Check        |                                  |
-+----------------------------------------------------------+
-| Setup progress bar (X of N steps complete)               |
-+----------------------------------------------------------+
+Template page  ─►  "Create variations" tab
+                  ┌──────────────────────────────┐
+                  │  Chat panel       │ Inputs   │
+                  │  (AI agent)       │  • CSV   │
+                  │                   │  • Imgs  │
+                  │                   │  • Engines│
+                  └──────────────────────────────┘
+                  AI extracts → structured rows  → Dispatch
+                                                    ├─ illustrator job
+                                                    ├─ indesign  job
+                                                    ├─ canva     job
+                                                    └─ figma     job
+                  Each row × engine = 1 job + 1 live-file output
 ```
 
-### 2. Brands (`/brands`, `/brands/$brandId`)
+## Pieces to build
 
-Brand kits scoped to workspace:
-- name, slug, logo_url, palette (jsonb: array of hex), fonts (jsonb), tone, guidelines (markdown)
-- attached to projects and brand-batch runs so renders inherit colours/type
+1. **Storage bucket** `brief-uploads` (private) for CSV + reference images, RLS scoped to workspace members.
+2. **Chat agent server fn** `briefAgentStream` (AI SDK + Lovable AI gateway, `google/gemini-3-flash-preview`) with tools:
+   - `propose_variations({ rows: [{ name, values: Record<string,string> }] })` — preview structured rows
+   - `dispatch_variations({ rows, engines: ('illustrator'|'indesign'|'canva'|'figma')[] })` — creates jobs + outputs per engine
+3. **CSV parser** server fn: upload → returns header + sample rows, auto-maps columns to template variable names.
+4. **`dispatchVariations` server fn**: for each row × engine, insert a `projects` row (named after row), a `jobs` row per engine, and a mock completed `outputs` row with engine-tagged live-file URL (uses template `preview_url` placeholder until real bridge runs).
+5. **`templates.$templateId.tsx`** — add new default tab "Create" with:
+   - left: AI Elements chat (`Conversation`, `Message`, `PromptInput`, `Shimmer`, `Tool`)
+   - right: dropzone for CSV + images, engine multi-select chip group, "Dispatch all" button
+6. **Variations tab** — group outputs per row, show one tile per engine with download link + engine badge.
 
-### 3. Brand Batch (`/batch`)
+## Data model deltas
 
-CSV-driven bulk run: rows × engines → one job per (row, engine) sharing a
-`batch_id`. Upload CSV, map columns → template variables, pick engines,
-queue. Status page shows progress per row.
+- Add column `jobs.row_label text` so variations can be grouped per source row.
+- No new tables; reuse `projects` / `jobs` / `outputs`.
 
-### 4. Engine pages (`/engines/$engine`)
+## Engine routing
 
-One detail page per engine (illustrator, indesign, canva, adobe-express,
-figma) showing: connection status, templates registered to this engine,
-recent jobs, engine-specific actions (e.g. Figma → Import file URL,
-Illustrator → Download bridge agent).
+- `illustrator` / `indesign` → `bridge://` source, queued for local agent; mocked-completed if no live agent (as today).
+- `figma` / `canva` → cloud API jobs, also mock-completed for now (returns template preview as the "live file" URL with engine in metadata).
 
-### 5. Structured briefs
+Real engine adapters stay stubbed — this PR wires the end-to-end UX and dispatch graph so adapters can be swapped in later.
 
-Replace free-text `projects.brief` with a typed brief block on each project:
-- headline, subhead, body, cta, channel (social/print/email/web), locale,
-  audience, assets (logo override, hero image url), notes
-- Claude chat reads/edits this brief via tool calls (already wired pattern)
+## Out of scope (this pass)
 
-### 6. Templates (extend)
-
-Add `kind` (master/variant), `aspect_ratio`, `dimensions`, `brand_id?`,
-`tags[]`. Template grid with filters by engine, brand, tag.
-
-### 7. System Check
-
-Diagnostic page that pings: Cloud DB, AI gateway, each integration
-(Figma/Canva creds present, agent last_seen < 5m), surfacing red/amber/green.
-
-## Data model changes
-
-New tables:
-- `brands` (workspace_id, name, slug, logo_url, palette, fonts, tone, guidelines)
-- `batches` (workspace_id, project_id, name, status, total, succeeded, failed, csv_url)
-- `batch_rows` (batch_id, row_index, variables jsonb, job_ids uuid[])
-
-Column adds:
-- `projects`: `brand_id uuid?`, `brief_struct jsonb default '{}'`
-- `templates`: `kind text default 'master'`, `aspect_ratio text`, `dimensions jsonb`, `brand_id uuid?`, `tags text[] default '{}'`
-- `jobs`: `batch_id uuid?`, `batch_row int?`
-
-RLS: workspace-member scoped on all new tables (same pattern as existing).
-
-## Routing additions
-
-- `/_authenticated/dashboard` (new index for authed users)
-- `/_authenticated/brands`, `/_authenticated/brands/$brandId`
-- `/_authenticated/batch`, `/_authenticated/batch/$batchId`
-- `/_authenticated/engines/$engine`
-- `/_authenticated/system-check`
-
-Sidebar reordered: Dashboard · Projects · Brands · Templates · Batch · Outputs · — · Engines (collapsible: Illustrator, InDesign, Canva, Adobe Express, Figma) · — · Integrations · Local Agent · API Tokens.
-
-## Build order (incremental)
-
-1. **Migration**: brands, batches, batch_rows + column adds.
-2. **Dashboard** page with engine status cards, counts, quick actions, recent projects, setup progress.
-3. **Brands** CRUD (list, create, edit, delete) + brand picker on project.
-4. **Structured brief editor** on project page (alongside chat).
-5. **Engine detail pages** (one component, route per engine).
-6. **Brand Batch** (CSV upload, mapping, queue fan-out, status).
-7. **System Check** page.
-8. Template extensions (kind/dimensions/brand/tags) + grid filters.
-
-Each step is independently shippable.
-
-## Out of scope (for now)
-
-- Adobe Express full integration (placeholder engine card only).
-- Real Canva OAuth dance (credentials form already exists; the dance lands once you provide the app).
-- Storage bucket for CSV uploads — uses signed URLs in step 6 only.
-
-## Open question
-
-Confirm before step 1: do you want me to keep the existing `/projects` as
-the landing for authed users, or switch landing to the new `/dashboard`?
-(Plan assumes Dashboard.)
+- Real Figma / Canva API rendering (mocked output URL for now).
+- Per-engine variable mapping overrides (uses same row values across engines).
+- Brand-kit / asset library reuse beyond uploaded images.
