@@ -96,6 +96,7 @@ export type Database = {
           error: string | null
           id: string
           project_id: string
+          row_label: string | null
           status: string
           template_id: string | null
           updated_at: string
@@ -113,6 +114,7 @@ export type Database = {
           error?: string | null
           id?: string
           project_id: string
+          row_label?: string | null
           status?: string
           template_id?: string | null
           updated_at?: string
@@ -130,6 +132,7 @@ export type Database = {
           error?: string | null
           id?: string
           project_id?: string
+          row_label?: string | null
           status?: string
           template_id?: string | null
           updated_at?: string
