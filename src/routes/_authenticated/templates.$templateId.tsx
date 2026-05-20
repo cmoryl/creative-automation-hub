@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CreateVariationsTab } from "@/components/CreateVariationsTab";
 
 export const Route = createFileRoute("/_authenticated/templates/$templateId")({
   component: TemplateDetailPage,
@@ -179,10 +180,13 @@ function TemplateDetailPage() {
             </div>
           )}
 
-          <Tabs defaultValue="variations">
+          <Tabs defaultValue="create">
             <TabsList>
+              <TabsTrigger value="create">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Create
+              </TabsTrigger>
               <TabsTrigger value="variations">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
+                <Sparkles className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
               </TabsTrigger>
               <TabsTrigger value="fields">
                 <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
@@ -194,6 +198,14 @@ function TemplateDetailPage() {
                 <PlayCircle className="mr-1 h-3.5 w-3.5" /> Runs ({data.jobs.length})
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="create" className="mt-4">
+              <CreateVariationsTab
+                templateId={tpl.id}
+                templateName={tpl.name}
+                variables={variables}
+              />
+            </TabsContent>
 
             <TabsContent value="variations" className="mt-4">
               {data.outputs.length === 0 ? (
