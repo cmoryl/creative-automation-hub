@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const Body = z.object({
   engines: z
-    .array(z.enum(["illustrator", "indesign", "figma", "canva"]))
+    .array(z.enum(["illustrator", "indesign", "figma", "canva", "claude"]))
     .min(1)
     .max(4),
   version: z.string().max(40).optional(),
