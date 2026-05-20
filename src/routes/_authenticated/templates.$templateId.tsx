@@ -95,19 +95,28 @@ function TemplateDetailPage() {
   };
   const isBridge = tpl.source_ref?.startsWith("bridge://");
 
-  const handleDispatch = async () => {
+  const handleDispatch = async (opts?: { stayOnPage?: boolean }) => {
     setBusy(true);
     try {
       const res = await dispatchFn({
         data: {
           templateId: tpl.id,
           variables: values,
-          briefSummary: brief || `Render ${tpl.name}`,
+          briefSummary: brief || `Variation of ${tpl.name}`,
         },
       });
-      toast.success("Job queued — bridge will pick it up");
+      toast.success(
+        res.mocked
+          ? "Variation created — preview ready (mocked, no live bridge)"
+          : "Variation queued — bridge will render it",
+      );
       qc.invalidateQueries({ queryKey: ["template", templateId] });
-      nav({ to: "/projects/$projectId", params: { projectId: res.projectId } });
+      if (opts?.stayOnPage) {
+        setValues({});
+        setBrief("");
+      } else {
+        nav({ to: "/projects/$projectId", params: { projectId: res.projectId } });
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Dispatch failed");
     } finally {
