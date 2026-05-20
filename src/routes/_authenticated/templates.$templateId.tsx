@@ -364,7 +364,7 @@ function TemplateDetailPage() {
                 </div>
               ))}
               <Button
-                onClick={handleDispatch}
+                onClick={() => handleDispatch()}
                 disabled={busy}
                 className="w-full"
               >
