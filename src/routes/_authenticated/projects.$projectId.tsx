@@ -129,19 +129,28 @@ function ProjectDetail() {
 
       {jobs.length > 0 && (
         <div className="border-b bg-muted/40 px-8 py-2 text-xs">
-          <div className="mx-auto flex max-w-3xl flex-wrap gap-2">
-            {jobs.slice(0, 6).map((j) => (
-              <span
-                key={j.id}
-                className={`rounded px-2 py-0.5 ${
-                  j.status === "completed" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" :
-                  j.status === "failed"    ? "bg-red-500/15 text-red-700 dark:text-red-300" :
-                  j.status === "running"   ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" :
-                                             "bg-muted text-muted-foreground"
-                }`}
-              >
-                {j.engine}: {j.status}
-              </span>
+          <div className="mx-auto flex max-w-3xl flex-col gap-1.5">
+            <div className="flex flex-wrap gap-2">
+              {jobs.slice(0, 6).map((j) => (
+                <span
+                  key={j.id}
+                  title={j.error ?? undefined}
+                  className={`rounded px-2 py-0.5 ${
+                    j.status === "completed" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" :
+                    j.status === "failed"    ? "bg-red-500/15 text-red-700 dark:text-red-300" :
+                    j.status === "running"   ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" :
+                                               "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {j.engine}: {j.status}
+                </span>
+              ))}
+            </div>
+            {jobs.filter((j) => j.status === "failed" && /template not found locally/i.test(j.error ?? "")).slice(0, 1).map((j) => (
+              <div key={`hint-${j.id}`} className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-amber-800 dark:text-amber-200">
+                <strong>Missing template file on the Mac.</strong> Drop the <code>.ai</code> file in <code>~/LovableTemplates/</code> (or set <code>LOVABLE_AGENT_TEMPLATES</code> to its folder) and re-run.
+                {j.error && <div className="mt-1 truncate font-mono text-[10px] opacity-70">{j.error}</div>}
+              </div>
             ))}
           </div>
         </div>
