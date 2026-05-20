@@ -71,7 +71,7 @@ export const listTemplates = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { data, error } = await supabase
       .from("templates")
-      .select("id, name, engine, preview_url, source_ref, company_id, product_id")
+      .select("id, name, engine, preview_url, source_ref, company_id, product_id, pages")
       .order("created_at", { ascending: false });
     if (error) throw error;
     return data ?? [];
@@ -169,7 +169,7 @@ export const getTemplate = createServerFn({ method: "GET" })
     const [tplRes, jobRes] = await Promise.all([
       supabase
         .from("templates")
-        .select("id, name, engine, preview_url, source_ref, variables, created_at, workspace_id")
+        .select("id, name, engine, preview_url, source_ref, variables, pages, created_at, workspace_id")
         .eq("id", data.id)
         .maybeSingle(),
       supabase

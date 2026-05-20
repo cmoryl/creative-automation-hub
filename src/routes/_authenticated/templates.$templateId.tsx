@@ -44,6 +44,16 @@ type Variable = {
   extracted?: boolean;
 };
 
+type TemplatePage = {
+  name?: string;
+  width?: number;
+  height?: number;
+  unit?: string;
+  kind?: "artboard" | "page" | string;
+  artboard_index?: number;
+  page_index?: number;
+};
+
 const engineMeta: Record<
   string,
   { label: string; mode: string; cls: string }
@@ -89,6 +99,11 @@ function TemplateDetailPage() {
   const variables: Variable[] = useMemo(() => {
     const v = data?.template?.variables;
     return Array.isArray(v) ? (v as unknown as Variable[]) : [];
+  }, [data]);
+
+  const pages: TemplatePage[] = useMemo(() => {
+    const p = (data?.template as { pages?: unknown })?.pages;
+    return Array.isArray(p) ? (p as TemplatePage[]) : [];
   }, [data]);
 
   const [editVars, setEditVars] = useState<Variable[]>([]);
@@ -196,8 +211,9 @@ function TemplateDetailPage() {
           </p>
 
           {/* Stat tiles */}
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="mt-5 grid grid-cols-4 gap-2">
             {[
+              { label: pages.length > 1 ? "Pages" : "Page", value: pages.length || 1 },
               { label: "Fields", value: variables.length },
               { label: "Variations", value: data.outputs.length },
               { label: "Runs", value: data.jobs.length },
@@ -248,6 +264,11 @@ function TemplateDetailPage() {
             <TabsTrigger value="fields">
               <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
             </TabsTrigger>
+            {pages.length > 0 && (
+              <TabsTrigger value="pages">
+                <FileText className="mr-1 h-3.5 w-3.5" /> Pages ({pages.length})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="layers">
               <Layers className="mr-1 h-3.5 w-3.5" /> Layers
             </TabsTrigger>
@@ -427,6 +448,47 @@ function TemplateDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {pages.length > 0 && (
+            <TabsContent value="pages" className="mt-4">
+              <Card>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Multi-page layout. Each render produces one preview + one PDF per page,
+                      plus a combined master PDF and a packaged ZIP.
+                    </p>
+                    <Badge variant="outline" className="text-[10px]">
+                      {pages.length} {pages.length === 1 ? "page" : "pages"}
+                    </Badge>
+                  </div>
+                  <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {pages.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 rounded-lg border bg-card/60 p-3"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
+                          {String(i + 1).padStart(2, "0")}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">
+                            {p.name ?? `Page ${i + 1}`}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
+                            {p.kind === "artboard" ? "Artboard" : "Page"}
+                            {p.width && p.height
+                              ? ` · ${p.width}×${p.height}${p.unit ?? ""}`
+                              : ""}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="layers" className="mt-4">
             <Card>

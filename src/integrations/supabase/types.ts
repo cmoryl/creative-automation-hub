@@ -479,6 +479,7 @@ export type Database = {
           engine: string
           id: string
           name: string
+          pages: Json
           preview_url: string | null
           product_id: string | null
           source_ref: string | null
@@ -491,6 +492,7 @@ export type Database = {
           engine: string
           id?: string
           name: string
+          pages?: Json
           preview_url?: string | null
           product_id?: string | null
           source_ref?: string | null
@@ -503,6 +505,7 @@ export type Database = {
           engine?: string
           id?: string
           name?: string
+          pages?: Json
           preview_url?: string | null
           product_id?: string | null
           source_ref?: string | null

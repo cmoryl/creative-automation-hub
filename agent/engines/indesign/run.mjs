@@ -1,5 +1,9 @@
-// InDesign engine adapter — mirrors the Illustrator adapter but exports an
-// interactive PDF using InDesign's PDF preset.
+// InDesign engine adapter — multi-page rendering.
+//
+// For each page declared on the template (or every page in the document when
+// none are declared) the script exports a JPEG thumbnail and a single-page
+// PDF.  It also exports a single multi-page master PDF spanning every page.
+
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -25,22 +29,26 @@ function esc(v) {
     .replace(/\r?\n/g, "\\n");
 }
 
-function buildJsx({ templatePath, variables, outDir }) {
-  const lines = Object.entries(variables || {})
+function buildJsx({ templatePath, variables, outDir, pages }) {
+  const swapLines = Object.entries(variables || {})
     .filter(([, v]) => typeof v === "string" && !v.startsWith("#"))
-    .map(
-      ([name, value]) =>
-        `swaps["${esc(name)}"] = "${esc(value)}";`,
-    )
+    .map(([name, value]) => `swaps["${esc(name)}"] = "${esc(value)}";`)
     .join("\n  ");
+
+  const declaredPages = Array.isArray(pages) && pages.length
+    ? pages.map((p, i) => ({
+        index: Number.isInteger(p.page_index) ? p.page_index : i + 1,
+        name: p.name || `page_${i + 1}`,
+      }))
+    : null;
 
   return `
 var swaps = {};
-${lines}
+${swapLines}
 
 var doc = app.open(File("${esc(templatePath)}"));
 
-// Replace named text frames; fall back to script-label matches.
+// --- Variable substitution ---------------------------------------------------
 for (var i = 0; i < doc.textFrames.length; i++) {
   var tf = doc.textFrames[i];
   var key = tf.label || tf.name;
@@ -49,9 +57,64 @@ for (var i = 0; i < doc.textFrames.length; i++) {
   }
 }
 
-var pdfFile = File("${esc(path.join(outDir, "master.pdf"))}");
-var preset = app.pdfExportPresets.itemByName("[High Quality Print]");
-doc.exportFile(ExportFormat.PDF_TYPE, pdfFile, false, preset);
+// --- Helpers ----------------------------------------------------------------
+var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+var slug = function (s) { return String(s).replace(/[^a-zA-Z0-9_-]+/g, "_").toLowerCase(); };
+
+var declared = ${JSON.stringify(declaredPages)};
+var totalPages = doc.pages.length;
+var pageList = [];
+if (declared) {
+  for (var d = 0; d < declared.length; d++) {
+    if (declared[d].index <= totalPages) {
+      pageList.push({ index: declared[d].index, name: declared[d].name });
+    }
+  }
+} else {
+  for (var n = 1; n <= totalPages; n++) {
+    pageList.push({ index: n, name: "page_" + pad(n) });
+  }
+}
+
+// --- Per-page JPEG thumbnail + per-page PDF ---------------------------------
+app.jpegExportPreferences.exportResolution = 144;
+app.jpegExportPreferences.jpegQuality = JPEGOptionsQuality.MAXIMUM;
+app.jpegExportPreferences.jpegExportRange = ExportRangeOrAllPages.EXPORT_RANGE;
+
+var pdfPreset = app.pdfExportPresets.itemByName("[High Quality Print]");
+
+for (var p = 0; p < pageList.length; p++) {
+  var info = pageList[p];
+  var fname = "page_" + pad(p + 1) + "_" + slug(info.name);
+
+  // JPEG
+  app.jpegExportPreferences.pageString = String(info.index);
+  var jpgFile = File("${esc(outDir)}/" + fname + ".jpg");
+  doc.exportFile(ExportFormat.JPG, jpgFile, false);
+
+  // PDF
+  app.pdfExportPreferences.pageRange = String(info.index);
+  var pdfPageFile = File("${esc(outDir)}/" + fname + ".pdf");
+  doc.exportFile(ExportFormat.PDF_TYPE, pdfPageFile, false, pdfPreset);
+}
+
+// --- Combined multi-page master PDF -----------------------------------------
+app.pdfExportPreferences.pageRange = PageRange.ALL_PAGES;
+var masterPdf = File("${esc(path.join(outDir, "master.pdf"))}");
+doc.exportFile(ExportFormat.PDF_TYPE, masterPdf, false, pdfPreset);
+
+// --- Save the edited .indd next to outputs (read-only kept on disk) ---------
+try {
+  var inddCopy = File("${esc(path.join(outDir, "editable.indd"))}");
+  doc.save(inddCopy);
+} catch (e) { $.writeln("save copy failed: " + e); }
+
+// --- Package: collect Links + Fonts + report --------------------------------
+try {
+  var pkgFolder = Folder("${esc(outDir)}/package");
+  pkgFolder.create();
+  doc.packageForPrint(pkgFolder, true, true, true, true, true, "", false, true);
+} catch (e) { $.writeln("packageForPrint failed: " + e); }
 
 doc.close(SaveOptions.NO);
 `;
@@ -78,6 +141,25 @@ function runScript(jsxPath) {
   });
 }
 
+function zipFolder(srcDir, zipPath) {
+  return new Promise((resolve, reject) => {
+    let cmd, args, opts = { stdio: "inherit" };
+    if (process.platform === "win32") {
+      cmd = "powershell";
+      args = ["-NoProfile", "-Command",
+        `Compress-Archive -Path '${srcDir}\\*' -DestinationPath '${zipPath}' -Force`];
+    } else {
+      cmd = "zip";
+      args = ["-r", "-q", zipPath, "."];
+      opts.cwd = srcDir;
+    }
+    const child = spawn(cmd, args, opts);
+    child.on("error", reject);
+    child.on("exit", (code) =>
+      code === 0 ? resolve() : reject(new Error(`zip exited ${code}`)));
+  });
+}
+
 async function uploadOutput({ apiBase, token, jobId, filePath, kind, metadata }) {
   const safe = path.basename(filePath).replace(/[^a-zA-Z0-9._-]/g, "_");
   const sigRes = await fetch(`${apiBase}/api/public/agent/upload-url`, {
@@ -97,6 +179,11 @@ async function uploadOutput({ apiBase, token, jobId, filePath, kind, metadata })
   return { kind, url: sig.public_url, metadata };
 }
 
+async function safeUpload(args) {
+  try { return await uploadOutput(args); }
+  catch (e) { console.warn(`upload failed for ${args.filePath}: ${e.message}`); return null; }
+}
+
 export async function run(job, ctx) {
   const { apiBase, token, progress } = ctx;
   await progress("opening", 10, "Opening template in InDesign");
@@ -107,18 +194,86 @@ export async function run(job, ctx) {
 
   const outDir = await fs.mkdtemp(path.join(os.tmpdir(), `lovable-job-${job.id}-`));
   const jsxPath = path.join(outDir, "render.jsx");
-  await fs.writeFile(jsxPath, buildJsx({ templatePath, variables: job.variables, outDir }));
+  const pages = Array.isArray(job.template?.pages) ? job.template.pages : [];
 
-  await progress("rendering", 50, "Running ExtendScript in InDesign");
+  await fs.writeFile(jsxPath, buildJsx({
+    templatePath, variables: job.variables, outDir, pages,
+  }));
+
+  await progress("rendering", 40, `Rendering ${pages.length || "all"} page(s) in InDesign`);
   await runScript(jsxPath);
 
-  await progress("uploading", 85, "Uploading PDF");
-  const pdf = await uploadOutput({
+  const all = await fs.readdir(outDir);
+  const pageJpgs = all.filter((f) => /^page_\d+_.*\.jpg$/.test(f)).sort();
+  const pagePdfs = all.filter((f) => /^page_\d+_.*\.pdf$/.test(f) && f !== "master.pdf").sort();
+
+  // Write manifest.
+  const pkgDir = path.join(outDir, "package");
+  await fs.mkdir(pkgDir, { recursive: true });
+  await fs.writeFile(
+    path.join(pkgDir, "manifest.json"),
+    JSON.stringify({
+      job_id: job.id,
+      template: job.template?.name ?? null,
+      source_ref: job.template?.source_ref ?? null,
+      engine: "indesign",
+      rendered_at: new Date().toISOString(),
+      page_count: pageJpgs.length,
+      pages: pageJpgs.map((f, i) => ({
+        index: i + 1,
+        thumbnail: f,
+        pdf: pagePdfs[i] ?? null,
+        name: pages[i]?.name ?? null,
+      })),
+      variables: job.variables ?? {},
+    }, null, 2),
+  );
+
+  await progress("packaging", 75, "Zipping editable assets + fonts");
+  const zipPath = path.join(outDir, "package.zip");
+  try { await zipFolder(pkgDir, zipPath); }
+  catch (e) { console.warn(`package zip failed: ${e.message}`); }
+
+  await progress("uploading", 85, `Uploading ${pageJpgs.length} page(s) + master PDF`);
+  const outputs = [];
+
+  for (let i = 0; i < pageJpgs.length; i++) {
+    const up = await safeUpload({
+      apiBase, token, jobId: job.id,
+      filePath: path.join(outDir, pageJpgs[i]),
+      kind: "png",
+      metadata: {
+        source: "indesign",
+        page_index: i + 1,
+        page_name: pages[i]?.name ?? null,
+        total_pages: pageJpgs.length,
+      },
+    });
+    if (up) outputs.push(up);
+  }
+
+  const master = await safeUpload({
     apiBase, token, jobId: job.id,
     filePath: path.join(outDir, "master.pdf"),
     kind: "pdf",
-    metadata: { source: "indesign" },
+    metadata: { source: "indesign", page_count: pageJpgs.length, master: true },
   });
-  await progress("done", 100, "Complete");
-  return [pdf];
+  if (master) outputs.push(master);
+
+  if (await fs.stat(zipPath).then(() => true).catch(() => false)) {
+    const pkg = await safeUpload({
+      apiBase, token, jobId: job.id,
+      filePath: zipPath,
+      kind: "package",
+      metadata: {
+        source: "indesign",
+        page_count: pageJpgs.length,
+        contents: ["master.pdf", ...pageJpgs, ...pagePdfs, "Links/", "Fonts/", "manifest.json"],
+      },
+    });
+    if (pkg) outputs.push(pkg);
+  }
+
+  await progress("done", 100, "Outputs uploaded");
+  return outputs;
 }
