@@ -169,6 +169,36 @@ function ProjectDetail() {
 
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
+          {jobs.some((j) => (j.outputs ?? []).length > 0) && (
+            <section className="rounded-lg border bg-card p-4">
+              <h2 className="mb-3 text-sm font-semibold">Renders</h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {jobs.flatMap((j) =>
+                  (j.outputs ?? []).map((o: { id: string; kind: string; url: string }) => (
+                    <a
+                      key={o.id}
+                      href={o.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group block overflow-hidden rounded border bg-muted transition hover:border-primary"
+                    >
+                      {o.kind === "png" || o.kind === "jpg" || o.kind === "jpeg" ? (
+                        <img src={o.url} alt={`${j.engine} ${o.kind}`} className="aspect-square w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
+                          {o.kind.toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between px-2 py-1 text-[10px] text-muted-foreground">
+                        <span>{j.engine}</span>
+                        <span className="uppercase">{o.kind}</span>
+                      </div>
+                    </a>
+                  )),
+                )}
+              </div>
+            </section>
+          )}
           {messages.length === 0 && !streaming && (
             <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
               Start by describing your campaign. Claude will pick templates, propose variables, and queue renders.
