@@ -59,7 +59,7 @@ const URL_RE = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 const IMAGE_URL_RE = /^https?:\/\/\S+$/i;
 
 /** Validate one field value. Returns error message or null. */
-function validateField(v: Variable, raw: string): string | null {
+export function validateField(v: Variable, raw: string): string | null {
   const val = (raw ?? "").trim();
   const label = v.label ?? v.name;
   if (!val) return `${label} is required`;
@@ -86,7 +86,7 @@ function validateField(v: Variable, raw: string): string | null {
   return null;
 }
 
-function validateAll(
+export function validateAll(
   variables: Variable[],
   values: Record<string, string>,
 ): Record<string, string> {
@@ -97,6 +97,8 @@ function validateAll(
   }
   return errs;
 }
+
+export type { Variable };
 
 export function CreateVariationsTab({
   templateId,
