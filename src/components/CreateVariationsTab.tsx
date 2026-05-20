@@ -290,7 +290,27 @@ export function CreateVariationsTab({
       setCsvRowErrors([]);
       logActivity("Validating inputs…");
       let rows: { label: string; values: Record<string, string> }[] = [];
-      if (mode === "csv") {
+      if (mode === "batch") {
+        if (!batchRows.length) throw new Error("Add at least one batch row");
+        const newErrs: Record<string, Record<string, string>> = {};
+        batchRows.forEach((r, i) => {
+          const re: Record<string, string> = {};
+          if (!r.label.trim()) re.__label = `Row ${i + 1} needs a label`;
+          for (const v of variables) {
+            const e = validateField(v, r.values[v.name] ?? "");
+            if (e) re[v.name] = e;
+          }
+          if (Object.keys(re).length) newErrs[r.id] = re;
+        });
+        setBatchErrors(newErrs);
+        if (Object.keys(newErrs).length) {
+          throw new Error(
+            `${Object.keys(newErrs).length} row(s) have errors — fix before dispatching`,
+          );
+        }
+        rows = batchRows.map((r) => ({ label: r.label.trim(), values: r.values }));
+        logActivity(`Prepared ${rows.length} batch row(s)`, "ok");
+      } else if (mode === "csv") {
         if (!csvRows.length) throw new Error("Upload a CSV first");
         const rowErrs: { row: number; field: string; message: string }[] = [];
         rows = csvRows.map((r, i) => {
@@ -343,6 +363,24 @@ export function CreateVariationsTab({
       logActivity(
         `Dispatching ${rows.length} × ${engineList.length} = ${rows.length * engineList.length} render job(s)…`,
       );
+      if (mode === "batch" || (mode === "csv" && rows.length > 1)) {
+        const res = await dispatchBatchFn({
+          data: {
+            batchLabel: mode === "batch" ? batchLabel : `${templateName} CSV ${new Date().toLocaleDateString()}`,
+            groups: [{ templateId, engines: engineList as never, rows }],
+          },
+        });
+        return {
+          created: res.created.map((c) => ({
+            projectId: c.projectId,
+            jobIds: c.jobIds,
+            label: c.label,
+          })),
+          hasLiveAgent: res.hasLiveAgent,
+          engines: engineList,
+          batchId: res.batchId,
+        };
+      }
       const res = await dispatchFn({
         data: {
           templateId,
