@@ -149,64 +149,93 @@ function TemplateDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Library
       </Link>
 
-      <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Badge className={`mb-2 border ${engine.cls}`}>
-            {engine.label} · {engine.mode}
-          </Badge>
-          <h1 className="text-3xl font-bold tracking-tight">{tpl.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            US Letter (8.5×11″) · {variables.length} editable fields · source{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{tpl.source_ref}</code>
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" asChild>
-            <a href={tpl.preview_url ?? "#"} target="_blank" rel="noreferrer">
-              <FileText className="h-4 w-4" /> Open preview
-            </a>
-          </Button>
-          {data.bridge?.required && (
-            <Badge variant={data.bridge.isLiveAgent ? "default" : "outline"}>
-              {data.bridge.isLiveAgent
-                ? `Agent online${data.bridge.agentName ? ` · ${data.bridge.agentName}` : ""}`
-                : "Agent offline"}
-            </Badge>
-          )}
-        </div>
-      </header>
-
-      {isBridge && (
-        <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={data.bridge?.isLiveAgent ? "default" : "outline"}>
-              {data.bridge?.isLiveAgent ? "Live bridge connected" : "Waiting for bridge agent"}
-            </Badge>
-            {data.bridge?.lastSeen && (
-              <span className="text-xs text-muted-foreground">
-                Last seen {new Date(data.bridge.lastSeen).toLocaleString()}
-              </span>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {data.bridge?.queuedJobs ?? 0} queued · {data.bridge?.runningJobs ?? 0} running
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Fill the Create tab below, then dispatch from there. For this template, jobs stay queued until your local Illustrator bridge comes online and claims them.
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-4">
-        {tpl.preview_url && (
-          <div className="overflow-hidden rounded-lg border bg-muted/30 shadow-sm">
+      {/* Hero: preview + metadata side by side */}
+      <section className="mb-8 grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
+        <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-muted/40 to-muted/10 shadow-sm">
+          {tpl.preview_url ? (
             <img
               src={tpl.preview_url}
               alt={tpl.name}
-              className="max-h-[280px] w-full object-contain"
+              className="aspect-[8.5/11] w-full object-contain p-4"
             />
+          ) : (
+            <div className="flex aspect-[8.5/11] w-full items-center justify-center text-xs text-muted-foreground">
+              No preview
+            </div>
+          )}
+          {tpl.preview_url && (
+            <a
+              href={tpl.preview_url}
+              target="_blank"
+              rel="noreferrer"
+              className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full border bg-background/90 px-2.5 py-1 text-xs shadow-sm backdrop-blur transition hover:bg-background"
+            >
+              <FileText className="h-3 w-3" /> Open
+            </a>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={`border ${engine.cls}`}>{engine.label}</Badge>
+            <Badge variant="outline" className="font-normal">{engine.mode}</Badge>
+            {data.bridge?.required && (
+              <Badge variant={data.bridge.isLiveAgent ? "default" : "outline"}>
+                <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${data.bridge.isLiveAgent ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground"}`} />
+                {data.bridge.isLiveAgent
+                  ? `Agent online${data.bridge.agentName ? ` · ${data.bridge.agentName}` : ""}`
+                  : "Agent offline"}
+              </Badge>
+            )}
           </div>
-        )}
+
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">{tpl.name}</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            US Letter (8.5×11″) · source{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{tpl.source_ref}</code>
+          </p>
+
+          {/* Stat tiles */}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {[
+              { label: "Fields", value: variables.length },
+              { label: "Variations", value: data.outputs.length },
+              { label: "Runs", value: data.jobs.length },
+            ].map((s) => (
+              <div key={s.label} className="rounded-lg border bg-card px-3 py-2.5">
+                <div className="text-2xl font-semibold leading-none">{s.value}</div>
+                <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {isBridge && (
+            <div className="mt-5 rounded-lg border bg-muted/30 p-3 text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={data.bridge?.isLiveAgent ? "default" : "outline"} className="text-[10px]">
+                  {data.bridge?.isLiveAgent ? "Live bridge connected" : "Waiting for bridge"}
+                </Badge>
+                {data.bridge?.lastSeen && (
+                  <span className="text-muted-foreground">
+                    Last seen {new Date(data.bridge.lastSeen).toLocaleString()}
+                  </span>
+                )}
+                <span className="text-muted-foreground">
+                  {data.bridge?.queuedJobs ?? 0} queued · {data.bridge?.runningJobs ?? 0} running
+                </span>
+              </div>
+              <p className="mt-1.5 text-muted-foreground">
+                Jobs stay queued until your local Illustrator bridge comes online and claims them.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className="space-y-4">
+
 
         <Tabs defaultValue="create">
           <TabsList>

@@ -6,12 +6,9 @@ import { toast } from "sonner";
 import {
   Bot,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   FileSpreadsheet,
   Loader2,
-  ListChecks,
   Send,
   Sparkles,
   Upload,
@@ -46,7 +43,7 @@ type Variable = {
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
-type InputMode = "form" | "stepper" | "csv";
+type InputMode = "form" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: string }[] = [
@@ -131,10 +128,9 @@ export function CreateVariationsTab({
   const parseFn = useServerFn(parseCsvFile);
   const dispatchFn = useServerFn(dispatchVariations);
 
-  const [mode, setMode] = useState<InputMode | null>(null);
+  const [mode, setMode] = useState<InputMode>("form");
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...(brandPrefill ?? {}) }));
-  const [step, setStep] = useState(0);
-  const [sections, setSections] = useState<Section[]>([]);
+  const [, setSections] = useState<Section[]>([]);
   const [engines, setEngines] = useState<Set<string>>(
     new Set(defaultEngines?.length ? defaultEngines : ["illustrator"]),
   );
@@ -163,21 +159,6 @@ export function CreateVariationsTab({
   const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
     setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
 
-  // auto-derive sections from layers when entering stepper without AI sections
-  const fallbackSections: Section[] = useMemo(() => {
-    const byLayer: Record<string, string[]> = {};
-    for (const v of variables) {
-      const key = v.layer ?? "General";
-      (byLayer[key] ??= []).push(v.name);
-    }
-    return Object.entries(byLayer).map(([title, fieldNames], i) => ({
-      id: `s${i}`,
-      title,
-      fieldNames,
-    }));
-  }, [variables]);
-
-  const activeSections = sections.length ? sections : fallbackSections;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 9e9, behavior: "smooth" });
@@ -248,7 +229,7 @@ export function CreateVariationsTab({
         },
       });
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
-      if (res.suggestedMode && !mode) setMode(res.suggestedMode);
+      if (res.suggestedMode && res.suggestedMode !== "stepper") setMode(res.suggestedMode);
       if (res.prefillValues && Object.keys(res.prefillValues).length) {
         setValues((s) => ({ ...s, ...res.prefillValues }));
         toast.success(`Filled ${Object.keys(res.prefillValues).length} field(s)`);
@@ -521,9 +502,8 @@ export function CreateVariationsTab({
         <div className="flex items-center gap-1 border-b p-2">
           {(
             [
-              { id: "form", icon: Sparkles, label: "Form" },
-              { id: "stepper", icon: ListChecks, label: "Stepper" },
-              { id: "csv", icon: FileSpreadsheet, label: "CSV" },
+              { id: "form", icon: Sparkles, label: "Single brief" },
+              { id: "csv", icon: FileSpreadsheet, label: "Bulk CSV" },
             ] as const
           ).map((m) => (
             <Button
@@ -538,12 +518,6 @@ export function CreateVariationsTab({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {!mode && (
-            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Chat with the assistant or pick a mode above.
-            </div>
-          )}
-
           {mode === "form" && (
             <div className="space-y-3">
               {variables.map((v) => (
@@ -557,61 +531,7 @@ export function CreateVariationsTab({
             </div>
           )}
 
-          {mode === "stepper" && activeSections.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  Step {step + 1} / {activeSections.length}:{" "}
-                  <strong className="text-foreground">
-                    {activeSections[step]?.title}
-                  </strong>
-                </span>
-                <div className="flex gap-1">
-                  {activeSections.map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 w-6 rounded ${
-                        i <= step ? "bg-primary" : "bg-muted"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-3">
-                {activeSections[step]?.fieldNames
-                  .map((n) => variables.find((v) => v.name === n))
-                  .filter((v): v is Variable => !!v)
-                  .map((v) => (
-                    <div key={v.name} className="space-y-1">
-                      <label className="text-xs font-medium">
-                        {v.label ?? v.name}
-                      </label>
-                      {renderField(v)}
-                    </div>
-                  ))}
-              </div>
-              <div className="flex justify-between pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={step === 0}
-                  onClick={() => setStep((s) => Math.max(0, s - 1))}
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" /> Back
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={step >= activeSections.length - 1}
-                  onClick={() =>
-                    setStep((s) => Math.min(activeSections.length - 1, s + 1))
-                  }
-                >
-                  Next <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
+
 
           {mode === "csv" && (
             <div className="space-y-3">
@@ -726,7 +646,7 @@ export function CreateVariationsTab({
           </div>
           <Button
             className="w-full"
-            disabled={dispatch.isPending || !mode}
+            disabled={dispatch.isPending}
             onClick={() => dispatch.mutate()}
           >
             {dispatch.isPending ? (
