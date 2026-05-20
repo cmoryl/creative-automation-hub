@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Bot,
@@ -30,6 +30,11 @@ import {
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
+import {
+  listProductAssets,
+  saveProductAsset,
+  generateProductImage,
+} from "@/lib/product-assets.functions";
 
 type Variable = {
   name: string;
@@ -59,6 +64,9 @@ export function CreateVariationsTab({
   autoOpenSingleResult = false,
   brandPrefill,
   brandSourceLabel,
+  companyId,
+  productId,
+  engine,
 }: {
   templateId: string;
   templateName: string;
@@ -67,6 +75,9 @@ export function CreateVariationsTab({
   autoOpenSingleResult?: boolean;
   brandPrefill?: Record<string, string>;
   brandSourceLabel?: string | null;
+  companyId?: string | null;
+  productId?: string | null;
+  engine?: string;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -336,6 +347,10 @@ export function CreateVariationsTab({
           onChange={onChange}
           requestUpload={(filename) => uploadHero({ data: { filename } })}
           onLog={logActivity}
+          companyId={companyId ?? null}
+          productId={productId ?? null}
+          engine={engine}
+          fieldLabel={v.label ?? v.name}
         />
       );
     if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
@@ -686,14 +701,43 @@ function ImageField({
   onChange,
   requestUpload,
   onLog,
+  companyId,
+  productId,
+  engine,
+  fieldLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
   requestUpload: (filename: string) => Promise<{ signedUrl: string; publicUrl: string }>;
   onLog: (text: string, kind?: "info" | "ok" | "err") => void;
+  companyId?: string | null;
+  productId?: string | null;
+  engine?: string;
+  fieldLabel?: string;
 }) {
+  const qc = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [tab, setTab] = useState<"upload" | "ai" | "library">("upload");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const saveAsset = useServerFn(saveProductAsset);
+  const generateImg = useServerFn(generateProductImage);
+  const listAssets = useServerFn(listProductAssets);
+
+  const showLibrary = !!companyId && engine === "illustrator";
+  const showAi = engine === "illustrator" || !engine;
+
+  const assetsQ = useQuery({
+    queryKey: ["product-assets", companyId, productId],
+    queryFn: () =>
+      listAssets({ data: { companyId: companyId ?? null, productId: productId ?? null } }),
+    enabled: showLibrary && tab === "library",
+  });
+
+  const invalidateLibrary = () =>
+    qc.invalidateQueries({ queryKey: ["product-assets", companyId, productId] });
 
   const handleFile = async (file: File) => {
     setUploading(true);
@@ -707,6 +751,20 @@ function ImageField({
       if (!res.ok) throw new Error(`Upload failed (${res.status})`);
       onChange(publicUrl);
       onLog(`Uploaded ${file.name}`, "ok");
+      if (companyId) {
+        await saveAsset({
+          data: {
+            companyId,
+            productId: productId ?? null,
+            url: publicUrl,
+            name: file.name,
+            source: "upload",
+            prompt: null,
+          },
+        });
+        invalidateLibrary();
+        onLog(`Saved ${file.name} to product live files`, "ok");
+      }
     } catch (e) {
       onLog(e instanceof Error ? e.message : "Upload failed", "err");
     } finally {
@@ -714,39 +772,34 @@ function ImageField({
     }
   };
 
+  const handleGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setGenerating(true);
+    try {
+      const { url } = await generateImg({
+        data: {
+          prompt: aiPrompt.trim(),
+          companyId: companyId ?? null,
+          productId: productId ?? null,
+        },
+      });
+      onChange(url);
+      onLog(`AI generated image for "${fieldLabel ?? "image"}"`, "ok");
+      invalidateLibrary();
+    } catch (e) {
+      onLog(e instanceof Error ? e.message : "Generation failed", "err");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Paste image URL or upload below"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Upload className="h-3.5 w-3.5" />
-          )}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void handleFile(f);
-            e.target.value = "";
-          }}
-        />
-      </div>
+      <Input
+        placeholder="Image URL (or use options below)"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
       {value && (
         <img
           src={value}
@@ -754,10 +807,135 @@ function ImageField({
           className="h-20 w-20 rounded border object-cover"
         />
       )}
-      <p className="text-[10px] text-muted-foreground">
-        Tip: in CSV mode, put the image URL directly in this column. The brief
-        assistant also accepts pasted URLs.
-      </p>
+      <div className="flex gap-1 border-b text-xs">
+        <button
+          type="button"
+          className={`px-2 py-1 ${tab === "upload" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+          onClick={() => setTab("upload")}
+        >
+          Upload
+        </button>
+        {showAi && (
+          <button
+            type="button"
+            className={`px-2 py-1 ${tab === "ai" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+            onClick={() => setTab("ai")}
+          >
+            <Sparkles className="mr-1 inline h-3 w-3" />AI generate
+          </button>
+        )}
+        {showLibrary && (
+          <button
+            type="button"
+            className={`px-2 py-1 ${tab === "library" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+            onClick={() => setTab("library")}
+          >
+            Product files
+          </button>
+        )}
+      </div>
+
+      {tab === "upload" && (
+        <div className="space-y-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="mr-1 h-3.5 w-3.5" />
+            )}
+            Upload image
+          </Button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleFile(f);
+              e.target.value = "";
+            }}
+          />
+          {companyId ? (
+            <p className="text-[10px] text-muted-foreground">
+              Saved to the product live files library and reusable later.
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">
+              Tip: CSV columns and the brief assistant also accept image URLs.
+            </p>
+          )}
+        </div>
+      )}
+
+      {tab === "ai" && showAi && (
+        <div className="space-y-1">
+          <Textarea
+            rows={2}
+            placeholder={`Describe the ${fieldLabel ?? "image"} you want (e.g. "Aerial photo of Sydney harbor at golden hour, cinematic")`}
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+          />
+          <Button
+            type="button"
+            size="sm"
+            disabled={generating || !aiPrompt.trim()}
+            onClick={handleGenerate}
+          >
+            {generating ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Wand2 className="mr-1 h-3.5 w-3.5" />
+            )}
+            Generate with AI
+          </Button>
+          {companyId && (
+            <p className="text-[10px] text-muted-foreground">
+              Auto-saved to the product live files library.
+            </p>
+          )}
+        </div>
+      )}
+
+      {tab === "library" && showLibrary && (
+        <div className="space-y-1">
+          {assetsQ.isLoading ? (
+            <p className="text-xs text-muted-foreground">Loading…</p>
+          ) : assetsQ.data?.assets.length ? (
+            <div className="grid grid-cols-4 gap-2">
+              {assetsQ.data.assets.map((a: { id: string; name: string; url: string; source: string }) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className={`group relative aspect-square overflow-hidden rounded border ${value === a.url ? "ring-2 ring-primary" : "hover:border-primary/50"}`}
+                  onClick={() => {
+                    onChange(a.url);
+                    onLog(`Picked ${a.name} from library`, "ok");
+                  }}
+                  title={a.name}
+                >
+                  <img src={a.url} alt={a.name} className="h-full w-full object-cover" />
+                  {a.source === "ai" && (
+                    <span className="absolute right-0.5 top-0.5 rounded bg-primary/90 px-1 text-[9px] text-primary-foreground">
+                      AI
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              No files yet — upload or generate to populate this product's library.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
