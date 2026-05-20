@@ -177,6 +177,9 @@ export function CreateVariationsTab({
   const dispatch = useMutation({
     mutationFn: async () => {
       if (engines.size === 0) throw new Error("Pick at least one engine");
+      setLastResult(null);
+      setActivityLog([]);
+      logActivity("Preparing brief…");
       let rows: { label: string; values: Record<string, string> }[] = [];
       if (mode === "csv") {
         if (!csvRows.length) throw new Error("Upload a CSV first");
@@ -195,6 +198,7 @@ export function CreateVariationsTab({
             values: mapped,
           };
         });
+        logActivity(`Mapped ${rows.length} CSV rows to template fields`, "ok");
       } else {
         rows = [
           {
@@ -206,26 +210,48 @@ export function CreateVariationsTab({
             values,
           },
         ];
+        logActivity(`Prepared 1 variation from ${mode} input`, "ok");
       }
-      return dispatchFn({
+      const engineList = Array.from(engines);
+      logActivity(
+        `Dispatching ${rows.length} × ${engineList.length} = ${rows.length * engineList.length} render job(s)…`,
+      );
+      const res = await dispatchFn({
         data: {
           templateId,
-          engines: Array.from(engines) as never,
+          engines: engineList as never,
           rows,
         },
       });
+      return { ...res, engines: engineList };
     },
     onSuccess: (res) => {
+      const totalJobs = res.created.reduce((n, c) => n + c.jobIds.length, 0);
+      logActivity(
+        `Created ${res.created.length} project(s) with ${totalJobs} job(s)`,
+        "ok",
+      );
+      if (res.hasLiveAgent) {
+        logActivity("Live bridge agent detected — jobs queued for rendering", "ok");
+      } else {
+        logActivity(
+          "No live bridge agent — Illustrator/InDesign jobs mocked with preview",
+          "info",
+        );
+      }
+      setLastResult(res);
       toast.success(
-        `Created ${res.created.length} variation(s) × ${engines.size} engine(s)${
-          res.hasLiveAgent ? "" : " — mocked (no live bridge)"
-        }`,
+        `Created ${res.created.length} variation(s) × ${res.engines.length} engine(s)`,
       );
       qc.invalidateQueries({ queryKey: ["template", templateId] });
-      setValues({});
-      setCsvRows([]);
-      setStep(0);
+      qc.invalidateQueries({ queryKey: ["projects"] });
     },
+    onError: (e) => {
+      const msg = e instanceof Error ? e.message : "Dispatch failed";
+      logActivity(msg, "err");
+      toast.error(msg);
+    },
+  });
     onError: (e) =>
       toast.error(e instanceof Error ? e.message : "Dispatch failed"),
   });
