@@ -12,11 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
+import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
@@ -42,11 +42,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
@@ -67,11 +62,17 @@ const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
   path: '/examples',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTemplatesIndexRoute =
+  AuthenticatedTemplatesIndexRouteImport.update({
+    id: '/templates/',
+    path: '/templates/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTemplatesTemplateIdRoute =
   AuthenticatedTemplatesTemplateIdRouteImport.update({
-    id: '/$templateId',
-    path: '/$templateId',
-    getParentRoute: () => AuthenticatedTemplatesRoute,
+    id: '/templates/$templateId',
+    path: '/templates/$templateId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
@@ -130,12 +131,12 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -149,12 +150,12 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -170,12 +171,12 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/_authenticated/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -191,12 +192,12 @@ export interface FileRouteTypes {
     | '/library'
     | '/outputs'
     | '/projects'
-    | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -210,12 +211,12 @@ export interface FileRouteTypes {
     | '/library'
     | '/outputs'
     | '/projects'
-    | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -230,12 +231,12 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/outputs'
     | '/_authenticated/projects'
-    | '/_authenticated/templates'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/templates/$templateId'
+    | '/_authenticated/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -276,13 +277,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/templates': {
-      id: '/_authenticated/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/projects': {
       id: '/_authenticated/projects'
       path: '/projects'
@@ -311,12 +305,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedExamplesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/templates/': {
+      id: '/_authenticated/templates/'
+      path: '/templates'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/templates/$templateId': {
       id: '/_authenticated/templates/$templateId'
-      path: '/$templateId'
+      path: '/templates/$templateId'
       fullPath: '/templates/$templateId'
       preLoaderRoute: typeof AuthenticatedTemplatesTemplateIdRouteImport
-      parentRoute: typeof AuthenticatedTemplatesRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
@@ -397,30 +398,16 @@ const AuthenticatedProjectsRouteWithChildren =
     AuthenticatedProjectsRouteChildren,
   )
 
-interface AuthenticatedTemplatesRouteChildren {
-  AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
-}
-
-const AuthenticatedTemplatesRouteChildren: AuthenticatedTemplatesRouteChildren =
-  {
-    AuthenticatedTemplatesTemplateIdRoute:
-      AuthenticatedTemplatesTemplateIdRoute,
-  }
-
-const AuthenticatedTemplatesRouteWithChildren =
-  AuthenticatedTemplatesRoute._addFileChildren(
-    AuthenticatedTemplatesRouteChildren,
-  )
-
 interface AuthenticatedRouteChildren {
   AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
-  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRouteWithChildren
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
+  AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -428,11 +415,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
-  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRouteWithChildren,
   AuthenticatedSettingsAgentRoute: AuthenticatedSettingsAgentRoute,
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
+  AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
