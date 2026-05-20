@@ -1,8 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { generateClaudeCopy } from "./claude.functions";
 
-const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva"] as const;
+const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
 
 const rowSchema = z.object({
   label: z.string().min(1).max(200),
@@ -11,7 +12,7 @@ const rowSchema = z.object({
 
 const groupSchema = z.object({
   templateId: z.string().uuid(),
-  engines: z.array(z.enum(SUPPORTED_ENGINES)).min(1).max(4),
+  engines: z.array(z.enum(SUPPORTED_ENGINES)).min(1).max(5),
   rows: z.array(rowSchema).min(1).max(100),
 });
 
