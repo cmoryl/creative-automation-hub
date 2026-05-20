@@ -315,6 +315,8 @@ export function CreateVariationsTab({
     },
   });
 
+  const uploadHero = useServerFn(createHeroImageUploadUrl);
+
   const renderField = (v: Variable) => {
     const val = values[v.name] ?? "";
     const onChange = (newVal: string) =>
@@ -325,6 +327,15 @@ export function CreateVariationsTab({
           type="color"
           value={val || "#0066cc"}
           onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    if (v.type === "image" || /image|logo|photo|hero/i.test(v.name))
+      return (
+        <ImageField
+          value={val}
+          onChange={onChange}
+          requestUpload={(filename) => uploadHero({ data: { filename } })}
+          onLog={logActivity}
         />
       );
     if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
