@@ -252,9 +252,6 @@ export function CreateVariationsTab({
       toast.error(msg);
     },
   });
-    onError: (e) =>
-      toast.error(e instanceof Error ? e.message : "Dispatch failed"),
-  });
 
   const renderField = (v: Variable) => {
     const val = values[v.name] ?? "";
