@@ -665,5 +665,6 @@ export function CreateVariationsTab({
         </div>
       </Card>
     </div>
+    </div>
   );
 }
