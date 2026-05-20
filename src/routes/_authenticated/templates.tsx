@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listTemplates } from "@/lib/workspace.functions";
@@ -116,19 +116,25 @@ function TemplatesPage() {
       ) : (
         <ul className="grid gap-3 md:grid-cols-3">
           {data.map((t) => (
-            <li key={t.id} className="rounded-lg border bg-card p-4">
-              {t.preview_url && (
-                <img src={t.preview_url} alt={t.name} className="mb-3 aspect-video w-full rounded object-cover" />
-              )}
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">{t.name}</h3>
-                <span className={`rounded px-2 py-0.5 text-xs ${engineColor[t.engine] ?? "bg-muted"}`}>
-                  {t.engine}
-                </span>
-              </div>
-              {t.source_ref && (
-                <p className="mt-2 truncate text-xs text-muted-foreground">{t.source_ref}</p>
-              )}
+            <li key={t.id}>
+              <Link
+                to="/templates/$templateId"
+                params={{ templateId: t.id }}
+                className="block rounded-lg border bg-card p-4 transition hover:border-primary hover:shadow-md"
+              >
+                {t.preview_url && (
+                  <img src={t.preview_url} alt={t.name} className="mb-3 aspect-video w-full rounded object-cover" />
+                )}
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">{t.name}</h3>
+                  <span className={`rounded px-2 py-0.5 text-xs ${engineColor[t.engine] ?? "bg-muted"}`}>
+                    {t.engine}
+                  </span>
+                </div>
+                {t.source_ref && (
+                  <p className="mt-2 truncate text-xs text-muted-foreground">{t.source_ref}</p>
+                )}
+              </Link>
             </li>
           ))}
         </ul>

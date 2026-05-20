@@ -77,6 +77,94 @@ export const listTemplates = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const getTemplate = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const [tplRes, jobRes] = await Promise.all([
+      supabase
+        .from("templates")
+        .select("id, name, engine, preview_url, source_ref, variables, created_at, workspace_id")
+        .eq("id", data.id)
+        .maybeSingle(),
+      supabase
+        .from("jobs")
+        .select("id, status, engine, variables, created_at, completed_at, project_id, error")
+        .eq("template_id", data.id)
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
+    if (tplRes.error) throw tplRes.error;
+    if (jobRes.error) throw jobRes.error;
+    if (!tplRes.data) return null;
+    const outRes = await supabase
+      .from("outputs")
+      .select("id, kind, url, metadata, job_id, created_at")
+      .in("job_id", (jobRes.data ?? []).map((j) => j.id))
+      .order("created_at", { ascending: false });
+    return {
+      template: tplRes.data,
+      jobs: jobRes.data ?? [],
+      outputs: outRes.data ?? [],
+    };
+  });
+
+export const dispatchTemplateJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        templateId: z.string().uuid(),
+        projectId: z.string().uuid().optional(),
+        variables: z.record(z.string(), z.unknown()).default({}),
+        briefSummary: z.string().max(2000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: tpl, error: tplErr } = await supabase
+      .from("templates")
+      .select("id, engine, workspace_id")
+      .eq("id", data.templateId)
+      .single();
+    if (tplErr) throw tplErr;
+
+    let projectId = data.projectId;
+    if (!projectId) {
+      const { data: proj, error: projErr } = await supabase
+        .from("projects")
+        .insert({
+          workspace_id: tpl.workspace_id,
+          name: `Bridge run ${new Date().toLocaleString()}`,
+          status: "active",
+          created_by: userId,
+          brief: data.briefSummary ?? "Dispatched from template deep-dive view.",
+        })
+        .select("id")
+        .single();
+      if (projErr) throw projErr;
+      projectId = proj.id;
+    }
+
+    const { data: job, error: jobErr } = await supabase
+      .from("jobs")
+      .insert({
+        project_id: projectId,
+        workspace_id: tpl.workspace_id,
+        template_id: tpl.id,
+        engine: tpl.engine,
+        status: "queued",
+        brief: { summary: data.briefSummary ?? "" },
+        variables: data.variables as never,
+      })
+      .select("id")
+      .single();
+    if (jobErr) throw jobErr;
+    return { jobId: job.id, projectId };
+  });
+
 export const listOutputs = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
