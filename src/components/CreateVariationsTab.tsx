@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileSpreadsheet,
+  Layers,
   Loader2,
   Send,
   Sparkles,
@@ -27,11 +28,13 @@ import {
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
+import { dispatchBatch } from "@/lib/batch.functions";
 import {
   listProductAssets,
   saveProductAsset,
   generateProductImage,
 } from "@/lib/product-assets.functions";
+import { BatchRowsTable, newBatchRow, type BatchRow } from "@/components/BatchRowsTable";
 
 type Variable = {
   name: string;
