@@ -59,6 +59,9 @@ export function CreateVariationsTab({
   autoOpenSingleResult = false,
   brandPrefill,
   brandSourceLabel,
+  companyId,
+  productId,
+  engine,
 }: {
   templateId: string;
   templateName: string;
@@ -67,6 +70,9 @@ export function CreateVariationsTab({
   autoOpenSingleResult?: boolean;
   brandPrefill?: Record<string, string>;
   brandSourceLabel?: string | null;
+  companyId?: string | null;
+  productId?: string | null;
+  engine?: string;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
