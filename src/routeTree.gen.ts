@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
+import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
@@ -52,6 +53,12 @@ const AuthenticatedOutputsRoute = AuthenticatedOutputsRouteImport.update({
   path: '/outputs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsApiRoute =
+  AuthenticatedSettingsApiRouteImport.update({
+    id: '/settings/api',
+    path: '/settings/api',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsAgentRoute =
   AuthenticatedSettingsAgentRouteImport.update({
     id: '/settings/agent',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/templates': typeof AuthenticatedTemplatesRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -112,6 +120,7 @@ export interface FileRoutesByTo {
   '/templates': typeof AuthenticatedTemplatesRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -128,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
+    | '/settings/api'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
+    | '/settings/api'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated/templates'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
+    | '/_authenticated/settings/api'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/outputs'
       fullPath: '/outputs'
       preLoaderRoute: typeof AuthenticatedOutputsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/api': {
+      id: '/_authenticated/settings/api'
+      path: '/settings/api'
+      fullPath: '/settings/api'
+      preLoaderRoute: typeof AuthenticatedSettingsApiRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/agent': {
@@ -304,6 +324,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
+  AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -311,6 +332,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedSettingsAgentRoute: AuthenticatedSettingsAgentRoute,
+  AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -341,3 +363,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
