@@ -87,43 +87,50 @@ function ExamplesPage() {
                 const Icon = meta.icon;
                 const vars = Array.isArray(t.variables) ? t.variables : [];
                 return (
-                  <Card key={t.id} className="overflow-hidden">
-                    {t.preview_url && (
-                      <img
-                        src={t.preview_url}
-                        alt={t.name}
-                        className="aspect-square w-full object-cover"
-                      />
-                    )}
-                    <CardContent className="space-y-2 p-4">
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${meta.tone}`}
-                        >
-                          <Icon className="h-3 w-3" /> {meta.label}
-                        </span>
-                        {t.source_ref && (
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="text-sm font-medium">{t.name}</div>
-                      <div className="flex flex-wrap gap-1">
-                        {vars.slice(0, 4).map((v, i) => {
-                          const name = typeof v === "object" && v && "name" in v ? String((v as { name: unknown }).name) : `var${i}`;
-                          return (
-                            <Badge key={name + i} variant="secondary" className="text-[10px]">
-                              {name}
+                  <Link
+                    key={t.id}
+                    to="/templates/$templateId"
+                    params={{ templateId: t.id }}
+                    className="block"
+                  >
+                    <Card className="overflow-hidden transition hover:border-primary hover:shadow-md">
+                      {t.preview_url && (
+                        <img
+                          src={t.preview_url}
+                          alt={t.name}
+                          className="aspect-square w-full object-cover"
+                        />
+                      )}
+                      <CardContent className="space-y-2 p-4">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${meta.tone}`}
+                          >
+                            <Icon className="h-3 w-3" /> {meta.label}
+                          </span>
+                          {t.source_ref && (
+                            <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="text-sm font-medium">{t.name}</div>
+                        <div className="flex flex-wrap gap-1">
+                          {vars.slice(0, 4).map((v, i) => {
+                            const name = typeof v === "object" && v && "name" in v ? String((v as { name: unknown }).name) : `var${i}`;
+                            return (
+                              <Badge key={name + i} variant="secondary" className="text-[10px]">
+                                {name}
+                              </Badge>
+                            );
+                          })}
+                          {vars.length > 4 && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              +{vars.length - 4}
                             </Badge>
-                          );
-                        })}
-                        {vars.length > 4 && (
-                          <Badge variant="secondary" className="text-[10px]">
-                            +{vars.length - 4}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>
