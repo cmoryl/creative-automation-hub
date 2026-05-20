@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   briefAgentChat,
   createBriefUploadUrl,
+  createHeroImageUploadUrl,
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
@@ -314,6 +315,8 @@ export function CreateVariationsTab({
     },
   });
 
+  const uploadHero = useServerFn(createHeroImageUploadUrl);
+
   const renderField = (v: Variable) => {
     const val = values[v.name] ?? "";
     const onChange = (newVal: string) =>
@@ -324,6 +327,15 @@ export function CreateVariationsTab({
           type="color"
           value={val || "#0066cc"}
           onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    if (v.type === "image" || /image|logo|photo|hero/i.test(v.name))
+      return (
+        <ImageField
+          value={val}
+          onChange={onChange}
+          requestUpload={(filename) => uploadHero({ data: { filename } })}
+          onLog={logActivity}
         />
       );
     if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
@@ -665,6 +677,87 @@ export function CreateVariationsTab({
         </div>
       </Card>
     </div>
+    </div>
+  );
+}
+
+function ImageField({
+  value,
+  onChange,
+  requestUpload,
+  onLog,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  requestUpload: (filename: string) => Promise<{ signedUrl: string; publicUrl: string }>;
+  onLog: (text: string, kind?: "info" | "ok" | "err") => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const { signedUrl, publicUrl } = await requestUpload(file.name);
+      const res = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+      onChange(publicUrl);
+      onLog(`Uploaded ${file.name}`, "ok");
+    } catch (e) {
+      onLog(e instanceof Error ? e.message : "Upload failed", "err");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <Input
+          placeholder="Paste image URL or upload below"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Upload className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void handleFile(f);
+            e.target.value = "";
+          }}
+        />
+      </div>
+      {value && (
+        <img
+          src={value}
+          alt="preview"
+          className="h-20 w-20 rounded border object-cover"
+        />
+      )}
+      <p className="text-[10px] text-muted-foreground">
+        Tip: in CSV mode, put the image URL directly in this column. The brief
+        assistant also accepts pasted URLs.
+      </p>
     </div>
   );
 }
