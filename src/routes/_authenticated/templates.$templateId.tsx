@@ -8,8 +8,10 @@ import {
   FileText,
   Layers,
   PlayCircle,
+  Plus,
   Send,
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { getTemplate, dispatchTemplateJob } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
