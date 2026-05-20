@@ -16,7 +16,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/templates")({
+export const Route = createFileRoute("/_authenticated/templates/")({
   component: TemplatesPage,
 });
 
