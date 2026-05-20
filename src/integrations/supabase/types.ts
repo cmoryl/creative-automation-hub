@@ -86,9 +86,13 @@ export type Database = {
       }
       jobs: {
         Row: {
+          assigned_agent_id: string | null
           brief: Json
+          claimed_at: string | null
           claude_thread_id: string | null
+          completed_at: string | null
           created_at: string
+          engine: string
           error: string | null
           id: string
           project_id: string
@@ -96,11 +100,16 @@ export type Database = {
           template_id: string | null
           updated_at: string
           variables: Json
+          workspace_id: string | null
         }
         Insert: {
+          assigned_agent_id?: string | null
           brief?: Json
+          claimed_at?: string | null
           claude_thread_id?: string | null
+          completed_at?: string | null
           created_at?: string
+          engine?: string
           error?: string | null
           id?: string
           project_id: string
@@ -108,11 +117,16 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           variables?: Json
+          workspace_id?: string | null
         }
         Update: {
+          assigned_agent_id?: string | null
           brief?: Json
+          claimed_at?: string | null
           claude_thread_id?: string | null
+          completed_at?: string | null
           created_at?: string
+          engine?: string
           error?: string | null
           id?: string
           project_id?: string
@@ -120,6 +134,7 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           variables?: Json
+          workspace_id?: string | null
         }
         Relationships: [
           {
@@ -297,6 +312,36 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      workspace_integrations: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          metadata: Json
+          provider: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          provider?: string
+          updated_at?: string
+          workspace_id?: string
         }
         Relationships: []
       }
