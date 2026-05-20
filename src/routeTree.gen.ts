@@ -17,6 +17,9 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
+import { Route as ApiPublicAgentPingRouteImport } from './routes/api/public/agent/ping'
+import { Route as ApiPublicAgentCompleteRouteImport } from './routes/api/public/agent/complete'
+import { Route as ApiPublicAgentClaimRouteImport } from './routes/api/public/agent/claim'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -59,6 +62,21 @@ const AuthenticatedProjectsProjectIdRoute =
     path: '/$projectId',
     getParentRoute: () => AuthenticatedProjectsRoute,
   } as any)
+const ApiPublicAgentPingRoute = ApiPublicAgentPingRouteImport.update({
+  id: '/api/public/agent/ping',
+  path: '/api/public/agent/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentCompleteRoute = ApiPublicAgentCompleteRouteImport.update({
+  id: '/api/public/agent/complete',
+  path: '/api/public/agent/complete',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentClaimRoute = ApiPublicAgentClaimRouteImport.update({
+  id: '/api/public/agent/claim',
+  path: '/api/public/agent/claim',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +86,9 @@ export interface FileRoutesByFullPath {
   '/templates': typeof AuthenticatedTemplatesRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
+  '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,6 +98,9 @@ export interface FileRoutesByTo {
   '/templates': typeof AuthenticatedTemplatesRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
+  '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,6 +112,9 @@ export interface FileRoutesById {
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
+  '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
+  '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,6 +126,9 @@ export interface FileRouteTypes {
     | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
+    | '/api/public/agent/claim'
+    | '/api/public/agent/complete'
+    | '/api/public/agent/ping'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,6 +138,9 @@ export interface FileRouteTypes {
     | '/templates'
     | '/projects/$projectId'
     | '/settings/agent'
+    | '/api/public/agent/claim'
+    | '/api/public/agent/complete'
+    | '/api/public/agent/ping'
   id:
     | '__root__'
     | '/'
@@ -118,12 +151,18 @@ export interface FileRouteTypes {
     | '/_authenticated/templates'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
+    | '/api/public/agent/claim'
+    | '/api/public/agent/complete'
+    | '/api/public/agent/ping'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicAgentClaimRoute: typeof ApiPublicAgentClaimRoute
+  ApiPublicAgentCompleteRoute: typeof ApiPublicAgentCompleteRoute
+  ApiPublicAgentPingRoute: typeof ApiPublicAgentPingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -184,6 +223,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
       parentRoute: typeof AuthenticatedProjectsRoute
     }
+    '/api/public/agent/ping': {
+      id: '/api/public/agent/ping'
+      path: '/api/public/agent/ping'
+      fullPath: '/api/public/agent/ping'
+      preLoaderRoute: typeof ApiPublicAgentPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/complete': {
+      id: '/api/public/agent/complete'
+      path: '/api/public/agent/complete'
+      fullPath: '/api/public/agent/complete'
+      preLoaderRoute: typeof ApiPublicAgentCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/claim': {
+      id: '/api/public/agent/claim'
+      path: '/api/public/agent/claim'
+      fullPath: '/api/public/agent/claim'
+      preLoaderRoute: typeof ApiPublicAgentClaimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -222,7 +282,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicAgentClaimRoute: ApiPublicAgentClaimRoute,
+  ApiPublicAgentCompleteRoute: ApiPublicAgentCompleteRoute,
+  ApiPublicAgentPingRoute: ApiPublicAgentPingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
