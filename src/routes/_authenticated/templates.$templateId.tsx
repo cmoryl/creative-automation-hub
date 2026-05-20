@@ -78,6 +78,11 @@ const engineMeta: Record<
     mode: "Cloud API",
     cls: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
   },
+  claude: {
+    label: "Claude",
+    mode: "AI copy generation",
+    cls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  },
 };
 
 function TemplateDetailPage() {

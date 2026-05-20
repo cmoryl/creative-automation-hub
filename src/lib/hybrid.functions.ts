@@ -10,9 +10,9 @@ export const createHybridRender = createServerFn({ method: "POST" })
     z.object({
       projectId: z.string().uuid(),
       engines: z
-        .array(z.enum(["illustrator", "indesign", "figma", "canva"]))
+        .array(z.enum(["illustrator", "indesign", "figma", "canva", "claude"]))
         .min(1)
-        .max(4),
+        .max(5),
       templateIds: z.record(z.string().uuid()).optional(), // engine -> templateId
       brief: z.record(z.unknown()).default({}),
       variables: z.record(z.unknown()).default({}),
