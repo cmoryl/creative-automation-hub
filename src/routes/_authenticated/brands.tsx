@@ -282,8 +282,27 @@ function BrandsPage() {
                   </Button>
                 </div>
 
+                {c.templates.length > 0 && (
+                  <div className="mt-4 space-y-1 rounded border bg-muted/20 p-2">
+                    <div className="px-1 text-xs font-medium text-muted-foreground">
+                      Brand templates ({c.templates.length})
+                    </div>
+                    {c.templates.map((t) => (
+                      <Link
+                        key={t.id}
+                        to="/templates/$templateId"
+                        params={{ templateId: t.id }}
+                        className="flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-background"
+                      >
+                        <span className="truncate">{t.name}</span>
+                        <span className="text-xs text-muted-foreground uppercase">{t.engine}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mt-3 text-xs text-muted-foreground">
-                  <Link to="/templates" className="hover:underline">View templates →</Link>
+                  <Link to="/templates" className="hover:underline">View all templates →</Link>
                 </div>
               </CardContent>
             </Card>
