@@ -134,7 +134,7 @@ function ProjectDetail() {
               <span
                 key={j.id}
                 className={`rounded px-2 py-0.5 ${
-                  j.status === "succeeded" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" :
+                  j.status === "completed" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" :
                   j.status === "failed"    ? "bg-red-500/15 text-red-700 dark:text-red-300" :
                   j.status === "running"   ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" :
                                              "bg-muted text-muted-foreground"
