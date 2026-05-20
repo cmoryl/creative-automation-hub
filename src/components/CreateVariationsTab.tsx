@@ -161,6 +161,13 @@ export function CreateVariationsTab({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [csvRowErrors, setCsvRowErrors] = useState<{ row: number; field: string; message: string }[]>([]);
+  const [batchRows, setBatchRows] = useState<BatchRow[]>(() => [
+    newBatchRow(brandPrefill ?? {}),
+  ]);
+  const [batchLabel, setBatchLabel] = useState(
+    `${templateName} batch ${new Date().toLocaleDateString()}`,
+  );
+  const [batchErrors, setBatchErrors] = useState<Record<string, Record<string, string>>>({});
 
   const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
     setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
