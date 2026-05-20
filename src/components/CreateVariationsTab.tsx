@@ -6,12 +6,9 @@ import { toast } from "sonner";
 import {
   Bot,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   FileSpreadsheet,
   Loader2,
-  ListChecks,
   Send,
   Sparkles,
   Upload,
@@ -649,7 +646,7 @@ export function CreateVariationsTab({
           </div>
           <Button
             className="w-full"
-            disabled={dispatch.isPending || !mode}
+            disabled={dispatch.isPending}
             onClick={() => dispatch.mutate()}
           >
             {dispatch.isPending ? (
