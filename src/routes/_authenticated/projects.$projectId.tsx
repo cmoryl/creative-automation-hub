@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { ProjectChecklist } from "@/components/ProjectChecklist";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -247,6 +248,7 @@ function ProjectDetail() {
 
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
+          <ProjectChecklist messages={messages} jobs={jobs} />
           {allOutputs.length > 0 && (
             <section className="rounded-lg border bg-card p-4">
               <h2 className="mb-3 text-sm font-semibold">Renders ({allOutputs.length})</h2>

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getDashboardStatus } from "@/lib/dashboard.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FirstRenderWizard } from "@/components/FirstRenderWizard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -123,6 +124,16 @@ function DashboardPage() {
         </div>
       ) : (
         <>
+          <section className="mb-8">
+            <FirstRenderWizard
+              hasIntegration={data.integrations.length > 0}
+              hasAgent={data.agents.some((a) => a.online) || data.agents.length > 0}
+              hasTemplate={data.totals.templates > 0}
+              hasProject={data.totals.jobs > 0 || (data.recentJobs?.length ?? 0) > 0}
+              hasCompletedJob={data.totals.completed > 0}
+            />
+          </section>
+
           {/* Totals row */}
           <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <StatCard label="Total Jobs" value={data.totals.jobs} icon={Layers} />
