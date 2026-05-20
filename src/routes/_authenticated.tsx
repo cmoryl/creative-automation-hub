@@ -19,6 +19,7 @@ const nav = [
   { to: "/templates", label: "Templates", icon: LayoutTemplate },
   { to: "/library", label: "Library", icon: FolderTree },
   { to: "/outputs", label: "Outputs", icon: FileStack },
+  { to: "/jobs", label: "All Renders", icon: ListChecks },
   { to: "/settings/integrations", label: "Integrations", icon: Plug },
   { to: "/settings/agent", label: "Local Agent", icon: Settings },
   { to: "/settings/api", label: "API Tokens", icon: KeyRound },
