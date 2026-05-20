@@ -132,6 +132,7 @@ export function CreateVariationsTab({
   const uploadUrlFn = useServerFn(createBriefUploadUrl);
   const parseFn = useServerFn(parseCsvFile);
   const dispatchFn = useServerFn(dispatchVariations);
+  const dispatchBatchFn = useServerFn(dispatchBatch);
 
   const [mode, setMode] = useState<InputMode>("form");
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...(brandPrefill ?? {}) }));
