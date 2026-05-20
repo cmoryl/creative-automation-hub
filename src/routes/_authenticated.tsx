@@ -62,7 +62,15 @@ function AuthedLayout() {
         </nav>
         <div className="border-t p-3 text-xs">
           <div className="truncate text-muted-foreground">{user?.email}</div>
-          <Button variant="ghost" size="sm" className="mt-2 w-full justify-start" onClick={signOut}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full justify-start"
+            onClick={resetOnboardingTour}
+          >
+            <HelpCircle className="h-4 w-4" /> Replay tour
+          </Button>
+          <Button variant="ghost" size="sm" className="mt-1 w-full justify-start" onClick={signOut}>
             <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
@@ -70,6 +78,7 @@ function AuthedLayout() {
       <main className="flex-1 overflow-auto">
         <Outlet />
       </main>
+      <OnboardingTour />
     </div>
   );
 }
