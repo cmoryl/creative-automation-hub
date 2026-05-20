@@ -396,18 +396,30 @@ export function CreateVariationsTab({
 
   const renderField = (v: Variable) => {
     const val = values[v.name] ?? "";
-    const onChange = (newVal: string) =>
+    const err = errors[v.name];
+    const onChange = (newVal: string) => {
       setValues((s) => ({ ...s, [v.name]: newVal }));
-    if (v.type === "color")
-      return (
+      if (errors[v.name]) {
+        setErrors((s) => {
+          const n = { ...s };
+          delete n[v.name];
+          return n;
+        });
+      }
+    };
+    const errBorder = err ? "border-destructive focus-visible:ring-destructive" : "";
+    let control: React.ReactNode;
+    if (v.type === "color") {
+      control = (
         <Input
           type="color"
           value={val || "#0066cc"}
           onChange={(e) => onChange(e.target.value)}
+          className={errBorder}
         />
       );
-    if (v.type === "image" || /image|logo|photo|hero/i.test(v.name))
-      return (
+    } else if (v.type === "image" || /image|logo|photo|hero/i.test(v.name)) {
+      control = (
         <ImageField
           value={val}
           onChange={onChange}
@@ -419,21 +431,32 @@ export function CreateVariationsTab({
           fieldLabel={v.label ?? v.name}
         />
       );
-    if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
-      return (
+    } else if (v.multiline || v.name.match(/challenge|solution|results|quote/i)) {
+      control = (
         <Textarea
           rows={3}
           placeholder={v.placeholder ?? v.label ?? v.name}
           value={val}
           onChange={(e) => onChange(e.target.value)}
+          className={errBorder}
         />
       );
+    } else {
+      control = (
+        <Input
+          placeholder={v.placeholder ?? v.label ?? v.name}
+          value={val}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={!!err}
+          className={errBorder}
+        />
+      );
+    }
     return (
-      <Input
-        placeholder={v.placeholder ?? v.label ?? v.name}
-        value={val}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <>
+        {control}
+        {err && <p className="text-xs text-destructive">{err}</p>}
+      </>
     );
   };
 
