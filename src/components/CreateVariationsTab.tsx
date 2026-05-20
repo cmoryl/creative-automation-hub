@@ -43,7 +43,7 @@ type Variable = {
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
-type InputMode = "form" | "csv";
+type InputMode = "form" | "batch" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: string }[] = [
