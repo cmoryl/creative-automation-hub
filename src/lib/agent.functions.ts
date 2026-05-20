@@ -66,8 +66,8 @@ export const createJob = createServerFn({ method: "POST" })
         project_id: data.projectId,
         engine: data.engine,
         template_id: data.templateId ?? null,
-        brief: data.brief,
-        variables: data.variables,
+        brief: data.brief as never,
+        variables: data.variables as never,
         status: "queued",
       })
       .select("id, engine, status")
