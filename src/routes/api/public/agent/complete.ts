@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const Body = z.object({
   jobId: z.string().uuid(),
-  status: z.enum(["succeeded", "failed"]),
+  status: z.enum(["succeeded", "completed", "failed"]),
   error: z.string().max(2000).optional(),
   outputs: z
     .array(
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
           await supabaseAdmin
             .from("jobs")
             .update({
-              status,
+              status: status === "succeeded" ? "completed" : status,
               error: error ?? null,
               completed_at: new Date().toISOString(),
             })
