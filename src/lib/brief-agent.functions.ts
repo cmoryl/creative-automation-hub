@@ -156,7 +156,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: tpl, error: tplErr } = await supabase
       .from("templates")
-      .select("id, name, workspace_id, preview_url, source_ref")
+      .select("id, name, workspace_id, preview_url, source_ref, variables")
       .eq("id", data.templateId)
       .single();
     if (tplErr) throw tplErr;
