@@ -151,11 +151,18 @@ function TemplateDetailPage() {
             </a>
           </Button>
           <Button
-            onClick={handleDispatch}
+            onClick={() => handleDispatch({ stayOnPage: true })}
+            disabled={busy}
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" /> {busy ? "Creating…" : "Quick variation"}
+          </Button>
+          <Button
+            onClick={() => handleDispatch()}
             disabled={busy}
             className="bg-gradient-to-r from-primary to-primary/80"
           >
-            <Send className="h-4 w-4" /> {busy ? "Dispatching…" : "Send to bridge"}
+            <Wand2 className="h-4 w-4" /> Create & open
           </Button>
         </div>
       </header>
