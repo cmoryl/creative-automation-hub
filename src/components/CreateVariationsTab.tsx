@@ -30,6 +30,11 @@ import {
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
+import {
+  listProductAssets,
+  saveProductAsset,
+  generateProductImage,
+} from "@/lib/product-assets.functions";
 
 type Variable = {
   name: string;
