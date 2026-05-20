@@ -286,7 +286,7 @@ export function CreateVariationsTab({
         logActivity("Live bridge agent detected — jobs queued for rendering", "ok");
       } else {
         logActivity(
-          "No live bridge agent — Illustrator/InDesign jobs mocked with preview",
+          "No live bridge agent detected — jobs are saved and waiting to be claimed",
           "info",
         );
       }
