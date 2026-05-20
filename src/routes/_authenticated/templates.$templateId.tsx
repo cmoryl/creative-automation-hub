@@ -8,8 +8,10 @@ import {
   FileText,
   Layers,
   PlayCircle,
-  Send,
+  Plus,
+  
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { getTemplate, dispatchTemplateJob } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
@@ -93,19 +95,28 @@ function TemplateDetailPage() {
   };
   const isBridge = tpl.source_ref?.startsWith("bridge://");
 
-  const handleDispatch = async () => {
+  const handleDispatch = async (opts?: { stayOnPage?: boolean }) => {
     setBusy(true);
     try {
       const res = await dispatchFn({
         data: {
           templateId: tpl.id,
           variables: values,
-          briefSummary: brief || `Render ${tpl.name}`,
+          briefSummary: brief || `Variation of ${tpl.name}`,
         },
       });
-      toast.success("Job queued — bridge will pick it up");
+      toast.success(
+        res.mocked
+          ? "Variation created — preview ready (mocked, no live bridge)"
+          : "Variation queued — bridge will render it",
+      );
       qc.invalidateQueries({ queryKey: ["template", templateId] });
-      nav({ to: "/projects/$projectId", params: { projectId: res.projectId } });
+      if (opts?.stayOnPage) {
+        setValues({});
+        setBrief("");
+      } else {
+        nav({ to: "/projects/$projectId", params: { projectId: res.projectId } });
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Dispatch failed");
     } finally {
@@ -140,11 +151,18 @@ function TemplateDetailPage() {
             </a>
           </Button>
           <Button
-            onClick={handleDispatch}
+            onClick={() => handleDispatch({ stayOnPage: true })}
+            disabled={busy}
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" /> {busy ? "Creating…" : "Quick variation"}
+          </Button>
+          <Button
+            onClick={() => handleDispatch()}
             disabled={busy}
             className="bg-gradient-to-r from-primary to-primary/80"
           >
-            <Send className="h-4 w-4" /> {busy ? "Dispatching…" : "Send to bridge"}
+            <Wand2 className="h-4 w-4" /> Create & open
           </Button>
         </div>
       </header>
@@ -162,8 +180,11 @@ function TemplateDetailPage() {
             </div>
           )}
 
-          <Tabs defaultValue="fields">
+          <Tabs defaultValue="variations">
             <TabsList>
+              <TabsTrigger value="variations">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
+              </TabsTrigger>
               <TabsTrigger value="fields">
                 <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
               </TabsTrigger>
@@ -174,6 +195,50 @@ function TemplateDetailPage() {
                 <PlayCircle className="mr-1 h-3.5 w-3.5" /> Runs ({data.jobs.length})
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="variations" className="mt-4">
+              {data.outputs.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                  <Wand2 className="mx-auto mb-2 h-6 w-6 opacity-50" />
+                  No variations yet. Fill the brief on the right and click{" "}
+                  <strong>Quick variation</strong> to generate one.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {data.outputs.map((o) => {
+                    const job = data.jobs.find((j) => j.id === o.job_id);
+                    return (
+                      <a
+                        key={o.id}
+                        href={o.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
+                      >
+                        <div className="aspect-[3/4] overflow-hidden bg-muted">
+                          <img
+                            src={o.url}
+                            alt="variation"
+                            className="h-full w-full object-cover transition group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-2">
+                          <div className="truncate text-xs font-medium">
+                            {(job?.variables as Record<string, string> | null)?.case_study_title ??
+                              (job?.variables as Record<string, string> | null)?.headline ??
+                              "Untitled variation"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {new Date(o.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
 
             <TabsContent value="fields" className="mt-4">
               <Card>
@@ -346,11 +411,11 @@ function TemplateDetailPage() {
                 </div>
               ))}
               <Button
-                onClick={handleDispatch}
+                onClick={() => handleDispatch()}
                 disabled={busy}
                 className="w-full"
               >
-                <Send className="h-4 w-4" /> {busy ? "Dispatching…" : "Send to bridge"}
+                <Wand2 className="h-4 w-4" /> {busy ? "Creating…" : "Create variation"}
               </Button>
               {isBridge && (
                 <p className="text-[11px] text-muted-foreground">
