@@ -113,7 +113,53 @@ export function CreateVariationsTab({
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 9e9, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, activityLog]);
+
+  // Subscribe to live job progress + status for jobs we just dispatched.
+  useEffect(() => {
+    if (!lastResult) return;
+    const jobIds = lastResult.created.flatMap((c) => c.jobIds);
+    if (!jobIds.length) return;
+
+    const channel = supabase
+      .channel(`jobs-progress-${jobIds[0]}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "jobs",
+          filter: `id=in.(${jobIds.join(",")})`,
+        },
+        (payload) => {
+          const row = payload.new as {
+            id: string;
+            status: string;
+            engine: string;
+            row_label: string | null;
+            brief: { progress?: { stage: string; percent: number; message?: string | null } } | null;
+            error: string | null;
+          };
+          const label = row.row_label ?? "variation";
+          if (row.status === "completed") {
+            logActivity(`✓ ${row.engine} · ${label} — completed`, "ok");
+          } else if (row.status === "failed") {
+            logActivity(`✗ ${row.engine} · ${label} — ${row.error ?? "failed"}`, "err");
+          } else if (row.brief?.progress) {
+            const p = row.brief.progress;
+            logActivity(
+              `${row.engine} · ${label} — ${p.stage} ${p.percent}%${p.message ? ` (${p.message})` : ""}`,
+            );
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [lastResult]);
+
 
   const chat = useMutation({
     mutationFn: async (text: string) => {
