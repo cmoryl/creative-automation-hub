@@ -177,6 +177,7 @@ function TemplatesPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </header>
 
       {/* Search + engine filter */}
