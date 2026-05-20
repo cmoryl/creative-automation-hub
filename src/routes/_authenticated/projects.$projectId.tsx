@@ -127,8 +127,6 @@ function ProjectDetail() {
               key={eng}
               size="sm"
               variant="outline"
-              size="sm"
-              variant="outline"
               onClick={() => queueRender(eng)}
             >
               <Play className="h-3 w-3" /> {eng}
