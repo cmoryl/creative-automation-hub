@@ -5,9 +5,10 @@ import {
   listTemplates,
   renameTemplate,
   deleteTemplate,
+  duplicateTemplate,
 } from "@/lib/workspace.functions";
 import { saveFigmaToken, importFigmaTemplate } from "@/lib/figma.functions";
-import { LayoutTemplate, Plus, MoreVertical, Pencil, Trash2, Search } from "lucide-react";
+import { LayoutTemplate, Plus, MoreVertical, Pencil, Trash2, Search, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,6 +57,7 @@ function TemplatesPage() {
   const importFn = useServerFn(importFigmaTemplate);
   const renameFn = useServerFn(renameTemplate);
   const deleteFn = useServerFn(deleteTemplate);
+  const duplicateFn = useServerFn(duplicateTemplate);
   const qc = useQueryClient();
   const { data = [], isLoading } = useQuery({
     queryKey: ["templates"],
@@ -246,6 +248,19 @@ function TemplatesPage() {
                       }}
                     >
                       <Pencil className="mr-2 h-4 w-4" /> Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={async () => {
+                        try {
+                          await duplicateFn({ data: { id: t.id } });
+                          toast.success(`Duplicated “${t.name}”`);
+                          qc.invalidateQueries({ queryKey: ["templates"] });
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Duplicate failed");
+                        }
+                      }}
+                    >
+                      <Copy className="mr-2 h-4 w-4" /> Duplicate
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"

@@ -102,12 +102,79 @@ export const listProjectJobs = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: jobs, error } = await context.supabase
       .from("jobs")
-      .select("id, engine, status, error, created_at, completed_at, outputs(id, kind, url, metadata)")
+      .select("id, engine, status, error, brief, created_at, completed_at, outputs(id, kind, url, metadata)")
       .eq("project_id", data.projectId)
       .order("created_at", { ascending: false });
     if (error) throw error;
     return jobs ?? [];
   });
+
+// All jobs across the user's workspace — for the global /jobs view.
+export const listAllJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("jobs")
+      .select(
+        "id, engine, status, error, created_at, completed_at, project_id, projects(name)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    return data ?? [];
+  });
+
+// Re-queue a failed/cancelled job by cloning brief + variables.
+export const retryJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: src, error: e1 } = await supabase
+      .from("jobs")
+      .select("project_id, engine, template_id, brief, variables")
+      .eq("id", data.jobId)
+      .maybeSingle();
+    if (e1) throw e1;
+    if (!src) throw new Error("Job not found");
+    const isMock = src.engine === "mock";
+    const { data: job, error } = await supabase
+      .from("jobs")
+      .insert({
+        project_id: src.project_id,
+        engine: src.engine,
+        template_id: src.template_id,
+        brief: src.brief as never,
+        variables: src.variables as never,
+        status: isMock ? "completed" : "queued",
+        completed_at: isMock ? new Date().toISOString() : null,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    if (isMock) {
+      const seed = (job.id as string).slice(0, 8);
+      await supabase.from("outputs").insert([
+        { job_id: job.id, kind: "png", url: `https://picsum.photos/seed/${seed}-preview/1080/1080`, metadata: { source: "mock", role: "preview" } as never },
+        { job_id: job.id, kind: "pdf", url: `https://picsum.photos/seed/${seed}-master/1240/1754`, metadata: { source: "mock", role: "master" } as never },
+      ]);
+    }
+    return job;
+  });
+
+export const cancelJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ jobId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("jobs")
+      .update({ status: "cancelled", error: "Cancelled by user", completed_at: new Date().toISOString() })
+      .eq("id", data.jobId)
+      .in("status", ["queued", "running"]);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 
 // Preflight a render request before queuing.
 // - illustrator/indesign/hybrid: needs a paired agent with a recent heartbeat.
