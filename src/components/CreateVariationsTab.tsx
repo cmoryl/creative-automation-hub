@@ -584,7 +584,28 @@ export function CreateVariationsTab({
             </div>
           )}
 
-
+          {mode === "batch" && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Batch name</label>
+                <Input
+                  value={batchLabel}
+                  onChange={(e) => setBatchLabel(e.target.value)}
+                  placeholder="e.g. APAC case studies — Q3"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Used to group these jobs on the Batches dashboard.
+                </p>
+              </div>
+              <BatchRowsTable
+                variables={variables}
+                rows={batchRows}
+                onChange={setBatchRows}
+                errors={batchErrors}
+                emptyHint="Add rows below to dispatch many variations at once."
+              />
+            </div>
+          )}
 
           {mode === "csv" && (
             <div className="space-y-3">
