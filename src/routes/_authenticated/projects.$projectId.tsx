@@ -3,11 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProject } from "@/lib/workspace.functions";
 import { listChatMessages, sendChatMessage } from "@/lib/chat.functions";
+import { createJob, listProjectJobs } from "@/lib/agent.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { Bot, User, Send, ArrowLeft } from "lucide-react";
+import { Bot, User, Send, ArrowLeft, Play } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   component: ProjectDetail,
@@ -21,6 +22,8 @@ function ProjectDetail() {
   const fetchMessages = useServerFn(listChatMessages);
   const sendFn = useServerFn(sendChatMessage);
   const qc = useQueryClient();
+  const createJobFn = useServerFn(createJob);
+  const fetchJobs = useServerFn(listProjectJobs);
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -29,6 +32,11 @@ function ProjectDetail() {
   const { data: messages = [] } = useQuery<Msg[]>({
     queryKey: ["chat", projectId],
     queryFn: () => fetchMessages({ data: { projectId } }),
+  });
+  const { data: jobs = [] } = useQuery({
+    queryKey: ["jobs", projectId],
+    queryFn: () => fetchJobs({ data: { projectId } }),
+    refetchInterval: 4000,
   });
 
   const [input, setInput] = useState("");
@@ -74,7 +82,47 @@ function ProjectDetail() {
             <p className="text-xs text-muted-foreground">Claude-orchestrated workflow</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          {(["illustrator", "indesign", "figma", "mock"] as const).map((eng) => (
+            <Button
+              key={eng}
+              size="sm"
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await createJobFn({ data: { projectId, engine: eng, brief: {}, variables: {} } });
+                  toast.success(`Queued ${eng} render`);
+                  qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Failed");
+                }
+              }}
+            >
+              <Play className="h-3 w-3" /> {eng}
+            </Button>
+          ))}
+        </div>
       </header>
+
+      {jobs.length > 0 && (
+        <div className="border-b bg-muted/40 px-8 py-2 text-xs">
+          <div className="mx-auto flex max-w-3xl flex-wrap gap-2">
+            {jobs.slice(0, 6).map((j) => (
+              <span
+                key={j.id}
+                className={`rounded px-2 py-0.5 ${
+                  j.status === "succeeded" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" :
+                  j.status === "failed"    ? "bg-red-500/15 text-red-700 dark:text-red-300" :
+                  j.status === "running"   ? "bg-blue-500/15 text-blue-700 dark:text-blue-300" :
+                                             "bg-muted text-muted-foreground"
+                }`}
+              >
+                {j.engine}: {j.status}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
