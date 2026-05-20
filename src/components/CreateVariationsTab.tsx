@@ -157,6 +157,7 @@ export function CreateVariationsTab({
     created: { projectId: string; jobIds: string[]; label: string }[];
     hasLiveAgent: boolean;
     engines: string[];
+    batchId?: string;
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
