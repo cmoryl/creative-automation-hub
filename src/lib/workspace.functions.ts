@@ -100,6 +100,67 @@ export const deleteTemplate = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const duplicateTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: src, error: e1 } = await context.supabase
+      .from("templates")
+      .select("workspace_id, name, engine, source_ref, preview_url, variables")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (e1) throw e1;
+    if (!src) throw new Error("Template not found");
+    const { data: row, error } = await context.supabase
+      .from("templates")
+      .insert({
+        workspace_id: src.workspace_id,
+        name: `${src.name} (copy)`,
+        engine: src.engine,
+        source_ref: src.source_ref,
+        preview_url: src.preview_url,
+        variables: src.variables as never,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    return { id: row.id };
+  });
+
+export const updateTemplateVariables = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      id: z.string().uuid(),
+      variables: z.array(
+        z.object({
+          name: z.string().min(1).max(80),
+          label: z.string().max(120).optional(),
+          type: z.enum(["text", "image", "color", "list"]),
+          layer: z.string().max(120).optional(),
+        }),
+      ),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("templates")
+      .update({ variables: data.variables as never })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+export const deleteOutput = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("outputs").delete().eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
+
 export const getTemplate = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
