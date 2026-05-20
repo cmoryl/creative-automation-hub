@@ -232,7 +232,7 @@ export function CreateVariationsTab({
         },
       });
       setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
-      if (res.suggestedMode && !mode) setMode(res.suggestedMode);
+      if (res.suggestedMode && res.suggestedMode !== "stepper") setMode(res.suggestedMode);
       if (res.prefillValues && Object.keys(res.prefillValues).length) {
         setValues((s) => ({ ...s, ...res.prefillValues }));
         toast.success(`Filled ${Object.keys(res.prefillValues).length} field(s)`);
