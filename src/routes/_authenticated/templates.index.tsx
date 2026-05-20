@@ -261,6 +261,7 @@ function TemplatesPage() {
                       }}
                     >
                       <Copy className="mr-2 h-4 w-4" /> Duplicate
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onSelect={() => setDeleteTarget({ id: t.id, name: t.name })}
