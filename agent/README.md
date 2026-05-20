@@ -37,14 +37,19 @@ proprietary daemon — just `node agent.mjs`.
    resolved template `source_ref`).
 3. Agent maps `bridge://templates/<filename>` → a real local file inside
    `LOVABLE_AGENT_TEMPLATES`, writes a temporary ExtendScript that opens the
-   doc, replaces text frames / fill colours from `variables`, and exports
-   PNG + PDF to a temp folder.
+   doc, replaces text frames / fill colours from `variables`, and produces a
+   full deliverable bundle per job:
+   - `preview.png` — flat web preview
+   - `master.pdf` — High Quality Print PDF
+   - `editable.ai` — Illustrator file with variables baked in
+   - `package.zip` — File > Package output (Links/, Fonts/, Report.txt) +
+     copies of the .ai/.pdf/.png + `manifest.json`
 4. Adobe app is invoked:
    - macOS: `osascript -e 'tell application "Adobe Illustrator" to do javascript file …'`
    - Windows: PowerShell COM bridge (`Illustrator.Application.DoJavaScriptFile`)
-5. Exported files are PUT to signed Cloud storage URLs (`/agent/upload-url`),
+5. Each artefact is PUT to a signed Cloud storage URL (`/agent/upload-url`),
    then `/agent/complete` is called with `status: "succeeded"` and an
-   `outputs[]` array.
+   `outputs[]` array (kinds: `png`, `pdf`, `ai`, `package`).
 6. Progress pings (`opening` → `rendering` → `uploading` → `done`) stream
    into the activity log on the web app via Postgres realtime.
 
