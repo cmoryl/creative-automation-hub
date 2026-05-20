@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -54,12 +54,17 @@ export function CreateVariationsTab({
   templateId,
   templateName,
   variables,
+  defaultEngines,
+  autoOpenSingleResult = false,
 }: {
   templateId: string;
   templateName: string;
   variables: Variable[];
+  defaultEngines?: string[];
+  autoOpenSingleResult?: boolean;
 }) {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const chatFn = useServerFn(briefAgentChat);
   const uploadUrlFn = useServerFn(createBriefUploadUrl);
   const parseFn = useServerFn(parseCsvFile);
@@ -70,7 +75,7 @@ export function CreateVariationsTab({
   const [step, setStep] = useState(0);
   const [sections, setSections] = useState<Section[]>([]);
   const [engines, setEngines] = useState<Set<string>>(
-    new Set(["illustrator"]),
+    new Set(defaultEngines?.length ? defaultEngines : ["illustrator"]),
   );
   const [messages, setMessages] = useState<ChatMsg[]>([
     {
@@ -281,7 +286,7 @@ export function CreateVariationsTab({
         logActivity("Live bridge agent detected — jobs queued for rendering", "ok");
       } else {
         logActivity(
-          "No live bridge agent — Illustrator/InDesign jobs mocked with preview",
+          "No live bridge agent detected — jobs are saved and waiting to be claimed",
           "info",
         );
       }
@@ -291,6 +296,12 @@ export function CreateVariationsTab({
       );
       qc.invalidateQueries({ queryKey: ["template", templateId] });
       qc.invalidateQueries({ queryKey: ["projects"] });
+      if (autoOpenSingleResult && res.created.length === 1) {
+        navigate({
+          to: "/projects/$projectId",
+          params: { projectId: res.created[0].projectId },
+        });
+      }
     },
     onError: (e) => {
       const msg = e instanceof Error ? e.message : "Dispatch failed";

@@ -190,7 +190,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
       const jobIds: string[] = [];
       for (const engine of data.engines) {
         const needsBridge = engine === "illustrator" || engine === "indesign";
-        const willMock = !needsBridge || !hasLiveAgent;
+        const willMock = !needsBridge;
 
         const { data: job, error: jobErr } = await supabase
           .from("jobs")
@@ -201,7 +201,19 @@ export const dispatchVariations = createServerFn({ method: "POST" })
             engine,
             row_label: row.label,
             status: willMock ? "completed" : "queued",
-            brief: { summary: data.briefSummary ?? "", row: row.label } as never,
+            brief: {
+              summary: data.briefSummary ?? "",
+              row: row.label,
+              progress: needsBridge
+                ? {
+                    stage: hasLiveAgent ? "queued" : "awaiting_agent",
+                    percent: 0,
+                    message: hasLiveAgent
+                      ? "Waiting for the local bridge agent to claim this job."
+                      : "No live bridge agent detected. Start the local agent to render this job.",
+                  }
+                : null,
+            } as never,
             variables: row.values as never,
             completed_at: willMock ? new Date().toISOString() : null,
           })
@@ -227,7 +239,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
       created.push({ projectId: proj.id, jobIds, label: row.label });
     }
 
-    return { created, hasLiveAgent };
+      return { created, hasLiveAgent };
   });
 
 // --- uploadBriefFile: returns a signed upload URL (browser uploads directly) ---

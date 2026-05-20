@@ -1,21 +1,17 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   ArrowLeft,
   FileText,
   Layers,
   PlayCircle,
-  Plus,
   Sparkles,
   Wand2,
 } from "lucide-react";
-import { getTemplate, dispatchTemplateJob } from "@/lib/workspace.functions";
+import { getTemplate } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -64,18 +60,11 @@ const engineMeta: Record<
 function TemplateDetailPage() {
   const { templateId } = Route.useParams();
   const fetchTemplate = useServerFn(getTemplate);
-  const dispatchFn = useServerFn(dispatchTemplateJob);
-  const qc = useQueryClient();
-  const nav = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["template", templateId],
     queryFn: () => fetchTemplate({ data: { id: templateId } }),
   });
-
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [brief, setBrief] = useState("");
-  const [busy, setBusy] = useState(false);
 
   const variables: Variable[] = useMemo(() => {
     const v = data?.template?.variables;
@@ -94,35 +83,6 @@ function TemplateDetailPage() {
     cls: "bg-muted",
   };
   const isBridge = tpl.source_ref?.startsWith("bridge://");
-
-  const handleDispatch = async (opts?: { stayOnPage?: boolean }) => {
-    setBusy(true);
-    try {
-      const res = await dispatchFn({
-        data: {
-          templateId: tpl.id,
-          variables: values,
-          briefSummary: brief || `Variation of ${tpl.name}`,
-        },
-      });
-      toast.success(
-        res.mocked
-          ? "Variation created — preview ready (mocked, no live bridge)"
-          : "Variation queued — bridge will render it",
-      );
-      qc.invalidateQueries({ queryKey: ["template", templateId] });
-      if (opts?.stayOnPage) {
-        setValues({});
-        setBrief("");
-      } else {
-        nav({ to: "/projects/$projectId", params: { projectId: res.projectId } });
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Dispatch failed");
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -144,28 +104,42 @@ function TemplateDetailPage() {
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{tpl.source_ref}</code>
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" asChild>
             <a href={tpl.preview_url ?? "#"} target="_blank" rel="noreferrer">
               <FileText className="h-4 w-4" /> Open preview
             </a>
           </Button>
-          <Button
-            onClick={() => handleDispatch({ stayOnPage: true })}
-            disabled={busy}
-            variant="outline"
-          >
-            <Plus className="h-4 w-4" /> {busy ? "Creating…" : "Quick variation"}
-          </Button>
-          <Button
-            onClick={() => handleDispatch()}
-            disabled={busy}
-            className="bg-gradient-to-r from-primary to-primary/80"
-          >
-            <Wand2 className="h-4 w-4" /> Create & open
-          </Button>
+          {data.bridge?.required && (
+            <Badge variant={data.bridge.isLiveAgent ? "default" : "outline"}>
+              {data.bridge.isLiveAgent
+                ? `Agent online${data.bridge.agentName ? ` · ${data.bridge.agentName}` : ""}`
+                : "Agent offline"}
+            </Badge>
+          )}
         </div>
       </header>
+
+      {isBridge && (
+        <div className="mb-4 rounded-lg border bg-muted/30 p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={data.bridge?.isLiveAgent ? "default" : "outline"}>
+              {data.bridge?.isLiveAgent ? "Live bridge connected" : "Waiting for bridge agent"}
+            </Badge>
+            {data.bridge?.lastSeen && (
+              <span className="text-xs text-muted-foreground">
+                Last seen {new Date(data.bridge.lastSeen).toLocaleString()}
+              </span>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {data.bridge?.queuedJobs ?? 0} queued · {data.bridge?.runningJobs ?? 0} running
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Fill the Create tab below, then dispatch from there. For this template, jobs stay queued until your local Illustrator bridge comes online and claims them.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {tpl.preview_url && (
@@ -202,6 +176,8 @@ function TemplateDetailPage() {
               templateId={tpl.id}
               templateName={tpl.name}
               variables={variables}
+              defaultEngines={[tpl.engine]}
+              autoOpenSingleResult
             />
             {isBridge && (
               <p className="mt-3 text-[11px] text-muted-foreground">
