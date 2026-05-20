@@ -293,15 +293,21 @@ export function CreateVariationsTab({
       if (engines.size === 0) throw new Error("Pick at least one engine");
       setLastResult(null);
       setActivityLog([]);
-      logActivity("Preparing brief…");
+      setCsvRowErrors([]);
+      logActivity("Validating inputs…");
       let rows: { label: string; values: Record<string, string> }[] = [];
       if (mode === "csv") {
         if (!csvRows.length) throw new Error("Upload a CSV first");
+        const rowErrs: { row: number; field: string; message: string }[] = [];
         rows = csvRows.map((r, i) => {
           const mapped: Record<string, string> = {};
           for (const v of variables) {
             const col = csvMapping[v.name];
             if (col && r[col] != null) mapped[v.name] = String(r[col]);
+          }
+          const errs = validateAll(variables, mapped);
+          for (const [field, message] of Object.entries(errs)) {
+            rowErrs.push({ row: i + 1, field, message });
           }
           return {
             label:
@@ -312,8 +318,21 @@ export function CreateVariationsTab({
             values: mapped,
           };
         });
+        if (rowErrs.length) {
+          setCsvRowErrors(rowErrs);
+          throw new Error(
+            `${rowErrs.length} validation error(s) across ${new Set(rowErrs.map((e) => e.row)).size} row(s)`,
+          );
+        }
         logActivity(`Mapped ${rows.length} CSV rows to template fields`, "ok");
       } else {
+        const errs = validateAll(variables, values);
+        setErrors(errs);
+        if (Object.keys(errs).length) {
+          throw new Error(
+            `Please fix ${Object.keys(errs).length} field error(s) before dispatching`,
+          );
+        }
         rows = [
           {
             label:
