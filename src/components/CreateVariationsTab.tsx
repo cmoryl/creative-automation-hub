@@ -505,9 +505,8 @@ export function CreateVariationsTab({
         <div className="flex items-center gap-1 border-b p-2">
           {(
             [
-              { id: "form", icon: Sparkles, label: "Form" },
-              { id: "stepper", icon: ListChecks, label: "Stepper" },
-              { id: "csv", icon: FileSpreadsheet, label: "CSV" },
+              { id: "form", icon: Sparkles, label: "Single brief" },
+              { id: "csv", icon: FileSpreadsheet, label: "Bulk CSV" },
             ] as const
           ).map((m) => (
             <Button
@@ -522,12 +521,6 @@ export function CreateVariationsTab({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {!mode && (
-            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              Chat with the assistant or pick a mode above.
-            </div>
-          )}
-
           {mode === "form" && (
             <div className="space-y-3">
               {variables.map((v) => (
@@ -541,61 +534,7 @@ export function CreateVariationsTab({
             </div>
           )}
 
-          {mode === "stepper" && activeSections.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  Step {step + 1} / {activeSections.length}:{" "}
-                  <strong className="text-foreground">
-                    {activeSections[step]?.title}
-                  </strong>
-                </span>
-                <div className="flex gap-1">
-                  {activeSections.map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 w-6 rounded ${
-                        i <= step ? "bg-primary" : "bg-muted"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="space-y-3">
-                {activeSections[step]?.fieldNames
-                  .map((n) => variables.find((v) => v.name === n))
-                  .filter((v): v is Variable => !!v)
-                  .map((v) => (
-                    <div key={v.name} className="space-y-1">
-                      <label className="text-xs font-medium">
-                        {v.label ?? v.name}
-                      </label>
-                      {renderField(v)}
-                    </div>
-                  ))}
-              </div>
-              <div className="flex justify-between pt-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={step === 0}
-                  onClick={() => setStep((s) => Math.max(0, s - 1))}
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" /> Back
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={step >= activeSections.length - 1}
-                  onClick={() =>
-                    setStep((s) => Math.min(activeSections.length - 1, s + 1))
-                  }
-                >
-                  Next <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          )}
+
 
           {mode === "csv" && (
             <div className="space-y-3">
