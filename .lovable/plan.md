@@ -1,93 +1,114 @@
-# Creative Automation Platform — Web Rebuild
+# Feature Buildout — Engines, Brands, Briefs, Batch
 
-Move off Electron. Build a hosted web app on Lovable Cloud that runs a Claude-orchestrated workflow end-to-end: brief → template pick → variant generation → live files + output bundle. Canva and Figma are driven from the cloud. Illustrator and InDesign are driven through a small headless local bridge agent that users install once.
+Bring the v3 CreativeOS dashboard surface into the web app: dashboard with
+engine status, brands, brand batch, structured briefs, and a richer
+template/engine model. Builds on the existing Cloud schema and integrations.
 
-## Architecture
+## Scope
+
+### 1. Dashboard (`/dashboard`, becomes default authed landing)
 
 ```text
- Browser (TanStack Start UI)
-        |
-        v
- Lovable Cloud (Postgres + Auth + Storage)
-   - projects, templates, jobs, outputs, assets
-   - RLS scoped to user/workspace
-        |
-        +--> Server functions (createServerFn)
-        |     - Claude orchestration (AI SDK + Lovable AI Gateway)
-        |     - Canva Connect API (OAuth, Autofill, Export)
-        |     - Figma REST (templates, components, variables, duplicate)
-        |     - Job runner, render queue, output bundler
-        |
-        +--> Local Bridge Agent  (http://127.0.0.1:47821, paired by token)
-              - Headless Node service the user installs once
-              - Wraps the existing engines/illustrator + engines/indesign
-              - Polls /api/public/agent/jobs for AI/ID jobs, posts results back
++----------------------------------------------------------+
+| Creative Automation Platform     [Projects][Templates]...|
+| 0 of 5 engines ready                                     |
++----------------------------------------------------------+
+| Engine cards: Illustrator | InDesign | Canva | Express | Figma
+|   each shows: connected? · template count · "Connect →"  |
++----------------------------------------------------------+
+| Quick Actions          | Recent Projects                  |
+|  - Brand Generate      |  list + "New Project"            |
+|  - Brand Batch         |                                  |
+|  - New Project         |                                  |
+|  - Run Batch           |                                  |
+|  - Browse Templates    |                                  |
+|  - System Check        |                                  |
++----------------------------------------------------------+
+| Setup progress bar (X of N steps complete)               |
++----------------------------------------------------------+
 ```
 
-No Electron shell, no desktop window. The bridge agent is a tiny background service (menubar/tray optional) ported from `engines/illustrator` and `engines/indesign` in the current repo.
+### 2. Brands (`/brands`, `/brands/$brandId`)
 
-## Phase 1 — Foundation (this build)
+Brand kits scoped to workspace:
+- name, slug, logo_url, palette (jsonb: array of hex), fonts (jsonb), tone, guidelines (markdown)
+- attached to projects and brand-batch runs so renders inherit colours/type
 
-Goal: working web app, auth, data model, Claude chat that can draft a brief and pick a template, Canva + Figma read-only template registry, mocked render path so the full flow is clickable. No local agent yet.
+### 3. Brand Batch (`/batch`)
 
-1. Enable Lovable Cloud and set up auth (email/password + Google).
-2. Data model (Postgres + RLS):
-   - `profiles` (id → auth.users)
-   - `workspaces`, `workspace_members`, `user_roles` (separate roles table)
-   - `projects` (campaign-level)
-   - `templates` (engine: canva|figma|illustrator|indesign, source_ref, variables JSON, preview_url)
-   - `jobs` (project_id, template_id, status, brief, variables JSON, claude_thread_id)
-   - `outputs` (job_id, kind: live_file|pdf|png|bundle, url, metadata)
-   - `agent_pairings` (workspace_id, name, token_hash, last_seen)
-3. App shell + routes:
-   - `/` marketing/landing
-   - `/login`
-   - `/_authenticated/projects` list + detail
-   - `/_authenticated/projects/$id` brief + Claude chat + template picker + job runs + outputs
-   - `/_authenticated/templates` registry browser (Canva + Figma sources)
-   - `/_authenticated/outputs` Output Center
-   - `/_authenticated/settings/agent` pair/manage local bridge
-4. Claude orchestration:
-   - `/api/chat` server route streaming through Lovable AI Gateway
-   - Tools: `search_templates`, `propose_variables`, `create_job`, `request_render`, `summarize_outputs`
-   - Persist threads per project; render tool calls inline in the chat
-5. Canva integration: OAuth, list brand templates, autofill → returns live editable design URL + PNG/PDF export.
-6. Figma integration: PAT or OAuth, list team files/components, read variables, duplicate file for a new version.
-7. Mocked AI/ID path: jobs targeting Illustrator/InDesign enqueue and show a clear "Awaiting local agent" state.
+CSV-driven bulk run: rows × engines → one job per (row, engine) sharing a
+`batch_id`. Upload CSV, map columns → template variables, pick engines,
+queue. Status page shows progress per row.
 
-## Phase 2 — Local Bridge Agent (next iteration)
+### 4. Engine pages (`/engines/$engine`)
 
-- Strip Electron shell from `apps/desktop`. Repackage `engines/illustrator` + `engines/indesign` + `packages/core` as a headless Node service.
-- Pairing flow: user generates a token in `/settings/agent`, installs the agent, agent calls `/api/public/agent/pair` with the token, gets a long-lived agent token.
-- Job loop: agent polls `/api/public/agent/jobs/next`, executes via existing safe runner, uploads outputs back via signed Cloud Storage URLs, posts status.
-- All `/api/public/agent/*` routes verify the agent token and are scoped to that workspace.
+One detail page per engine (illustrator, indesign, canva, adobe-express,
+figma) showing: connection status, templates registered to this engine,
+recent jobs, engine-specific actions (e.g. Figma → Import file URL,
+Illustrator → Download bridge agent).
 
-## Phase 3 — Claude Skill + Hybrid
+### 5. Structured briefs
 
-- Publish the existing `claude-skill` as a thin skill that calls the platform's public job API (so Claude Desktop / Claude Code can run jobs against the same backend).
-- Hybrid engine: combine Figma source-of-truth + Canva autofill + AI/ID press-ready PDFs in one job spec.
+Replace free-text `projects.brief` with a typed brief block on each project:
+- headline, subhead, body, cta, channel (social/print/email/web), locale,
+  audience, assets (logo override, hero image url), notes
+- Claude chat reads/edits this brief via tool calls (already wired pattern)
 
-## What carries over from your repo
+### 6. Templates (extend)
 
-- `claude-skill/job_schema.example.json` → canonical job shape in `jobs.brief` / `jobs.variables`.
-- `packages/template-registry` → schema model for the `templates` table.
-- `packages/output-center` → schema model for the `outputs` table + Output Center UI.
-- `engines/illustrator` and `engines/indesign` → become the bridge agent in Phase 2.
-- `engines/canva`, `engines/adobe_express`, `engines/hybrid` → become server-function modules in Phase 1/3.
+Add `kind` (master/variant), `aspect_ratio`, `dimensions`, `brand_id?`,
+`tags[]`. Template grid with filters by engine, brand, tag.
 
-## What this plan explicitly will NOT do
+### 7. System Check
 
-- Will not build, package, or sign a DMG.
-- Will not drive Illustrator/InDesign from the browser. They require the local bridge agent (Phase 2).
-- Will not migrate npm workspaces wholesale — the web app is a fresh TanStack Start build that references the v3 schemas, not a port of the Electron renderer.
+Diagnostic page that pings: Cloud DB, AI gateway, each integration
+(Figma/Canva creds present, agent last_seen < 5m), surfacing red/amber/green.
 
-## Technical notes
+## Data model changes
 
-- Stack: TanStack Start (already scaffolded here), React 19, Tailwind v4, shadcn, Lovable Cloud (Postgres + Auth + Storage + RLS), AI SDK with Lovable AI Gateway (`google/gemini-3-flash-preview` default).
-- Secrets needed in Phase 1: Canva client ID/secret, Figma PAT or OAuth client. `LOVABLE_API_KEY` is auto-provisioned.
-- Roles in a separate `user_roles` table with a `has_role()` security-definer function (never on profiles).
-- All agent endpoints live under `/api/public/agent/*` with token verification; never return user PII.
+New tables:
+- `brands` (workspace_id, name, slug, logo_url, palette, fonts, tone, guidelines)
+- `batches` (workspace_id, project_id, name, status, total, succeeded, failed, csv_url)
+- `batch_rows` (batch_id, row_index, variables jsonb, job_ids uuid[])
 
-## Deliverable for the first build
+Column adds:
+- `projects`: `brand_id uuid?`, `brief_struct jsonb default '{}'`
+- `templates`: `kind text default 'master'`, `aspect_ratio text`, `dimensions jsonb`, `brand_id uuid?`, `tags text[] default '{}'`
+- `jobs`: `batch_id uuid?`, `batch_row int?`
 
-Phase 1 only. Phase 2 (local bridge) and Phase 3 (Claude skill + hybrid) are follow-up builds.
+RLS: workspace-member scoped on all new tables (same pattern as existing).
+
+## Routing additions
+
+- `/_authenticated/dashboard` (new index for authed users)
+- `/_authenticated/brands`, `/_authenticated/brands/$brandId`
+- `/_authenticated/batch`, `/_authenticated/batch/$batchId`
+- `/_authenticated/engines/$engine`
+- `/_authenticated/system-check`
+
+Sidebar reordered: Dashboard · Projects · Brands · Templates · Batch · Outputs · — · Engines (collapsible: Illustrator, InDesign, Canva, Adobe Express, Figma) · — · Integrations · Local Agent · API Tokens.
+
+## Build order (incremental)
+
+1. **Migration**: brands, batches, batch_rows + column adds.
+2. **Dashboard** page with engine status cards, counts, quick actions, recent projects, setup progress.
+3. **Brands** CRUD (list, create, edit, delete) + brand picker on project.
+4. **Structured brief editor** on project page (alongside chat).
+5. **Engine detail pages** (one component, route per engine).
+6. **Brand Batch** (CSV upload, mapping, queue fan-out, status).
+7. **System Check** page.
+8. Template extensions (kind/dimensions/brand/tags) + grid filters.
+
+Each step is independently shippable.
+
+## Out of scope (for now)
+
+- Adobe Express full integration (placeholder engine card only).
+- Real Canva OAuth dance (credentials form already exists; the dance lands once you provide the app).
+- Storage bucket for CSV uploads — uses signed URLs in step 6 only.
+
+## Open question
+
+Confirm before step 1: do you want me to keep the existing `/projects` as
+the landing for authed users, or switch landing to the new `/dashboard`?
+(Plan assumes Dashboard.)
