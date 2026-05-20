@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getDashboardStatus } from "@/lib/dashboard.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { FirstRenderWizard } from "@/components/FirstRenderWizard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
