@@ -273,31 +273,31 @@ export async function run(job, ctx) {
 
   const outDir = await fs.mkdtemp(path.join(os.tmpdir(), `lovable-job-${job.id}-`));
   const jsxPath = path.join(outDir, "render.jsx");
-  await fs.writeFile(jsxPath, buildJsx({ templatePath, variables: job.variables, outDir }));
+  const pages = Array.isArray(job.template?.pages) ? job.template.pages : [];
+  await fs.writeFile(
+    jsxPath,
+    buildJsx({ templatePath, variables: job.variables, outDir, pages }),
+  );
 
-  await progress("rendering", 40, "Running ExtendScript in Illustrator");
+  await progress("rendering", 40, `Rendering ${pages.length || 1} page(s) in Illustrator`);
   await runIllustratorScript(jsxPath);
+
+  // Discover per-page PNGs the script just wrote.
+  const all = await fs.readdir(outDir);
+  const pagePngs = all
+    .filter((f) => /^page_\d+_.*\.png$/.test(f))
+    .sort();
 
   // Write a manifest into the package folder before zipping.
   const pkgDir = path.join(outDir, "package");
   await fs.mkdir(pkgDir, { recursive: true });
-  // Copy the editable .ai into the package too, so the zip is self-contained.
-  try {
-    await fs.copyFile(
-      path.join(outDir, "editable.ai"),
-      path.join(pkgDir, "editable.ai"),
-    );
-  } catch {}
-  try {
-    await fs.copyFile(
-      path.join(outDir, "master.pdf"),
-      path.join(pkgDir, "master.pdf"),
-    );
-    await fs.copyFile(
-      path.join(outDir, "preview.png"),
-      path.join(pkgDir, "preview.png"),
-    );
-  } catch {}
+  try { await fs.copyFile(path.join(outDir, "editable.ai"), path.join(pkgDir, "editable.ai")); } catch {}
+  try { await fs.copyFile(path.join(outDir, "master.pdf"), path.join(pkgDir, "master.pdf")); } catch {}
+  try { await fs.copyFile(path.join(outDir, "preview.png"), path.join(pkgDir, "preview.png")); } catch {}
+  for (const png of pagePngs) {
+    try { await fs.copyFile(path.join(outDir, png), path.join(pkgDir, png)); } catch {}
+  }
+
   await fs.writeFile(
     path.join(pkgDir, "manifest.json"),
     JSON.stringify(
@@ -307,6 +307,15 @@ export async function run(job, ctx) {
         source_ref: job.template?.source_ref ?? null,
         engine: "illustrator",
         rendered_at: new Date().toISOString(),
+        page_count: pages.length || 1,
+        pages: pages.length
+          ? pages.map((p, i) => ({
+              index: i + 1,
+              name: p.name ?? `page_${i + 1}`,
+              file: pagePngs[i] ?? null,
+              width: p.width, height: p.height, unit: p.unit,
+            }))
+          : [{ index: 1, name: "preview", file: "preview.png" }],
         variables: job.variables ?? {},
       },
       null,
@@ -316,27 +325,39 @@ export async function run(job, ctx) {
 
   await progress("packaging", 75, "Zipping editable assets + fonts");
   const zipPath = path.join(outDir, "package.zip");
-  try {
-    await zipFolder(pkgDir, zipPath);
-  } catch (e) {
-    console.warn(`package zip failed: ${e.message}`);
-  }
+  try { await zipFolder(pkgDir, zipPath); }
+  catch (e) { console.warn(`package zip failed: ${e.message}`); }
 
-  await progress("uploading", 85, "Uploading artefacts");
+  await progress("uploading", 85, `Uploading ${pagePngs.length || 1} page(s) + artefacts`);
   const outputs = [];
-  const png = await safeUpload({
-    apiBase, token, jobId: job.id,
-    filePath: path.join(outDir, "preview.png"),
-    kind: "png",
-    metadata: { source: "illustrator" },
-  });
-  if (png) outputs.push(png);
+
+  // Per-page PNGs (if any) — keep the cover/page-1 as the primary thumbnail.
+  for (let i = 0; i < pagePngs.length; i++) {
+    const filePath = path.join(outDir, pagePngs[i]);
+    const meta = {
+      source: "illustrator",
+      page_index: i + 1,
+      page_name: pages[i]?.name ?? null,
+      total_pages: pagePngs.length,
+    };
+    const up = await safeUpload({ apiBase, token, jobId: job.id, filePath, kind: "png", metadata: meta });
+    if (up) outputs.push(up);
+  }
+  if (pagePngs.length === 0) {
+    const png = await safeUpload({
+      apiBase, token, jobId: job.id,
+      filePath: path.join(outDir, "preview.png"),
+      kind: "png",
+      metadata: { source: "illustrator", page_index: 1, total_pages: 1 },
+    });
+    if (png) outputs.push(png);
+  }
 
   const pdf = await safeUpload({
     apiBase, token, jobId: job.id,
     filePath: path.join(outDir, "master.pdf"),
     kind: "pdf",
-    metadata: { source: "illustrator" },
+    metadata: { source: "illustrator", page_count: pages.length || 1 },
   });
   if (pdf) outputs.push(pdf);
 
@@ -355,7 +376,12 @@ export async function run(job, ctx) {
       kind: "package",
       metadata: {
         source: "illustrator",
-        contents: ["editable.ai", "master.pdf", "preview.png", "Links/", "Fonts/", "manifest.json", "Report.txt"],
+        page_count: pages.length || 1,
+        contents: [
+          "editable.ai", "master.pdf", "preview.png",
+          ...pagePngs,
+          "Links/", "Fonts/", "manifest.json", "Report.txt",
+        ],
       },
     });
     if (pkg) outputs.push(pkg);
@@ -364,3 +390,4 @@ export async function run(job, ctx) {
   await progress("done", 100, "Outputs uploaded");
   return outputs;
 }
+
