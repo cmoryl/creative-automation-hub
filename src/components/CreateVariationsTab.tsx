@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Bot,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   FileSpreadsheet,
+  Loader2,
   ListChecks,
   Send,
   Sparkles,
