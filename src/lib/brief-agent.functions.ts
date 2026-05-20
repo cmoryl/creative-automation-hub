@@ -265,3 +265,34 @@ export const createBriefUploadUrl = createServerFn({ method: "POST" })
     if (error) throw error;
     return { path, token: signed.token, signedUrl: signed.signedUrl };
   });
+
+// Signed upload into the PUBLIC job-outputs bucket — used for hero/image
+// template fields so the bridge agent can fetch the asset by public URL.
+export const createHeroImageUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ filename: z.string().min(1).max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: ws } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("owner_id", userId)
+      .limit(1)
+      .maybeSingle();
+    if (!ws) throw new Error("No workspace");
+    const safe = data.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${ws.id}/hero/${Date.now()}-${safe}`;
+    const { data: signed, error } = await supabase.storage
+      .from("job-outputs")
+      .createSignedUploadUrl(path);
+    if (error) throw error;
+    const { data: pub } = supabase.storage.from("job-outputs").getPublicUrl(path);
+    return {
+      path,
+      token: signed.token,
+      signedUrl: signed.signedUrl,
+      publicUrl: pub.publicUrl,
+    };
+  });
