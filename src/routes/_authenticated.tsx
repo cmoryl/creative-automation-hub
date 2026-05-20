@@ -18,6 +18,7 @@ const nav = [
   { to: "/examples", label: "Examples", icon: Sparkles },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/templates", label: "Templates", icon: LayoutTemplate },
+  { to: "/batches", label: "Batches", icon: Layers },
   { to: "/brands", label: "Brands", icon: Building2 },
   { to: "/library", label: "Library", icon: FolderTree },
   { to: "/outputs", label: "Outputs", icon: FileStack },
