@@ -126,21 +126,38 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: tpl, error: tplErr } = await supabase
       .from("templates")
-      .select("id, engine, workspace_id")
+      .select("id, name, engine, workspace_id, preview_url, source_ref")
       .eq("id", data.templateId)
       .single();
     if (tplErr) throw tplErr;
 
+    // Check if a bridge agent is paired (active within last 5 min)
+    const { data: agents } = await supabase
+      .from("agent_pairings")
+      .select("id, last_seen")
+      .eq("workspace_id", tpl.workspace_id)
+      .order("last_seen", { ascending: false })
+      .limit(1);
+    const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+    const hasLiveAgent = !!agents?.[0]?.last_seen && new Date(agents[0].last_seen).getTime() > fiveMinAgo;
+    const needsBridge = tpl.source_ref?.startsWith("bridge://") ?? false;
+    const willMock = !needsBridge || !hasLiveAgent;
+
     let projectId = data.projectId;
     if (!projectId) {
+      const variationName =
+        (data.variables?.case_study_title as string) ||
+        (data.variables?.headline as string) ||
+        (data.variables?.title as string) ||
+        `Variation ${new Date().toLocaleString()}`;
       const { data: proj, error: projErr } = await supabase
         .from("projects")
         .insert({
           workspace_id: tpl.workspace_id,
-          name: `Bridge run ${new Date().toLocaleString()}`,
+          name: `${tpl.name} — ${variationName}`,
           status: "active",
           created_by: userId,
-          brief: data.briefSummary ?? "Dispatched from template deep-dive view.",
+          brief: data.briefSummary ?? `Variation of ${tpl.name}`,
         })
         .select("id")
         .single();
@@ -155,14 +172,25 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
         workspace_id: tpl.workspace_id,
         template_id: tpl.id,
         engine: tpl.engine,
-        status: "queued",
+        status: willMock ? "completed" : "queued",
         brief: { summary: data.briefSummary ?? "" },
         variables: data.variables as never,
+        completed_at: willMock ? new Date().toISOString() : null,
       })
       .select("id")
       .single();
     if (jobErr) throw jobErr;
-    return { jobId: job.id, projectId };
+
+    if (willMock && tpl.preview_url) {
+      await supabase.from("outputs").insert({
+        job_id: job.id,
+        kind: "png",
+        url: tpl.preview_url,
+        metadata: { mock: true, variables: data.variables } as never,
+      });
+    }
+
+    return { jobId: job.id, projectId, mocked: willMock };
   });
 
 export const listOutputs = createServerFn({ method: "GET" })
