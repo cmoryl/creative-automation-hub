@@ -57,6 +57,7 @@ function TemplatesPage() {
   const importFn = useServerFn(importFigmaTemplate);
   const renameFn = useServerFn(renameTemplate);
   const deleteFn = useServerFn(deleteTemplate);
+  const duplicateFn = useServerFn(duplicateTemplate);
   const qc = useQueryClient();
   const { data = [], isLoading } = useQuery({
     queryKey: ["templates"],
