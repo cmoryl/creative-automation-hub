@@ -1,21 +1,33 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   FileText,
   Layers,
   PlayCircle,
+  Plus,
+  Save,
   Sparkles,
+  Trash2,
   Wand2,
 } from "lucide-react";
-import { getTemplate } from "@/lib/workspace.functions";
+import { getTemplate, updateTemplateVariables } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateVariationsTab } from "@/components/CreateVariationsTab";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/templates/$templateId")({
   component: TemplateDetailPage,
@@ -60,6 +72,8 @@ const engineMeta: Record<
 function TemplateDetailPage() {
   const { templateId } = Route.useParams();
   const fetchTemplate = useServerFn(getTemplate);
+  const updateVarsFn = useServerFn(updateTemplateVariables);
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["template", templateId],
@@ -70,6 +84,42 @@ function TemplateDetailPage() {
     const v = data?.template?.variables;
     return Array.isArray(v) ? (v as unknown as Variable[]) : [];
   }, [data]);
+
+  const [editVars, setEditVars] = useState<Variable[]>([]);
+  const [savingVars, setSavingVars] = useState(false);
+  useEffect(() => { setEditVars(variables); }, [variables]);
+
+  const varsDirty = useMemo(
+    () => JSON.stringify(editVars) !== JSON.stringify(variables),
+    [editVars, variables],
+  );
+
+  const saveVars = async () => {
+    // Basic client-side validation: names required and unique
+    const names = editVars.map((v) => v.name.trim());
+    if (names.some((n) => !n)) return toast.error("Each field needs a name");
+    if (new Set(names).size !== names.length) return toast.error("Field names must be unique");
+    setSavingVars(true);
+    try {
+      await updateVarsFn({
+        data: {
+          id: templateId,
+          variables: editVars.map((v) => ({
+            name: v.name.trim(),
+            label: v.label?.trim() || undefined,
+            type: (v.type as "text" | "image" | "color" | "list"),
+            layer: v.layer?.trim() || undefined,
+          })),
+        },
+      });
+      toast.success("Fields saved");
+      qc.invalidateQueries({ queryKey: ["template", templateId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingVars(false);
+    }
+  };
 
   if (isLoading)
     return <div className="p-8 text-sm text-muted-foreground">Loading template…</div>;
@@ -232,27 +282,104 @@ function TemplateDetailPage() {
 
           <TabsContent value="fields" className="mt-4">
             <Card>
-              <CardContent className="space-y-2 p-4">
-                <p className="text-xs text-muted-foreground">
-                  Auto-extracted from the source file — each row maps to a named text or
-                  placement frame. The bridge agent swaps these on render.
-                </p>
-                <ul className="divide-y text-sm">
-                  {variables.map((v) => (
-                    <li key={v.name} className="flex items-center justify-between py-2">
-                      <div>
-                        <div className="font-medium">{v.label ?? v.name}</div>
-                        <code className="text-[11px] text-muted-foreground">{v.name}</code>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {v.layer && (
-                          <Badge variant="outline" className="text-[10px]">{v.layer}</Badge>
-                        )}
-                        <Badge variant="secondary" className="text-[10px]">{v.type}</Badge>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Each row maps to a named text or placement frame. The bridge agent swaps these on render.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setEditVars((prev) => [
+                          ...prev,
+                          { name: `field_${prev.length + 1}`, label: "", type: "text" },
+                        ])
+                      }
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add field
+                    </Button>
+                    <Button size="sm" onClick={saveVars} disabled={!varsDirty || savingVars}>
+                      <Save className="h-3.5 w-3.5" /> {savingVars ? "Saving…" : "Save"}
+                    </Button>
+                  </div>
+                </div>
+                {editVars.length === 0 ? (
+                  <p className="rounded border border-dashed p-6 text-center text-xs text-muted-foreground">
+                    No fields yet. Add one to make this template usable.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {editVars.map((v, i) => (
+                      <li
+                        key={i}
+                        className="grid grid-cols-[1fr_1fr_140px_140px_auto] items-center gap-2 rounded border bg-card/50 p-2"
+                      >
+                        <Input
+                          value={v.name}
+                          placeholder="variable_name"
+                          onChange={(e) =>
+                            setEditVars((prev) =>
+                              prev.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)),
+                            )
+                          }
+                          className="h-8 font-mono text-xs"
+                        />
+                        <Input
+                          value={v.label ?? ""}
+                          placeholder="Display label"
+                          onChange={(e) =>
+                            setEditVars((prev) =>
+                              prev.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
+                            )
+                          }
+                          className="h-8 text-xs"
+                        />
+                        <Select
+                          value={v.type}
+                          onValueChange={(val) =>
+                            setEditVars((prev) =>
+                              prev.map((x, j) =>
+                                j === i ? { ...x, type: val as Variable["type"] } : x,
+                              ),
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">text</SelectItem>
+                            <SelectItem value="image">image</SelectItem>
+                            <SelectItem value="color">color</SelectItem>
+                            <SelectItem value="list">list</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          value={v.layer ?? ""}
+                          placeholder="Layer (optional)"
+                          onChange={(e) =>
+                            setEditVars((prev) =>
+                              prev.map((x, j) => (j === i ? { ...x, layer: e.target.value } : x)),
+                            )
+                          }
+                          className="h-8 text-xs"
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={() =>
+                            setEditVars((prev) => prev.filter((_, j) => j !== i))
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
