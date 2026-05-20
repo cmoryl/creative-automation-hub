@@ -4,11 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProject } from "@/lib/workspace.functions";
 import { listChatMessages, sendChatMessage } from "@/lib/chat.functions";
 import { createJob, listProjectJobs } from "@/lib/agent.functions";
+import { createHybridRender } from "@/lib/hybrid.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { Bot, User, Send, ArrowLeft, Play } from "lucide-react";
+import { Bot, User, Send, ArrowLeft, Play, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
   component: ProjectDetail,
@@ -24,6 +25,7 @@ function ProjectDetail() {
   const qc = useQueryClient();
   const createJobFn = useServerFn(createJob);
   const fetchJobs = useServerFn(listProjectJobs);
+  const hybridFn = useServerFn(createHybridRender);
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -101,6 +103,27 @@ function ProjectDetail() {
               <Play className="h-3 w-3" /> {eng}
             </Button>
           ))}
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                const res = await hybridFn({
+                  data: {
+                    projectId,
+                    engines: ["figma", "illustrator", "indesign"],
+                    brief: {},
+                    variables: {},
+                  },
+                });
+                toast.success(`Queued ${res.jobs.length} hybrid jobs`);
+                qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+              } catch (e) {
+                toast.error(e instanceof Error ? e.message : "Failed");
+              }
+            }}
+          >
+            <Layers className="h-3 w-3" /> hybrid
+          </Button>
         </div>
       </header>
 
