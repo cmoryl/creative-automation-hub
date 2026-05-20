@@ -140,10 +140,14 @@ function TemplatesPage() {
             Canva, Figma, Illustrator and InDesign templates available to this workspace.
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4" /> Import from Figma</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link to="/templates/batch">Batch dispatch</Link>
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button><Plus className="h-4 w-4" /> Import from Figma</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Import Figma template</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -173,6 +177,7 @@ function TemplatesPage() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </header>
 
       {/* Search + engine filter */}

@@ -20,11 +20,14 @@ import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBrandsRouteImport } from './routes/_authenticated/brands'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
+import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authenticated/batches.index'
+import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
+import { Route as AuthenticatedBatchesBatchIdRouteImport } from './routes/_authenticated/batches.$batchId'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
 import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
 import { Route as ApiPublicAgentProgressRouteImport } from './routes/api/public/agent/progress'
@@ -89,6 +92,18 @@ const AuthenticatedTemplatesIndexRoute =
     path: '/templates/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBatchesIndexRoute =
+  AuthenticatedBatchesIndexRouteImport.update({
+    id: '/batches/',
+    path: '/batches/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTemplatesBatchRoute =
+  AuthenticatedTemplatesBatchRouteImport.update({
+    id: '/templates/batch',
+    path: '/templates/batch',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTemplatesTemplateIdRoute =
   AuthenticatedTemplatesTemplateIdRouteImport.update({
     id: '/templates/$templateId',
@@ -118,6 +133,12 @@ const AuthenticatedProjectsProjectIdRoute =
     id: '/$projectId',
     path: '/$projectId',
     getParentRoute: () => AuthenticatedProjectsRoute,
+  } as any)
+const AuthenticatedBatchesBatchIdRoute =
+  AuthenticatedBatchesBatchIdRouteImport.update({
+    id: '/batches/$batchId',
+    path: '/batches/$batchId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const ApiPublicV1JobsRoute = ApiPublicV1JobsRouteImport.update({
   id: '/api/public/v1/jobs',
@@ -170,11 +191,14 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/batches/': typeof AuthenticatedBatchesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -195,11 +219,14 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/batches': typeof AuthenticatedBatchesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -222,11 +249,14 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/_authenticated/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/_authenticated/batches/': typeof AuthenticatedBatchesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -249,11 +279,14 @@ export interface FileRouteTypes {
     | '/library'
     | '/outputs'
     | '/projects'
+    | '/batches/$batchId'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates/batch'
+    | '/batches/'
     | '/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -274,11 +307,14 @@ export interface FileRouteTypes {
     | '/library'
     | '/outputs'
     | '/projects'
+    | '/batches/$batchId'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates/batch'
+    | '/batches'
     | '/templates'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -300,11 +336,14 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/outputs'
     | '/_authenticated/projects'
+    | '/_authenticated/batches/$batchId'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/templates/$templateId'
+    | '/_authenticated/templates/batch'
+    | '/_authenticated/batches/'
     | '/_authenticated/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -408,6 +447,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/batches/': {
+      id: '/_authenticated/batches/'
+      path: '/batches'
+      fullPath: '/batches/'
+      preLoaderRoute: typeof AuthenticatedBatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/templates/batch': {
+      id: '/_authenticated/templates/batch'
+      path: '/templates/batch'
+      fullPath: '/templates/batch'
+      preLoaderRoute: typeof AuthenticatedTemplatesBatchRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/templates/$templateId': {
       id: '/_authenticated/templates/$templateId'
       path: '/templates/$templateId'
@@ -442,6 +495,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/projects/$projectId'
       preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
       parentRoute: typeof AuthenticatedProjectsRoute
+    }
+    '/_authenticated/batches/$batchId': {
+      id: '/_authenticated/batches/$batchId'
+      path: '/batches/$batchId'
+      fullPath: '/batches/$batchId'
+      preLoaderRoute: typeof AuthenticatedBatchesBatchIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/v1/jobs': {
       id: '/api/public/v1/jobs'
@@ -523,10 +583,13 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
+  AuthenticatedBatchesBatchIdRoute: typeof AuthenticatedBatchesBatchIdRoute
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
+  AuthenticatedTemplatesBatchRoute: typeof AuthenticatedTemplatesBatchRoute
+  AuthenticatedBatchesIndexRoute: typeof AuthenticatedBatchesIndexRoute
   AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
 }
 
@@ -538,11 +601,14 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
+  AuthenticatedBatchesBatchIdRoute: AuthenticatedBatchesBatchIdRoute,
   AuthenticatedSettingsAgentRoute: AuthenticatedSettingsAgentRoute,
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
+  AuthenticatedTemplatesBatchRoute: AuthenticatedTemplatesBatchRoute,
+  AuthenticatedBatchesIndexRoute: AuthenticatedBatchesIndexRoute,
   AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
 }
 

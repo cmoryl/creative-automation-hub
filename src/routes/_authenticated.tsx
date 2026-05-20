@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, redirect, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug, FolderTree, Activity, ListChecks, HelpCircle, Building2 } from "lucide-react";
+import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug, FolderTree, Activity, ListChecks, HelpCircle, Building2, Layers } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { OnboardingTour, resetOnboardingTour } from "@/components/OnboardingTour";
 
@@ -18,6 +18,7 @@ const nav = [
   { to: "/examples", label: "Examples", icon: Sparkles },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/templates", label: "Templates", icon: LayoutTemplate },
+  { to: "/batches", label: "Batches", icon: Layers },
   { to: "/brands", label: "Brands", icon: Building2 },
   { to: "/library", label: "Library", icon: FolderTree },
   { to: "/outputs", label: "Outputs", icon: FileStack },

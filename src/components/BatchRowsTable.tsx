@@ -1,0 +1,203 @@
+import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Copy, Plus, Trash2 } from "lucide-react";
+
+export type BatchVariable = {
+  name: string;
+  label?: string;
+  type?: string;
+  multiline?: boolean;
+  placeholder?: string;
+};
+
+export type BatchRow = {
+  id: string;
+  label: string;
+  values: Record<string, string>;
+};
+
+export function newBatchRow(prefill: Record<string, string> = {}): BatchRow {
+  return {
+    id: crypto.randomUUID(),
+    label: "",
+    values: { ...prefill },
+  };
+}
+
+export function BatchRowsTable({
+  variables,
+  rows,
+  onChange,
+  errors,
+  emptyHint,
+}: {
+  variables: BatchVariable[];
+  rows: BatchRow[];
+  onChange: (next: BatchRow[]) => void;
+  errors?: Record<string, Record<string, string>>; // rowId -> field -> msg
+  emptyHint?: string;
+}) {
+  const cols = useMemo(() => variables, [variables]);
+
+  const update = (rowId: string, patch: Partial<BatchRow>) =>
+    onChange(rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
+
+  const updateValue = (rowId: string, name: string, value: string) =>
+    onChange(
+      rows.map((r) =>
+        r.id === rowId ? { ...r, values: { ...r.values, [name]: value } } : r,
+      ),
+    );
+
+  const duplicate = (rowId: string) => {
+    const idx = rows.findIndex((r) => r.id === rowId);
+    if (idx < 0) return;
+    const src = rows[idx];
+    const copy: BatchRow = {
+      ...src,
+      id: crypto.randomUUID(),
+      label: src.label ? `${src.label} (copy)` : "",
+      values: { ...src.values },
+    };
+    const next = [...rows];
+    next.splice(idx + 1, 0, copy);
+    onChange(next);
+  };
+
+  const remove = (rowId: string) => onChange(rows.filter((r) => r.id !== rowId));
+
+  if (!rows.length) {
+    return (
+      <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+        {emptyHint ?? "No rows yet. Add one to get started."}
+        <div className="mt-3">
+          <Button size="sm" variant="outline" onClick={() => onChange([newBatchRow()])}>
+            <Plus className="h-3.5 w-3.5" /> Add row
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {rows.map((row, i) => {
+        const rowErrs = errors?.[row.id] ?? {};
+        const labelErr = rowErrs.__label;
+        return (
+          <div key={row.id} className="rounded-md border bg-card">
+            <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-1.5">
+              <div className="flex flex-1 items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  #{i + 1}
+                </span>
+                <Input
+                  className={`h-7 max-w-[280px] text-xs ${labelErr ? "border-destructive" : ""}`}
+                  placeholder="Row label (e.g. Client A — Australia)"
+                  value={row.label}
+                  onChange={(e) => update(row.id, { label: e.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  title="Duplicate row"
+                  onClick={() => duplicate(row.id)}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-destructive"
+                  title="Delete row"
+                  onClick={() => remove(row.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-2 p-3 md:grid-cols-2">
+              {cols.map((v) => {
+                const val = row.values[v.name] ?? "";
+                const err = rowErrs[v.name];
+                const errBorder = err
+                  ? "border-destructive focus-visible:ring-destructive"
+                  : "";
+                const multiline =
+                  v.multiline ||
+                  /challenge|solution|results|quote|body|description/i.test(v.name);
+                return (
+                  <div key={v.name} className="space-y-0.5">
+                    <label className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {v.label ?? v.name}
+                    </label>
+                    {v.type === "color" ? (
+                      <Input
+                        type="color"
+                        value={val || "#0066cc"}
+                        onChange={(e) => updateValue(row.id, v.name, e.target.value)}
+                        className={`h-9 ${errBorder}`}
+                      />
+                    ) : multiline ? (
+                      <Textarea
+                        rows={2}
+                        placeholder={v.placeholder ?? v.label ?? v.name}
+                        value={val}
+                        onChange={(e) => updateValue(row.id, v.name, e.target.value)}
+                        className={errBorder}
+                      />
+                    ) : (
+                      <Input
+                        placeholder={v.placeholder ?? v.label ?? v.name}
+                        value={val}
+                        onChange={(e) => updateValue(row.id, v.name, e.target.value)}
+                        className={errBorder}
+                      />
+                    )}
+                    {err && <p className="text-[10px] text-destructive">{err}</p>}
+                  </div>
+                );
+              })}
+            </div>
+            {labelErr && (
+              <p className="px-3 pb-2 text-[10px] text-destructive">{labelErr}</p>
+            )}
+          </div>
+        );
+      })}
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onChange([...rows, newBatchRow()])}
+        >
+          <Plus className="h-3.5 w-3.5" /> Add row
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            const last = rows[rows.length - 1];
+            onChange([
+              ...rows,
+              {
+                ...last,
+                id: crypto.randomUUID(),
+                label: last.label ? `${last.label} (copy)` : "",
+                values: { ...last.values },
+              },
+            ]);
+          }}
+        >
+          <Copy className="h-3.5 w-3.5" /> Duplicate last
+        </Button>
+      </div>
+    </div>
+  );
+}

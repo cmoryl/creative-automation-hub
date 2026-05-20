@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   FileSpreadsheet,
+  Layers,
   Loader2,
   Send,
   Sparkles,
@@ -27,11 +28,13 @@ import {
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
+import { dispatchBatch } from "@/lib/batch.functions";
 import {
   listProductAssets,
   saveProductAsset,
   generateProductImage,
 } from "@/lib/product-assets.functions";
+import { BatchRowsTable, newBatchRow, type BatchRow } from "@/components/BatchRowsTable";
 
 type Variable = {
   name: string;
@@ -43,7 +46,7 @@ type Variable = {
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
-type InputMode = "form" | "csv";
+type InputMode = "form" | "batch" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: string }[] = [
@@ -59,7 +62,7 @@ const URL_RE = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 const IMAGE_URL_RE = /^https?:\/\/\S+$/i;
 
 /** Validate one field value. Returns error message or null. */
-function validateField(v: Variable, raw: string): string | null {
+export function validateField(v: Variable, raw: string): string | null {
   const val = (raw ?? "").trim();
   const label = v.label ?? v.name;
   if (!val) return `${label} is required`;
@@ -86,7 +89,7 @@ function validateField(v: Variable, raw: string): string | null {
   return null;
 }
 
-function validateAll(
+export function validateAll(
   variables: Variable[],
   values: Record<string, string>,
 ): Record<string, string> {
@@ -97,6 +100,8 @@ function validateAll(
   }
   return errs;
 }
+
+export type { Variable };
 
 export function CreateVariationsTab({
   templateId,
@@ -127,6 +132,7 @@ export function CreateVariationsTab({
   const uploadUrlFn = useServerFn(createBriefUploadUrl);
   const parseFn = useServerFn(parseCsvFile);
   const dispatchFn = useServerFn(dispatchVariations);
+  const dispatchBatchFn = useServerFn(dispatchBatch);
 
   const [mode, setMode] = useState<InputMode>("form");
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...(brandPrefill ?? {}) }));
@@ -151,10 +157,18 @@ export function CreateVariationsTab({
     created: { projectId: string; jobIds: string[]; label: string }[];
     hasLiveAgent: boolean;
     engines: string[];
+    batchId?: string;
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [csvRowErrors, setCsvRowErrors] = useState<{ row: number; field: string; message: string }[]>([]);
+  const [batchRows, setBatchRows] = useState<BatchRow[]>(() => [
+    newBatchRow(brandPrefill ?? {}),
+  ]);
+  const [batchLabel, setBatchLabel] = useState(
+    `${templateName} batch ${new Date().toLocaleDateString()}`,
+  );
+  const [batchErrors, setBatchErrors] = useState<Record<string, Record<string, string>>>({});
 
   const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
     setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
@@ -277,7 +291,27 @@ export function CreateVariationsTab({
       setCsvRowErrors([]);
       logActivity("Validating inputs…");
       let rows: { label: string; values: Record<string, string> }[] = [];
-      if (mode === "csv") {
+      if (mode === "batch") {
+        if (!batchRows.length) throw new Error("Add at least one batch row");
+        const newErrs: Record<string, Record<string, string>> = {};
+        batchRows.forEach((r, i) => {
+          const re: Record<string, string> = {};
+          if (!r.label.trim()) re.__label = `Row ${i + 1} needs a label`;
+          for (const v of variables) {
+            const e = validateField(v, r.values[v.name] ?? "");
+            if (e) re[v.name] = e;
+          }
+          if (Object.keys(re).length) newErrs[r.id] = re;
+        });
+        setBatchErrors(newErrs);
+        if (Object.keys(newErrs).length) {
+          throw new Error(
+            `${Object.keys(newErrs).length} row(s) have errors — fix before dispatching`,
+          );
+        }
+        rows = batchRows.map((r) => ({ label: r.label.trim(), values: r.values }));
+        logActivity(`Prepared ${rows.length} batch row(s)`, "ok");
+      } else if (mode === "csv") {
         if (!csvRows.length) throw new Error("Upload a CSV first");
         const rowErrs: { row: number; field: string; message: string }[] = [];
         rows = csvRows.map((r, i) => {
@@ -330,6 +364,24 @@ export function CreateVariationsTab({
       logActivity(
         `Dispatching ${rows.length} × ${engineList.length} = ${rows.length * engineList.length} render job(s)…`,
       );
+      if (mode === "batch" || (mode === "csv" && rows.length > 1)) {
+        const res = await dispatchBatchFn({
+          data: {
+            batchLabel: mode === "batch" ? batchLabel : `${templateName} CSV ${new Date().toLocaleDateString()}`,
+            groups: [{ templateId, engines: engineList as never, rows }],
+          },
+        });
+        return {
+          created: res.created.map((c) => ({
+            projectId: c.projectId,
+            jobIds: c.jobIds,
+            label: c.label,
+          })),
+          hasLiveAgent: res.hasLiveAgent,
+          engines: engineList,
+          batchId: res.batchId,
+        };
+      }
       const res = await dispatchFn({
         data: {
           templateId,
@@ -503,6 +555,7 @@ export function CreateVariationsTab({
           {(
             [
               { id: "form", icon: Sparkles, label: "Single brief" },
+              { id: "batch", icon: Layers, label: "Batch" },
               { id: "csv", icon: FileSpreadsheet, label: "Bulk CSV" },
             ] as const
           ).map((m) => (
@@ -531,7 +584,28 @@ export function CreateVariationsTab({
             </div>
           )}
 
-
+          {mode === "batch" && (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium">Batch name</label>
+                <Input
+                  value={batchLabel}
+                  onChange={(e) => setBatchLabel(e.target.value)}
+                  placeholder="e.g. APAC case studies — Q3"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Used to group these jobs on the Batches dashboard.
+                </p>
+              </div>
+              <BatchRowsTable
+                variables={variables}
+                rows={batchRows}
+                onChange={setBatchRows}
+                errors={batchErrors}
+                emptyHint="Add rows below to dispatch many variations at once."
+              />
+            </div>
+          )}
 
           {mode === "csv" && (
             <div className="space-y-3">
@@ -658,7 +732,9 @@ export function CreateVariationsTab({
               ? "Dispatching…"
               : mode === "csv"
                 ? `Dispatch ${csvRows.length} × ${engines.size} = ${csvRows.length * engines.size} files`
-                : `Create variation × ${engines.size} engine(s)`}
+                : mode === "batch"
+                  ? `Dispatch batch · ${batchRows.length} × ${engines.size} = ${batchRows.length * engines.size} files`
+                  : `Create variation × ${engines.size} engine(s)`}
           </Button>
 
           {(activityLog.length > 0 || dispatch.isPending) && (
@@ -720,12 +796,22 @@ export function CreateVariationsTab({
                   </div>
                 )}
               </div>
-              <Link
-                to="/outputs"
-                className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
-              >
-                View all outputs <ExternalLink className="h-3 w-3" />
-              </Link>
+              {lastResult.batchId ? (
+                <Link
+                  to="/batches/$batchId"
+                  params={{ batchId: lastResult.batchId }}
+                  className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
+                >
+                  Open batch dashboard <ExternalLink className="h-3 w-3" />
+                </Link>
+              ) : (
+                <Link
+                  to="/outputs"
+                  className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
+                >
+                  View all outputs <ExternalLink className="h-3 w-3" />
+                </Link>
+              )}
             </div>
           )}
         </div>
