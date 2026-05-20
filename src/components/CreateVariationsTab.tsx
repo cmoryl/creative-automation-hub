@@ -909,7 +909,7 @@ function ImageField({
             <p className="text-xs text-muted-foreground">Loading…</p>
           ) : assetsQ.data?.assets.length ? (
             <div className="grid grid-cols-4 gap-2">
-              {assetsQ.data.assets.map((a) => (
+              {assetsQ.data.assets.map((a: { id: string; name: string; url: string; source: string }) => (
                 <button
                   key={a.id}
                   type="button"
