@@ -15,6 +15,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
+import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
@@ -52,6 +54,16 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
 const AuthenticatedOutputsRoute = AuthenticatedOutputsRouteImport.update({
   id: '/outputs',
   path: '/outputs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
+  id: '/examples',
+  path: '/examples',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSettingsIntegrationsRoute =
@@ -107,6 +119,8 @@ const ApiPublicV1JobsJobIdRoute = ApiPublicV1JobsJobIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/examples': typeof AuthenticatedExamplesRoute
+  '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -123,6 +137,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/examples': typeof AuthenticatedExamplesRoute
+  '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -141,6 +157,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/examples': typeof AuthenticatedExamplesRoute
+  '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
@@ -159,6 +177,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/examples'
+    | '/library'
     | '/outputs'
     | '/projects'
     | '/templates'
@@ -175,6 +195,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/examples'
+    | '/library'
     | '/outputs'
     | '/projects'
     | '/templates'
@@ -192,6 +214,8 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/examples'
+    | '/_authenticated/library'
     | '/_authenticated/outputs'
     | '/_authenticated/projects'
     | '/_authenticated/templates'
@@ -258,6 +282,20 @@ declare module '@tanstack/react-router' {
       path: '/outputs'
       fullPath: '/outputs'
       preLoaderRoute: typeof AuthenticatedOutputsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/library': {
+      id: '/_authenticated/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/examples': {
+      id: '/_authenticated/examples'
+      path: '/examples'
+      fullPath: '/examples'
+      preLoaderRoute: typeof AuthenticatedExamplesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/integrations': {
@@ -340,6 +378,8 @@ const AuthenticatedProjectsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
+  AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -349,6 +389,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedExamplesRoute: AuthenticatedExamplesRoute,
+  AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
@@ -386,3 +428,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

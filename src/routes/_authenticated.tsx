@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, redirect, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug } from "lucide-react";
+import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug, FolderTree } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -13,13 +13,16 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 const nav = [
+  { to: "/examples", label: "Examples", icon: Sparkles },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/templates", label: "Templates", icon: LayoutTemplate },
+  { to: "/library", label: "Library", icon: FolderTree },
   { to: "/outputs", label: "Outputs", icon: FileStack },
   { to: "/settings/integrations", label: "Integrations", icon: Plug },
   { to: "/settings/agent", label: "Local Agent", icon: Settings },
   { to: "/settings/api", label: "API Tokens", icon: KeyRound },
 ] as const;
+
 
 function AuthedLayout() {
   const { user } = useAuth();
