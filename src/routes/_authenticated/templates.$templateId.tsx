@@ -44,6 +44,16 @@ type Variable = {
   extracted?: boolean;
 };
 
+type TemplatePage = {
+  name?: string;
+  width?: number;
+  height?: number;
+  unit?: string;
+  kind?: "artboard" | "page" | string;
+  artboard_index?: number;
+  page_index?: number;
+};
+
 const engineMeta: Record<
   string,
   { label: string; mode: string; cls: string }
@@ -89,6 +99,11 @@ function TemplateDetailPage() {
   const variables: Variable[] = useMemo(() => {
     const v = data?.template?.variables;
     return Array.isArray(v) ? (v as unknown as Variable[]) : [];
+  }, [data]);
+
+  const pages: TemplatePage[] = useMemo(() => {
+    const p = (data?.template as { pages?: unknown })?.pages;
+    return Array.isArray(p) ? (p as TemplatePage[]) : [];
   }, [data]);
 
   const [editVars, setEditVars] = useState<Variable[]>([]);
