@@ -732,7 +732,9 @@ export function CreateVariationsTab({
               ? "Dispatching…"
               : mode === "csv"
                 ? `Dispatch ${csvRows.length} × ${engines.size} = ${csvRows.length * engines.size} files`
-                : `Create variation × ${engines.size} engine(s)`}
+                : mode === "batch"
+                  ? `Dispatch batch · ${batchRows.length} × ${engines.size} = ${batchRows.length * engines.size} files`
+                  : `Create variation × ${engines.size} engine(s)`}
           </Button>
 
           {(activityLog.length > 0 || dispatch.isPending) && (
