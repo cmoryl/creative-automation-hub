@@ -449,6 +449,47 @@ function TemplateDetailPage() {
             </Card>
           </TabsContent>
 
+          {pages.length > 0 && (
+            <TabsContent value="pages" className="mt-4">
+              <Card>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Multi-page layout. Each render produces one preview + one PDF per page,
+                      plus a combined master PDF and a packaged ZIP.
+                    </p>
+                    <Badge variant="outline" className="text-[10px]">
+                      {pages.length} {pages.length === 1 ? "page" : "pages"}
+                    </Badge>
+                  </div>
+                  <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {pages.map((p, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3 rounded-lg border bg-card/60 p-3"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
+                          {String(i + 1).padStart(2, "0")}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium">
+                            {p.name ?? `Page ${i + 1}`}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-muted-foreground">
+                            {p.kind === "artboard" ? "Artboard" : "Page"}
+                            {p.width && p.height
+                              ? ` · ${p.width}×${p.height}${p.unit ?? ""}`
+                              : ""}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
           <TabsContent value="layers" className="mt-4">
             <Card>
               <CardContent className="space-y-1 p-4 text-sm">
