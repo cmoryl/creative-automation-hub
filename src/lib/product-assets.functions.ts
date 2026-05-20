@@ -15,7 +15,7 @@ export const listProductAssets = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    if (!data.companyId) return { assets: [] as Array<Record<string, unknown>> };
+    if (!data.companyId) return { assets: [] as Array<{ id: string; name: string; url: string; source: string; prompt: string | null; product_id: string | null; company_id: string; created_at: string }> };
     let q = supabase
       .from("product_assets")
       .select("id, name, url, source, prompt, product_id, company_id, created_at")
