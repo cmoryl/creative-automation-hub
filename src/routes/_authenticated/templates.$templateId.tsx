@@ -167,277 +167,175 @@ function TemplateDetailPage() {
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-        {/* LEFT — preview + tabs */}
-        <div className="space-y-4">
-          {tpl.preview_url && (
-            <div className="overflow-hidden rounded-lg border bg-muted/30 shadow-sm">
-              <img
-                src={tpl.preview_url}
-                alt={tpl.name}
-                className="w-full object-contain"
-              />
-            </div>
-          )}
+      <div className="space-y-4">
+        {tpl.preview_url && (
+          <div className="overflow-hidden rounded-lg border bg-muted/30 shadow-sm">
+            <img
+              src={tpl.preview_url}
+              alt={tpl.name}
+              className="max-h-[280px] w-full object-contain"
+            />
+          </div>
+        )}
 
-          <Tabs defaultValue="create">
-            <TabsList>
-              <TabsTrigger value="create">
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> Create
-              </TabsTrigger>
-              <TabsTrigger value="variations">
-                <Sparkles className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
-              </TabsTrigger>
-              <TabsTrigger value="fields">
-                <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
-              </TabsTrigger>
-              <TabsTrigger value="layers">
-                <Layers className="mr-1 h-3.5 w-3.5" /> Layers
-              </TabsTrigger>
-              <TabsTrigger value="runs">
-                <PlayCircle className="mr-1 h-3.5 w-3.5" /> Runs ({data.jobs.length})
-              </TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="create">
+          <TabsList>
+            <TabsTrigger value="create">
+              <Wand2 className="mr-1 h-3.5 w-3.5" /> Create
+            </TabsTrigger>
+            <TabsTrigger value="variations">
+              <Sparkles className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
+            </TabsTrigger>
+            <TabsTrigger value="fields">
+              <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
+            </TabsTrigger>
+            <TabsTrigger value="layers">
+              <Layers className="mr-1 h-3.5 w-3.5" /> Layers
+            </TabsTrigger>
+            <TabsTrigger value="runs">
+              <PlayCircle className="mr-1 h-3.5 w-3.5" /> Runs ({data.jobs.length})
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="create" className="mt-4">
-              <CreateVariationsTab
-                templateId={tpl.id}
-                templateName={tpl.name}
-                variables={variables}
-              />
-            </TabsContent>
+          <TabsContent value="create" className="mt-4">
+            <CreateVariationsTab
+              templateId={tpl.id}
+              templateName={tpl.name}
+              variables={variables}
+            />
+            {isBridge && (
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                Bridge URL: <code>{tpl.source_ref}</code>. Your paired agent on this
+                workspace will receive each job and render it locally in {engine.label}.
+              </p>
+            )}
+          </TabsContent>
 
-            <TabsContent value="variations" className="mt-4">
-              {data.outputs.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                  <Wand2 className="mx-auto mb-2 h-6 w-6 opacity-50" />
-                  No variations yet. Fill the brief on the right and click{" "}
-                  <strong>Quick variation</strong> to generate one.
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {data.outputs.map((o) => {
-                    const job = data.jobs.find((j) => j.id === o.job_id);
-                    return (
-                      <a
-                        key={o.id}
-                        href={o.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
-                      >
-                        <div className="aspect-[3/4] overflow-hidden bg-muted">
-                          <img
-                            src={o.url}
-                            alt="variation"
-                            className="h-full w-full object-cover transition group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="p-2">
-                          <div className="truncate text-xs font-medium">
-                            {(job?.variables as Record<string, string> | null)?.case_study_title ??
-                              (job?.variables as Record<string, string> | null)?.headline ??
-                              "Untitled variation"}
-                          </div>
-                          <div className="text-[10px] text-muted-foreground">
-                            {new Date(o.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              )}
-            </TabsContent>
-
-
-            <TabsContent value="fields" className="mt-4">
-              <Card>
-                <CardContent className="space-y-2 p-4">
-                  <p className="text-xs text-muted-foreground">
-                    Auto-extracted from the .ai file — each row maps to a named text or
-                    placement frame inside Illustrator. The bridge agent swaps these on
-                    render.
-                  </p>
-                  <ul className="divide-y text-sm">
-                    {variables.map((v) => (
-                      <li key={v.name} className="flex items-center justify-between py-2">
-                        <div>
-                          <div className="font-medium">{v.label ?? v.name}</div>
-                          <code className="text-[11px] text-muted-foreground">
-                            {v.name}
-                          </code>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {v.layer && (
-                            <Badge variant="outline" className="text-[10px]">
-                              {v.layer}
-                            </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-[10px]">
-                            {v.type}
-                          </Badge>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="layers" className="mt-4">
-              <Card>
-                <CardContent className="space-y-1 p-4 text-sm">
-                  {[
-                    "00_GUIDES_LOCKED",
-                    "01_BACKGROUND",
-                    "02_IMAGES",
-                    "03_GRAPHICS",
-                    "04_TEXT",
-                    "05_LOGOS",
-                    "06_FOOTER",
-                    "99_NOTES",
-                    "NO_TEXT_ZONE_CURVE",
-                  ].map((l) => (
-                    <div
-                      key={l}
-                      className="flex items-center justify-between rounded px-2 py-1.5 hover:bg-muted/50"
-                    >
-                      <code className="text-xs">{l}</code>
-                      <Badge variant="outline" className="text-[10px]">
-                        {l.startsWith("00") || l === "NO_TEXT_ZONE_CURVE"
-                          ? "locked"
-                          : "editable"}
-                      </Badge>
-                    </div>
-                  ))}
-                  <p className="pt-2 text-xs text-muted-foreground">
-                    Parsed from the uploaded master file. The bridge respects layer order
-                    and only writes into editable layers.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="runs" className="mt-4">
-              {data.jobs.length === 0 ? (
-                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  No runs yet. Fill the brief on the right and send to the bridge.
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {data.jobs.map((j) => {
-                    const outs = data.outputs.filter((o) => o.job_id === j.id);
-                    return (
-                      <li
-                        key={j.id}
-                        className="flex items-center justify-between rounded-lg border bg-card p-3 text-sm"
-                      >
-                        <div>
-                          <div className="font-medium capitalize">{j.status}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(j.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {outs.map((o) => (
-                            <a
-                              key={o.id}
-                              href={o.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="rounded border px-2 py-0.5 text-xs hover:bg-accent"
-                            >
-                              {o.kind}
-                            </a>
-                          ))}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* RIGHT — brief + variable form */}
-        <aside className="space-y-4">
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <div>
-                <h2 className="text-sm font-semibold">Brief</h2>
-                <p className="text-xs text-muted-foreground">
-                  Plain English. Claude turns this into variables below.
-                </p>
+          <TabsContent value="variations" className="mt-4">
+            {data.outputs.length === 0 ? (
+              <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                <Wand2 className="mx-auto mb-2 h-6 w-6 opacity-50" />
+                No variations yet. Use the <strong>Create</strong> tab to chat with the
+                agent, fill the form, or upload a CSV.
               </div>
-              <Textarea
-                placeholder={`e.g. "Case study for Acme Biotech on our new oncology trial workflow. Hero shot: lab tech with vial. Strong stats: 42% faster, 18 sites."`}
-                rows={5}
-                value={brief}
-                onChange={(e) => setBrief(e.target.value)}
-              />
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {data.outputs.map((o) => {
+                  const job = data.jobs.find((j) => j.id === o.job_id);
+                  return (
+                    <a
+                      key={o.id}
+                      href={o.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
+                    >
+                      <div className="aspect-[3/4] overflow-hidden bg-muted">
+                        <img
+                          src={o.url}
+                          alt="variation"
+                          className="h-full w-full object-cover transition group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="p-2">
+                        <div className="truncate text-xs font-medium">
+                          {(job?.variables as Record<string, string> | null)?.case_study_title ??
+                            (job?.variables as Record<string, string> | null)?.headline ??
+                            "Untitled variation"}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {job?.engine} · {new Date(o.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
 
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <h2 className="text-sm font-semibold">Variables</h2>
-              {variables.map((v) => (
-                <div key={v.name} className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {v.label ?? v.name}
-                    {v.layer && (
-                      <span className="ml-1 text-[10px] text-muted-foreground">
-                        ({v.layer})
-                      </span>
-                    )}
-                  </label>
-                  {v.type === "color" ? (
-                    <Input
-                      type="color"
-                      value={values[v.name] ?? "#0066cc"}
-                      onChange={(e) =>
-                        setValues((s) => ({ ...s, [v.name]: e.target.value }))
-                      }
-                    />
-                  ) : v.multiline ? (
-                    <Textarea
-                      rows={3}
-                      placeholder={v.placeholder ?? v.label ?? v.name}
-                      value={values[v.name] ?? ""}
-                      onChange={(e) =>
-                        setValues((s) => ({ ...s, [v.name]: e.target.value }))
-                      }
-                    />
-                  ) : (
-                    <Input
-                      placeholder={v.placeholder ?? v.label ?? v.name}
-                      value={values[v.name] ?? ""}
-                      onChange={(e) =>
-                        setValues((s) => ({ ...s, [v.name]: e.target.value }))
-                      }
-                    />
-                  )}
-                </div>
-              ))}
-              <Button
-                onClick={() => handleDispatch()}
-                disabled={busy}
-                className="w-full"
-              >
-                <Wand2 className="h-4 w-4" /> {busy ? "Creating…" : "Create variation"}
-              </Button>
-              {isBridge && (
-                <p className="text-[11px] text-muted-foreground">
-                  Bridge URL: <code>{tpl.source_ref}</code>. Your paired agent on this
-                  workspace will receive the job and render it locally in{" "}
-                  {engine.label}.
+          <TabsContent value="fields" className="mt-4">
+            <Card>
+              <CardContent className="space-y-2 p-4">
+                <p className="text-xs text-muted-foreground">
+                  Auto-extracted from the source file — each row maps to a named text or
+                  placement frame. The bridge agent swaps these on render.
                 </p>
-              )}
-            </CardContent>
-          </Card>
-        </aside>
+                <ul className="divide-y text-sm">
+                  {variables.map((v) => (
+                    <li key={v.name} className="flex items-center justify-between py-2">
+                      <div>
+                        <div className="font-medium">{v.label ?? v.name}</div>
+                        <code className="text-[11px] text-muted-foreground">{v.name}</code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {v.layer && (
+                          <Badge variant="outline" className="text-[10px]">{v.layer}</Badge>
+                        )}
+                        <Badge variant="secondary" className="text-[10px]">{v.type}</Badge>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="layers" className="mt-4">
+            <Card>
+              <CardContent className="space-y-1 p-4 text-sm">
+                {[
+                  "00_GUIDES_LOCKED","01_BACKGROUND","02_IMAGES","03_GRAPHICS",
+                  "04_TEXT","05_LOGOS","06_FOOTER","99_NOTES","NO_TEXT_ZONE_CURVE",
+                ].map((l) => (
+                  <div key={l} className="flex items-center justify-between rounded px-2 py-1.5 hover:bg-muted/50">
+                    <code className="text-xs">{l}</code>
+                    <Badge variant="outline" className="text-[10px]">
+                      {l.startsWith("00") || l === "NO_TEXT_ZONE_CURVE" ? "locked" : "editable"}
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="runs" className="mt-4">
+            {data.jobs.length === 0 ? (
+              <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                No runs yet.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {data.jobs.map((j) => {
+                  const outs = data.outputs.filter((o) => o.job_id === j.id);
+                  return (
+                    <li key={j.id} className="flex items-center justify-between rounded-lg border bg-card p-3 text-sm">
+                      <div>
+                        <div className="font-medium capitalize">
+                          {j.status} · {j.engine}
+                          {(j as { row_label?: string | null }).row_label
+                            ? ` · ${(j as { row_label?: string | null }).row_label}`
+                            : ""}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(j.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {outs.map((o) => (
+                          <a key={o.id} href={o.url} target="_blank" rel="noreferrer"
+                            className="rounded border px-2 py-0.5 text-xs hover:bg-accent">
+                            {o.kind}
+                          </a>
+                        ))}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
