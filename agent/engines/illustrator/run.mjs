@@ -118,6 +118,29 @@ var pdfOpts = new PDFSaveOptions();
 pdfOpts.pDFPreset = "[High Quality Print]";
 doc.saveAs(pdfFile, pdfOpts);
 
+// Save editable .ai copy (variables baked in, fonts/links still linked)
+var aiFile = new File("${escapeForJsx(path.join(outDir, "editable.ai"))}");
+var aiOpts = new IllustratorSaveOptions();
+try { aiOpts.compatibility = Compatibility.ILLUSTRATOR17; } catch (e) {}
+aiOpts.pdfCompatible = true;
+doc.saveAs(aiFile, aiOpts);
+
+// File > Package — collect Links + Fonts + report into <outDir>/package/
+var pkgParent = new Folder("${escapeForJsx(outDir)}");
+try {
+  doc.packageDocument(pkgParent, "package", {
+    copyLinks: true,
+    copyFonts: true,
+    copyProfiles: true,
+    createReport: true,
+    cleanStudentData: false,
+    copyLinkedFiles: true,
+    overwriteExisting: true
+  });
+} catch (e) {
+  $.writeln("packageDocument failed: " + e);
+}
+
 doc.close(SaveOptions.DONOTSAVECHANGES);
 `;
 }
