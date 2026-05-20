@@ -112,19 +112,26 @@ function LibraryPage() {
         <TabsContent value="templates" className="mt-4">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {tplList.map((t) => (
-              <Card key={t.id} className="overflow-hidden">
-                {t.preview_url && (
-                  <img src={t.preview_url} alt={t.name} className="aspect-video w-full object-cover" />
-                )}
-                <CardContent className="space-y-1 p-3">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="capitalize">{t.engine}</Badge>
-                    <code className="text-[10px] text-muted-foreground">{t.id.slice(0, 8)}</code>
-                  </div>
-                  <div className="text-sm font-medium">{t.name}</div>
-                  <div className="truncate text-xs text-muted-foreground">{t.source_ref}</div>
-                </CardContent>
-              </Card>
+              <Link
+                key={t.id}
+                to="/templates/$templateId"
+                params={{ templateId: t.id }}
+                className="group"
+              >
+                <Card className="overflow-hidden transition group-hover:border-primary group-hover:shadow-md">
+                  {t.preview_url && (
+                    <img src={t.preview_url} alt={t.name} className="aspect-video w-full object-cover" />
+                  )}
+                  <CardContent className="space-y-1 p-3">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="capitalize">{t.engine}</Badge>
+                      <code className="text-[10px] text-muted-foreground">{t.id.slice(0, 8)}</code>
+                    </div>
+                    <div className="text-sm font-medium">{t.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{t.source_ref}</div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </TabsContent>
