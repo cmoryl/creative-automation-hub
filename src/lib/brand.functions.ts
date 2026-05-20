@@ -35,7 +35,7 @@ export const listCompanies = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, company_id, name, slug, description, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, brand_metadata, created_at",
+          "id, company_id, parent_product_id, name, slug, description, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, brand_metadata, created_at",
         )
         .order("name"),
       supabase.from("templates").select("id, company_id, product_id"),
@@ -46,14 +46,21 @@ export const listCompanies = createServerFn({ method: "GET" })
 
     const products = pRes.data ?? [];
     const templates = tRes.data ?? [];
+    const decorate = (p: (typeof products)[number]) => ({
+      ...p,
+      templateCount: templates.filter((t) => t.product_id === p.id).length,
+      subProducts: products
+        .filter((sp) => sp.parent_product_id === p.id)
+        .map((sp) => ({
+          ...sp,
+          templateCount: templates.filter((t) => t.product_id === sp.id).length,
+        })),
+    });
     return (cRes.data ?? []).map((c) => ({
       ...c,
       products: products
-        .filter((p) => p.company_id === c.id)
-        .map((p) => ({
-          ...p,
-          templateCount: templates.filter((t) => t.product_id === p.id).length,
-        })),
+        .filter((p) => p.company_id === c.id && !p.parent_product_id)
+        .map(decorate),
       templateCount: templates.filter((t) => t.company_id === c.id).length,
     }));
   });
