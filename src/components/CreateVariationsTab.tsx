@@ -511,13 +511,85 @@ export function CreateVariationsTab({
             disabled={dispatch.isPending || !mode}
             onClick={() => dispatch.mutate()}
           >
-            <Wand2 className="h-4 w-4" />{" "}
+            {dispatch.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="h-4 w-4" />
+            )}{" "}
             {dispatch.isPending
               ? "Dispatching…"
               : mode === "csv"
                 ? `Dispatch ${csvRows.length} × ${engines.size} = ${csvRows.length * engines.size} files`
                 : `Create variation × ${engines.size} engine(s)`}
           </Button>
+
+          {(activityLog.length > 0 || dispatch.isPending) && (
+            <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border bg-muted/30 p-2 text-xs">
+              {activityLog.map((a, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-1.5 ${
+                    a.kind === "err"
+                      ? "text-destructive"
+                      : a.kind === "ok"
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {a.kind === "ok" ? (
+                    <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0" />
+                  ) : a.kind === "err" ? (
+                    <span className="mt-0.5">×</span>
+                  ) : (
+                    <Loader2 className="mt-0.5 h-3 w-3 shrink-0 animate-spin" />
+                  )}
+                  <span>{a.text}</span>
+                </div>
+              ))}
+              {dispatch.isPending && (
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>Working on the server…</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {lastResult && !dispatch.isPending && (
+            <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-2 text-xs">
+              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                {lastResult.created.length} project(s) created
+              </div>
+              <div className="space-y-1">
+                {lastResult.created.slice(0, 5).map((c) => (
+                  <Link
+                    key={c.projectId}
+                    to="/projects/$projectId"
+                    params={{ projectId: c.projectId }}
+                    className="flex items-center justify-between rounded px-1.5 py-1 hover:bg-background"
+                  >
+                    <span className="truncate">{c.label}</span>
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      {c.jobIds.length} job(s)
+                      <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </Link>
+                ))}
+                {lastResult.created.length > 5 && (
+                  <div className="px-1.5 text-muted-foreground">
+                    +{lastResult.created.length - 5} more…
+                  </div>
+                )}
+              </div>
+              <Link
+                to="/outputs"
+                className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
+              >
+                View all outputs <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
         </div>
       </Card>
     </div>
