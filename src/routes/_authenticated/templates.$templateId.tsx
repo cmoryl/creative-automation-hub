@@ -1,14 +1,12 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { toast } from "sonner";
 import {
   ArrowLeft,
   FileText,
   Layers,
   PlayCircle,
-  Plus,
   Sparkles,
   Wand2,
 } from "lucide-react";
