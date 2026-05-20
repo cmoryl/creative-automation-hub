@@ -26,6 +26,43 @@ function ProjectDetail() {
   const createJobFn = useServerFn(createJob);
   const fetchJobs = useServerFn(listProjectJobs);
   const hybridFn = useServerFn(createHybridRender);
+  const preflightFn = useServerFn(preflightEngine);
+
+  const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "mock") => {
+    try {
+      const pre = await preflightFn({ data: { projectId, engine } });
+      pre.warnings.forEach((w) => toast.warning(w));
+      if (!pre.ok) {
+        pre.blockers.forEach((b) => toast.error(b));
+        return;
+      }
+      await createJobFn({ data: { projectId, engine, brief: {}, variables: {} } });
+      toast.success(`Queued ${engine} render`);
+      qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  };
+
+  const queueHybrid = async () => {
+    try {
+      const engines: ("figma" | "illustrator" | "indesign")[] = ["figma", "illustrator", "indesign"];
+      const checks = await Promise.all(
+        engines.map((e) => preflightFn({ data: { projectId, engine: e } })),
+      );
+      checks.forEach((c) => c.warnings.forEach((w) => toast.warning(w)));
+      const blockers = checks.flatMap((c) => c.blockers);
+      if (blockers.length) {
+        blockers.forEach((b) => toast.error(b));
+        return;
+      }
+      const res = await hybridFn({ data: { projectId, engines, brief: {}, variables: {} } });
+      toast.success(`Queued ${res.jobs.length} hybrid jobs`);
+      qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  };
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
