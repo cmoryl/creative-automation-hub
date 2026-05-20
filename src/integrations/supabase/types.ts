@@ -84,6 +84,60 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          accent_color: string | null
+          brand_metadata: Json
+          contact_email: string | null
+          contact_url: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          font_family: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          accent_color?: string | null
+          brand_metadata?: Json
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          accent_color?: string | null
+          brand_metadata?: Json
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           assigned_agent_id: string | null
@@ -191,6 +245,71 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          accent_color: string | null
+          brand_metadata: Json
+          company_id: string
+          contact_email: string | null
+          contact_url: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          font_family: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string | null
+          slug: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          accent_color?: string | null
+          brand_metadata?: Json
+          company_id: string
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string | null
+          slug: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          accent_color?: string | null
+          brand_metadata?: Json
+          company_id?: string
+          contact_email?: string | null
+          contact_url?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          font_family?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string | null
+          slug?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -218,35 +337,55 @@ export type Database = {
       projects: {
         Row: {
           brief: string | null
+          company_id: string | null
           created_at: string
           created_by: string
           id: string
           name: string
+          product_id: string | null
           status: string
           updated_at: string
           workspace_id: string
         }
         Insert: {
           brief?: string | null
+          company_id?: string | null
           created_at?: string
           created_by: string
           id?: string
           name: string
+          product_id?: string | null
           status?: string
           updated_at?: string
           workspace_id: string
         }
         Update: {
           brief?: string | null
+          company_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
           name?: string
+          product_id?: string | null
           status?: string
           updated_at?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -258,36 +397,56 @@ export type Database = {
       }
       templates: {
         Row: {
+          company_id: string | null
           created_at: string
           engine: string
           id: string
           name: string
           preview_url: string | null
+          product_id: string | null
           source_ref: string | null
           variables: Json
           workspace_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           engine: string
           id?: string
           name: string
           preview_url?: string | null
+          product_id?: string | null
           source_ref?: string | null
           variables?: Json
           workspace_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           engine?: string
           id?: string
           name?: string
           preview_url?: string | null
+          product_id?: string | null
           source_ref?: string | null
           variables?: Json
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "templates_workspace_id_fkey"
             columns: ["workspace_id"]
