@@ -5,9 +5,10 @@ import {
   listTemplates,
   renameTemplate,
   deleteTemplate,
+  duplicateTemplate,
 } from "@/lib/workspace.functions";
 import { saveFigmaToken, importFigmaTemplate } from "@/lib/figma.functions";
-import { LayoutTemplate, Plus, MoreVertical, Pencil, Trash2, Search } from "lucide-react";
+import { LayoutTemplate, Plus, MoreVertical, Pencil, Trash2, Search, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
