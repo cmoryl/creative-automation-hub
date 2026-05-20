@@ -268,7 +268,7 @@ function DashboardPage() {
                     {data.recentJobs.map((j) => {
                       const brief = (j.brief ?? {}) as { progress?: { stage?: string; percent?: number; message?: string } };
                       const progress = brief.progress;
-                      const sIcon =
+                      const SIcon =
                         j.status === "completed" ? CheckCircle2 :
                         j.status === "failed" ? XCircle :
                         j.status === "running" ? Loader2 : Clock;
@@ -278,7 +278,7 @@ function DashboardPage() {
                         j.status === "running" ? "text-blue-500" : "text-amber-500";
                       return (
                         <li key={j.id} className="flex items-center gap-4 px-4 py-3">
-                          <sIcon className={`h-4 w-4 shrink-0 ${sColor} ${j.status === "running" ? "animate-spin" : ""}`} />
+                          <SIcon className={`h-4 w-4 shrink-0 ${sColor} ${j.status === "running" ? "animate-spin" : ""}`} />
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">{j.engine}</Badge>
