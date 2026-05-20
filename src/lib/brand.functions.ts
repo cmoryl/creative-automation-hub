@@ -161,6 +161,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .object({
         companyId: z.string().uuid(),
         name: z.string().min(1).max(120),
+        parentProductId: z.string().uuid().nullish(),
         kit: brandKitInput.optional(),
       })
       .parse(input),
@@ -180,6 +181,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .insert({
         company_id: company.id,
         workspace_id: company.workspace_id,
+        parent_product_id: data.parentProductId ?? null,
         created_by: userId,
         name: data.name,
         slug,
