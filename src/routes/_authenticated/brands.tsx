@@ -102,7 +102,7 @@ function BrandsPage() {
   const [coKit, setCoKit] = useState<Kit>({});
 
   const [editCo, setEditCo] = useState<{ id: string; name: string; kit: Kit } | null>(null);
-  const [prFor, setPrFor] = useState<string | null>(null);
+  const [prFor, setPrFor] = useState<{ companyId: string; parentProductId: string | null; parentName?: string } | null>(null);
   const [prName, setPrName] = useState("");
   const [prKit, setPrKit] = useState<Kit>({});
   const [editPr, setEditPr] = useState<{ id: string; name: string; kit: Kit } | null>(null);
@@ -122,8 +122,8 @@ function BrandsPage() {
   const submitPr = async () => {
     if (!prFor || !prName.trim()) return;
     try {
-      await createPrFn({ data: { companyId: prFor, name: prName.trim(), kit: prKit } });
-      toast.success("Product created");
+      await createPrFn({ data: { companyId: prFor.companyId, parentProductId: prFor.parentProductId, name: prName.trim(), kit: prKit } });
+      toast.success(prFor.parentProductId ? "Sub-product created" : "Product created");
       setPrFor(null); setPrName(""); setPrKit({});
       invalidate();
     } catch (e) {
