@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProject } from "@/lib/workspace.functions";
 import { listChatMessages, sendChatMessage } from "@/lib/chat.functions";
-import { createJob, listProjectJobs } from "@/lib/agent.functions";
+import { createJob, listProjectJobs, preflightEngine } from "@/lib/agent.functions";
 import { createHybridRender } from "@/lib/hybrid.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +26,43 @@ function ProjectDetail() {
   const createJobFn = useServerFn(createJob);
   const fetchJobs = useServerFn(listProjectJobs);
   const hybridFn = useServerFn(createHybridRender);
+  const preflightFn = useServerFn(preflightEngine);
+
+  const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "mock") => {
+    try {
+      const pre = await preflightFn({ data: { projectId, engine } });
+      pre.warnings.forEach((w) => toast.warning(w));
+      if (!pre.ok) {
+        pre.blockers.forEach((b) => toast.error(b));
+        return;
+      }
+      await createJobFn({ data: { projectId, engine, brief: {}, variables: {} } });
+      toast.success(`Queued ${engine} render`);
+      qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  };
+
+  const queueHybrid = async () => {
+    try {
+      const engines: ("figma" | "illustrator" | "indesign")[] = ["figma", "illustrator", "indesign"];
+      const checks = await Promise.all(
+        engines.map((e) => preflightFn({ data: { projectId, engine: e } })),
+      );
+      checks.forEach((c) => c.warnings.forEach((w) => toast.warning(w)));
+      const blockers = checks.flatMap((c) => c.blockers);
+      if (blockers.length) {
+        blockers.forEach((b) => toast.error(b));
+        return;
+      }
+      const res = await hybridFn({ data: { projectId, engines, brief: {}, variables: {} } });
+      toast.success(`Queued ${res.jobs.length} hybrid jobs`);
+      qc.invalidateQueries({ queryKey: ["jobs", projectId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
+  };
 
   const { data: project } = useQuery({
     queryKey: ["project", projectId],
@@ -90,38 +127,12 @@ function ProjectDetail() {
               key={eng}
               size="sm"
               variant="outline"
-              onClick={async () => {
-                try {
-                  await createJobFn({ data: { projectId, engine: eng, brief: {}, variables: {} } });
-                  toast.success(`Queued ${eng} render`);
-                  qc.invalidateQueries({ queryKey: ["jobs", projectId] });
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Failed");
-                }
-              }}
+              onClick={() => queueRender(eng)}
             >
               <Play className="h-3 w-3" /> {eng}
             </Button>
           ))}
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                const res = await hybridFn({
-                  data: {
-                    projectId,
-                    engines: ["figma", "illustrator", "indesign"],
-                    brief: {},
-                    variables: {},
-                  },
-                });
-                toast.success(`Queued ${res.jobs.length} hybrid jobs`);
-                qc.invalidateQueries({ queryKey: ["jobs", projectId] });
-              } catch (e) {
-                toast.error(e instanceof Error ? e.message : "Failed");
-              }
-            }}
-          >
+          <Button size="sm" onClick={queueHybrid}>
             <Layers className="h-3 w-3" /> hybrid
           </Button>
         </div>
@@ -158,6 +169,36 @@ function ProjectDetail() {
 
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
+          {jobs.some((j) => (j.outputs ?? []).length > 0) && (
+            <section className="rounded-lg border bg-card p-4">
+              <h2 className="mb-3 text-sm font-semibold">Renders</h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {jobs.flatMap((j) =>
+                  (j.outputs ?? []).map((o: { id: string; kind: string; url: string }) => (
+                    <a
+                      key={o.id}
+                      href={o.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group block overflow-hidden rounded border bg-muted transition hover:border-primary"
+                    >
+                      {o.kind === "png" || o.kind === "jpg" || o.kind === "jpeg" ? (
+                        <img src={o.url} alt={`${j.engine} ${o.kind}`} className="aspect-square w-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="flex aspect-square w-full items-center justify-center text-xs text-muted-foreground">
+                          {o.kind.toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between px-2 py-1 text-[10px] text-muted-foreground">
+                        <span>{j.engine}</span>
+                        <span className="uppercase">{o.kind}</span>
+                      </div>
+                    </a>
+                  )),
+                )}
+              </div>
+            </section>
+          )}
           {messages.length === 0 && !streaming && (
             <div className="rounded-lg border border-dashed bg-card p-8 text-center text-sm text-muted-foreground">
               Start by describing your campaign. Claude will pick templates, propose variables, and queue renders.
