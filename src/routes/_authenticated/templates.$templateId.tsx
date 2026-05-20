@@ -14,6 +14,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { getTemplate, updateTemplateVariables } from "@/lib/workspace.functions";
+import { getTemplateBrandPrefill } from "@/lib/brand.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -78,6 +79,11 @@ function TemplateDetailPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["template", templateId],
     queryFn: () => fetchTemplate({ data: { id: templateId } }),
+  });
+  const brandPrefillFn = useServerFn(getTemplateBrandPrefill);
+  const { data: brand } = useQuery({
+    queryKey: ["template-brand", templateId],
+    queryFn: () => brandPrefillFn({ data: { templateId } }),
   });
 
   const variables: Variable[] = useMemo(() => {
@@ -228,6 +234,12 @@ function TemplateDetailPage() {
               variables={variables}
               defaultEngines={[tpl.engine]}
               autoOpenSingleResult
+              brandPrefill={brand?.prefill}
+              brandSourceLabel={
+                brand?.source
+                  ? [brand.source.productName, brand.source.companyName].filter(Boolean).join(" / ") || null
+                  : null
+              }
             />
             {isBridge && (
               <p className="mt-3 text-[11px] text-muted-foreground">
