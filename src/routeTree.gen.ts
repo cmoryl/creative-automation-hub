@@ -18,6 +18,7 @@ import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBrandsRouteImport } from './routes/_authenticated/brands'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
@@ -75,6 +76,11 @@ const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBrandsRoute = AuthenticatedBrandsRouteImport.update({
+  id: '/brands',
+  path: '/brands',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedTemplatesIndexRoute =
@@ -157,6 +163,7 @@ const ApiPublicV1JobsJobIdRoute = ApiPublicV1JobsJobIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/brands': typeof AuthenticatedBrandsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
   '/jobs': typeof AuthenticatedJobsRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/brands': typeof AuthenticatedBrandsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
   '/jobs': typeof AuthenticatedJobsRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/brands': typeof AuthenticatedBrandsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/examples': typeof AuthenticatedExamplesRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/brands'
     | '/dashboard'
     | '/examples'
     | '/jobs'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/brands'
     | '/dashboard'
     | '/examples'
     | '/jobs'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/brands'
     | '/_authenticated/dashboard'
     | '/_authenticated/examples'
     | '/_authenticated/jobs'
@@ -380,6 +392,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/brands': {
+      id: '/_authenticated/brands'
+      path: '/brands'
+      fullPath: '/brands'
+      preLoaderRoute: typeof AuthenticatedBrandsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/templates/': {
@@ -497,6 +516,7 @@ const AuthenticatedProjectsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedBrandsRoute: typeof AuthenticatedBrandsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
@@ -511,6 +531,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedBrandsRoute: AuthenticatedBrandsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExamplesRoute: AuthenticatedExamplesRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
