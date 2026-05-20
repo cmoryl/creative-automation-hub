@@ -72,6 +72,8 @@ const engineMeta: Record<
 function TemplateDetailPage() {
   const { templateId } = Route.useParams();
   const fetchTemplate = useServerFn(getTemplate);
+  const updateVarsFn = useServerFn(updateTemplateVariables);
+  const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["template", templateId],
@@ -82,6 +84,42 @@ function TemplateDetailPage() {
     const v = data?.template?.variables;
     return Array.isArray(v) ? (v as unknown as Variable[]) : [];
   }, [data]);
+
+  const [editVars, setEditVars] = useState<Variable[]>([]);
+  const [savingVars, setSavingVars] = useState(false);
+  useEffect(() => { setEditVars(variables); }, [variables]);
+
+  const varsDirty = useMemo(
+    () => JSON.stringify(editVars) !== JSON.stringify(variables),
+    [editVars, variables],
+  );
+
+  const saveVars = async () => {
+    // Basic client-side validation: names required and unique
+    const names = editVars.map((v) => v.name.trim());
+    if (names.some((n) => !n)) return toast.error("Each field needs a name");
+    if (new Set(names).size !== names.length) return toast.error("Field names must be unique");
+    setSavingVars(true);
+    try {
+      await updateVarsFn({
+        data: {
+          id: templateId,
+          variables: editVars.map((v) => ({
+            name: v.name.trim(),
+            label: v.label?.trim() || undefined,
+            type: (v.type as "text" | "image" | "color" | "list"),
+            layer: v.layer?.trim() || undefined,
+          })),
+        },
+      });
+      toast.success("Fields saved");
+      qc.invalidateQueries({ queryKey: ["template", templateId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingVars(false);
+    }
+  };
 
   if (isLoading)
     return <div className="p-8 text-sm text-muted-foreground">Loading template…</div>;
