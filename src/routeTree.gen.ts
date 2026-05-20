@@ -21,6 +21,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBrandsRouteImport } from './routes/_authenticated/brands'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
 import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authenticated/batches.index'
+import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
@@ -95,6 +96,12 @@ const AuthenticatedBatchesIndexRoute =
   AuthenticatedBatchesIndexRouteImport.update({
     id: '/batches/',
     path: '/batches/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTemplatesBatchRoute =
+  AuthenticatedTemplatesBatchRouteImport.update({
+    id: '/templates/batch',
+    path: '/templates/batch',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTemplatesTemplateIdRoute =
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/batches/': typeof AuthenticatedBatchesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/batches': typeof AuthenticatedBatchesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
+  '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/_authenticated/batches/': typeof AuthenticatedBatchesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates/batch'
     | '/batches/'
     | '/templates/'
     | '/api/public/agent/claim'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/settings/api'
     | '/settings/integrations'
     | '/templates/$templateId'
+    | '/templates/batch'
     | '/batches'
     | '/templates'
     | '/api/public/agent/claim'
@@ -330,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
     | '/_authenticated/templates/$templateId'
+    | '/_authenticated/templates/batch'
     | '/_authenticated/batches/'
     | '/_authenticated/templates/'
     | '/api/public/agent/claim'
@@ -439,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/batches'
       fullPath: '/batches/'
       preLoaderRoute: typeof AuthenticatedBatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/templates/batch': {
+      id: '/_authenticated/templates/batch'
+      path: '/templates/batch'
+      fullPath: '/templates/batch'
+      preLoaderRoute: typeof AuthenticatedTemplatesBatchRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/templates/$templateId': {
@@ -568,6 +588,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
+  AuthenticatedTemplatesBatchRoute: typeof AuthenticatedTemplatesBatchRoute
   AuthenticatedBatchesIndexRoute: typeof AuthenticatedBatchesIndexRoute
   AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
 }
@@ -586,6 +607,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
+  AuthenticatedTemplatesBatchRoute: AuthenticatedTemplatesBatchRoute,
   AuthenticatedBatchesIndexRoute: AuthenticatedBatchesIndexRoute,
   AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
 }
