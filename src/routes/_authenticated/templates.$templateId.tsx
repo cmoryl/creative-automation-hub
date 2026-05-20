@@ -9,7 +9,7 @@ import {
   Layers,
   PlayCircle,
   Plus,
-  Send,
+  Send: _Send,
   Sparkles,
   Wand2,
 } from "lucide-react";
