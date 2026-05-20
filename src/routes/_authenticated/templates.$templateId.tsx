@@ -211,8 +211,9 @@ function TemplateDetailPage() {
           </p>
 
           {/* Stat tiles */}
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          <div className="mt-5 grid grid-cols-4 gap-2">
             {[
+              { label: pages.length > 1 ? "Pages" : "Page", value: pages.length || 1 },
               { label: "Fields", value: variables.length },
               { label: "Variations", value: data.outputs.length },
               { label: "Runs", value: data.jobs.length },
@@ -263,6 +264,11 @@ function TemplateDetailPage() {
             <TabsTrigger value="fields">
               <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
             </TabsTrigger>
+            {pages.length > 0 && (
+              <TabsTrigger value="pages">
+                <FileText className="mr-1 h-3.5 w-3.5" /> Pages ({pages.length})
+              </TabsTrigger>
+            )}
             <TabsTrigger value="layers">
               <Layers className="mr-1 h-3.5 w-3.5" /> Layers
             </TabsTrigger>
