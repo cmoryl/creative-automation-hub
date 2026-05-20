@@ -17,6 +17,7 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
+import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
@@ -66,6 +67,12 @@ const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
   path: '/examples',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTemplatesTemplateIdRoute =
+  AuthenticatedTemplatesTemplateIdRouteImport.update({
+    id: '/$templateId',
+    path: '/$templateId',
+    getParentRoute: () => AuthenticatedTemplatesRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/settings/integrations',
@@ -123,11 +130,12 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/templates': typeof AuthenticatedTemplatesRoute
+  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -141,11 +149,12 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/templates': typeof AuthenticatedTemplatesRoute
+  '/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -161,11 +170,12 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
-  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRouteWithChildren
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -186,6 +196,7 @@ export interface FileRouteTypes {
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/templates/$templateId'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/templates/$templateId'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -223,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/templates/$templateId'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -297,6 +310,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/examples'
       preLoaderRoute: typeof AuthenticatedExamplesRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/templates/$templateId': {
+      id: '/_authenticated/templates/$templateId'
+      path: '/$templateId'
+      fullPath: '/templates/$templateId'
+      preLoaderRoute: typeof AuthenticatedTemplatesTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedTemplatesRoute
     }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
@@ -377,12 +397,27 @@ const AuthenticatedProjectsRouteWithChildren =
     AuthenticatedProjectsRouteChildren,
   )
 
+interface AuthenticatedTemplatesRouteChildren {
+  AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
+}
+
+const AuthenticatedTemplatesRouteChildren: AuthenticatedTemplatesRouteChildren =
+  {
+    AuthenticatedTemplatesTemplateIdRoute:
+      AuthenticatedTemplatesTemplateIdRoute,
+  }
+
+const AuthenticatedTemplatesRouteWithChildren =
+  AuthenticatedTemplatesRoute._addFileChildren(
+    AuthenticatedTemplatesRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
-  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRouteWithChildren
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
@@ -393,7 +428,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
-  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
+  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRouteWithChildren,
   AuthenticatedSettingsAgentRoute: AuthenticatedSettingsAgentRoute,
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
   AuthenticatedSettingsIntegrationsRoute:
@@ -428,3 +463,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
