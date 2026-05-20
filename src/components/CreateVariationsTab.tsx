@@ -46,7 +46,7 @@ type Variable = {
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
-type InputMode = "form" | "stepper" | "csv";
+type InputMode = "form" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: string }[] = [
@@ -131,10 +131,9 @@ export function CreateVariationsTab({
   const parseFn = useServerFn(parseCsvFile);
   const dispatchFn = useServerFn(dispatchVariations);
 
-  const [mode, setMode] = useState<InputMode | null>(null);
+  const [mode, setMode] = useState<InputMode>("form");
   const [values, setValues] = useState<Record<string, string>>(() => ({ ...(brandPrefill ?? {}) }));
-  const [step, setStep] = useState(0);
-  const [sections, setSections] = useState<Section[]>([]);
+  const [, setSections] = useState<Section[]>([]);
   const [engines, setEngines] = useState<Set<string>>(
     new Set(defaultEngines?.length ? defaultEngines : ["illustrator"]),
   );
@@ -163,21 +162,6 @@ export function CreateVariationsTab({
   const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
     setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
 
-  // auto-derive sections from layers when entering stepper without AI sections
-  const fallbackSections: Section[] = useMemo(() => {
-    const byLayer: Record<string, string[]> = {};
-    for (const v of variables) {
-      const key = v.layer ?? "General";
-      (byLayer[key] ??= []).push(v.name);
-    }
-    return Object.entries(byLayer).map(([title, fieldNames], i) => ({
-      id: `s${i}`,
-      title,
-      fieldNames,
-    }));
-  }, [variables]);
-
-  const activeSections = sections.length ? sections : fallbackSections;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 9e9, behavior: "smooth" });
