@@ -342,6 +342,10 @@ export function CreateVariationsTab({
           onChange={onChange}
           requestUpload={(filename) => uploadHero({ data: { filename } })}
           onLog={logActivity}
+          companyId={companyId ?? null}
+          productId={productId ?? null}
+          engine={engine}
+          fieldLabel={v.label ?? v.name}
         />
       );
     if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
