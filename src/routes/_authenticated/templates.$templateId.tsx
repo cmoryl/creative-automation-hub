@@ -9,7 +9,6 @@ import {
   Layers,
   PlayCircle,
   Plus,
-  
   Sparkles,
   Wand2,
 } from "lucide-react";
