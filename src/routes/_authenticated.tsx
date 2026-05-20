@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, Link, redirect, useNavigate, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug, FolderTree, Activity } from "lucide-react";
+import { Sparkles, FolderKanban, LayoutTemplate, FileStack, Settings, LogOut, KeyRound, Plug, FolderTree, Activity, ListChecks } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated")({

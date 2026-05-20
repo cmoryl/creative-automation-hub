@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
@@ -59,6 +60,11 @@ const AuthenticatedOutputsRoute = AuthenticatedOutputsRouteImport.update({
 const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   id: '/library',
   path: '/library',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
+  '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
+  '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/examples': typeof AuthenticatedExamplesRoute
+  '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/examples'
+    | '/jobs'
     | '/library'
     | '/outputs'
     | '/projects'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/examples'
+    | '/jobs'
     | '/library'
     | '/outputs'
     | '/projects'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/dashboard'
     | '/_authenticated/examples'
+    | '/_authenticated/jobs'
     | '/_authenticated/library'
     | '/_authenticated/outputs'
     | '/_authenticated/projects'
@@ -347,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/library'
       fullPath: '/library'
       preLoaderRoute: typeof AuthenticatedLibraryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/jobs': {
+      id: '/_authenticated/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof AuthenticatedJobsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/examples': {
@@ -480,6 +499,7 @@ const AuthenticatedProjectsRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
+  AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRouteWithChildren
@@ -493,6 +513,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExamplesRoute: AuthenticatedExamplesRoute,
+  AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRouteWithChildren,
