@@ -243,7 +243,7 @@ export const dispatchVariations = createServerFn({ method: "POST" })
             const result = await generateClaudeCopy({
               data: {
                 templateName: tpl.name,
-                variables: data.variables ?? [],
+                variables: Array.isArray(tpl.variables) ? tpl.variables as { name: string; label?: string; type?: string }[] : [],
                 brief: data.briefSummary ?? "",
                 rowLabel: row.label,
               },
