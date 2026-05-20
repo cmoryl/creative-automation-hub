@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
+import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
@@ -53,6 +54,12 @@ const AuthenticatedOutputsRoute = AuthenticatedOutputsRouteImport.update({
   path: '/outputs',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsIntegrationsRoute =
+  AuthenticatedSettingsIntegrationsRouteImport.update({
+    id: '/settings/integrations',
+    path: '/settings/integrations',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsApiRoute =
   AuthenticatedSettingsApiRouteImport.update({
     id: '/settings/api',
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
+  '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -121,6 +129,7 @@ export interface FileRoutesByTo {
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
+  '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -138,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
+  '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
+    | '/settings/integrations'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
+    | '/settings/integrations'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
+    | '/_authenticated/settings/integrations'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
@@ -245,6 +258,13 @@ declare module '@tanstack/react-router' {
       path: '/outputs'
       fullPath: '/outputs'
       preLoaderRoute: typeof AuthenticatedOutputsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/integrations': {
+      id: '/_authenticated/settings/integrations'
+      path: '/settings/integrations'
+      fullPath: '/settings/integrations'
+      preLoaderRoute: typeof AuthenticatedSettingsIntegrationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/api': {
@@ -325,6 +345,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
+  AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -333,6 +354,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedSettingsAgentRoute: AuthenticatedSettingsAgentRoute,
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
+  AuthenticatedSettingsIntegrationsRoute:
+    AuthenticatedSettingsIntegrationsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
