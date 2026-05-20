@@ -245,6 +245,73 @@ export type Database = {
           },
         ]
       }
+      product_assets: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          metadata: Json
+          name: string
+          product_id: string | null
+          prompt: string | null
+          source: string
+          url: string
+          workspace_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          name: string
+          product_id?: string | null
+          prompt?: string | null
+          source?: string
+          url: string
+          workspace_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          name?: string
+          product_id?: string | null
+          prompt?: string | null
+          source?: string
+          url?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_assets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_assets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_assets_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           accent_color: string | null
