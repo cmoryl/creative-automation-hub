@@ -5,7 +5,7 @@ import { getShowcase } from "@/lib/workspace.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Figma, Palette, FileText, Layers, Sparkles, ExternalLink } from "lucide-react";
+import { Figma, Palette, FileText, Layers, Sparkles, ExternalLink, MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/examples")({
   component: ExamplesPage,
