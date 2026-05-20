@@ -108,11 +108,14 @@ function ExamplesPage() {
                       </div>
                       <div className="text-sm font-medium">{t.name}</div>
                       <div className="flex flex-wrap gap-1">
-                        {vars.slice(0, 4).map((v: { name: string }) => (
-                          <Badge key={v.name} variant="secondary" className="text-[10px]">
-                            {v.name}
-                          </Badge>
-                        ))}
+                        {vars.slice(0, 4).map((v, i) => {
+                          const name = typeof v === "object" && v && "name" in v ? String((v as { name: unknown }).name) : `var${i}`;
+                          return (
+                            <Badge key={name + i} variant="secondary" className="text-[10px]">
+                              {name}
+                            </Badge>
+                          );
+                        })}
                         {vars.length > 4 && (
                           <Badge variant="secondary" className="text-[10px]">
                             +{vars.length - 4}
