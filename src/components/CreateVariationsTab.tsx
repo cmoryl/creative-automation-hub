@@ -56,6 +56,51 @@ const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: stri
   { id: "canva", label: "Canva" },
 ];
 
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
+const IMAGE_URL_RE = /^https?:\/\/\S+$/i;
+
+/** Validate one field value. Returns error message or null. */
+function validateField(v: Variable, raw: string): string | null {
+  const val = (raw ?? "").trim();
+  const label = v.label ?? v.name;
+  if (!val) return `${label} is required`;
+  if (v.type === "color") {
+    if (!HEX_RE.test(val)) return `${label} must be a hex color (e.g. #0E2C5C)`;
+    return null;
+  }
+  if (v.type === "image" || /image|logo|photo|hero/i.test(v.name)) {
+    if (!IMAGE_URL_RE.test(val)) return `${label} must be an image URL (https://…)`;
+    return null;
+  }
+  if (/email/i.test(v.name)) {
+    if (!EMAIL_RE.test(val)) return `${label} must be a valid email`;
+    if (val.length > 255) return `${label} is too long`;
+    return null;
+  }
+  if (/url|website|link/i.test(v.name)) {
+    if (!URL_RE.test(val)) return `${label} must be a valid URL or domain`;
+    if (val.length > 500) return `${label} is too long`;
+    return null;
+  }
+  const max = v.multiline || /challenge|solution|results|quote|body|description/i.test(v.name) ? 4000 : 200;
+  if (val.length > max) return `${label} must be ≤ ${max} characters`;
+  return null;
+}
+
+function validateAll(
+  variables: Variable[],
+  values: Record<string, string>,
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  for (const v of variables) {
+    const e = validateField(v, values[v.name] ?? "");
+    if (e) errs[v.name] = e;
+  }
+  return errs;
+}
+
 export function CreateVariationsTab({
   templateId,
   templateName,
@@ -112,6 +157,8 @@ export function CreateVariationsTab({
     engines: string[];
   } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [csvRowErrors, setCsvRowErrors] = useState<{ row: number; field: string; message: string }[]>([]);
 
   const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
     setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
@@ -246,15 +293,21 @@ export function CreateVariationsTab({
       if (engines.size === 0) throw new Error("Pick at least one engine");
       setLastResult(null);
       setActivityLog([]);
-      logActivity("Preparing brief…");
+      setCsvRowErrors([]);
+      logActivity("Validating inputs…");
       let rows: { label: string; values: Record<string, string> }[] = [];
       if (mode === "csv") {
         if (!csvRows.length) throw new Error("Upload a CSV first");
+        const rowErrs: { row: number; field: string; message: string }[] = [];
         rows = csvRows.map((r, i) => {
           const mapped: Record<string, string> = {};
           for (const v of variables) {
             const col = csvMapping[v.name];
             if (col && r[col] != null) mapped[v.name] = String(r[col]);
+          }
+          const errs = validateAll(variables, mapped);
+          for (const [field, message] of Object.entries(errs)) {
+            rowErrs.push({ row: i + 1, field, message });
           }
           return {
             label:
@@ -265,8 +318,21 @@ export function CreateVariationsTab({
             values: mapped,
           };
         });
+        if (rowErrs.length) {
+          setCsvRowErrors(rowErrs);
+          throw new Error(
+            `${rowErrs.length} validation error(s) across ${new Set(rowErrs.map((e) => e.row)).size} row(s)`,
+          );
+        }
         logActivity(`Mapped ${rows.length} CSV rows to template fields`, "ok");
       } else {
+        const errs = validateAll(variables, values);
+        setErrors(errs);
+        if (Object.keys(errs).length) {
+          throw new Error(
+            `Please fix ${Object.keys(errs).length} field error(s) before dispatching`,
+          );
+        }
         rows = [
           {
             label:
@@ -330,18 +396,30 @@ export function CreateVariationsTab({
 
   const renderField = (v: Variable) => {
     const val = values[v.name] ?? "";
-    const onChange = (newVal: string) =>
+    const err = errors[v.name];
+    const onChange = (newVal: string) => {
       setValues((s) => ({ ...s, [v.name]: newVal }));
-    if (v.type === "color")
-      return (
+      if (errors[v.name]) {
+        setErrors((s) => {
+          const n = { ...s };
+          delete n[v.name];
+          return n;
+        });
+      }
+    };
+    const errBorder = err ? "border-destructive focus-visible:ring-destructive" : "";
+    let control: React.ReactNode;
+    if (v.type === "color") {
+      control = (
         <Input
           type="color"
           value={val || "#0066cc"}
           onChange={(e) => onChange(e.target.value)}
+          className={errBorder}
         />
       );
-    if (v.type === "image" || /image|logo|photo|hero/i.test(v.name))
-      return (
+    } else if (v.type === "image" || /image|logo|photo|hero/i.test(v.name)) {
+      control = (
         <ImageField
           value={val}
           onChange={onChange}
@@ -353,21 +431,32 @@ export function CreateVariationsTab({
           fieldLabel={v.label ?? v.name}
         />
       );
-    if (v.multiline || v.name.match(/challenge|solution|results|quote/i))
-      return (
+    } else if (v.multiline || v.name.match(/challenge|solution|results|quote/i)) {
+      control = (
         <Textarea
           rows={3}
           placeholder={v.placeholder ?? v.label ?? v.name}
           value={val}
           onChange={(e) => onChange(e.target.value)}
+          className={errBorder}
         />
       );
+    } else {
+      control = (
+        <Input
+          placeholder={v.placeholder ?? v.label ?? v.name}
+          value={val}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={!!err}
+          className={errBorder}
+        />
+      );
+    }
     return (
-      <Input
-        placeholder={v.placeholder ?? v.label ?? v.name}
-        value={val}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <>
+        {control}
+        {err && <p className="text-xs text-destructive">{err}</p>}
+      </>
     );
   };
 
@@ -583,6 +672,36 @@ export function CreateVariationsTab({
 
         {/* Footer: engines + dispatch */}
         <div className="space-y-2 border-t p-3">
+          {mode !== "csv" && Object.keys(errors).length > 0 && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+              <div className="font-medium">
+                {Object.keys(errors).length} field error(s) — fix before dispatching:
+              </div>
+              <ul className="mt-1 list-disc pl-4">
+                {Object.entries(errors).slice(0, 5).map(([f, m]) => (
+                  <li key={f}>{m}</li>
+                ))}
+                {Object.keys(errors).length > 5 && (
+                  <li>+{Object.keys(errors).length - 5} more…</li>
+                )}
+              </ul>
+            </div>
+          )}
+          {mode === "csv" && csvRowErrors.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+              <div className="font-medium">
+                {csvRowErrors.length} CSV validation error(s):
+              </div>
+              <ul className="mt-1 list-disc pl-4">
+                {csvRowErrors.slice(0, 10).map((e, i) => (
+                  <li key={i}>
+                    Row {e.row}: {e.message}
+                  </li>
+                ))}
+                {csvRowErrors.length > 10 && <li>+{csvRowErrors.length - 10} more…</li>}
+              </ul>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Render in:</span>
             {ENGINES.map((e) => {
