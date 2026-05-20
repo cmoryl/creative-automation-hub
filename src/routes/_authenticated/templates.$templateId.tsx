@@ -240,6 +240,9 @@ function TemplateDetailPage() {
                   ? [brand.source.productName, brand.source.companyName].filter(Boolean).join(" / ") || null
                   : null
               }
+              companyId={brand?.source?.companyId ?? null}
+              productId={brand?.source?.productId ?? null}
+              engine={tpl.engine}
             />
             {isBridge && (
               <p className="mt-3 text-[11px] text-muted-foreground">
