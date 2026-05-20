@@ -452,6 +452,10 @@ export type Database = {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
       }
+      seed_workspace_examples: {
+        Args: { _workspace_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "member"
