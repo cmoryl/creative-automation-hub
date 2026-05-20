@@ -66,7 +66,7 @@ function TemplatesBatchPage() {
       const out: Record<string, BatchVariable[]> = {};
       for (const id of selectedIds) {
         const t = await getTplFn({ data: { id } });
-        out[id] = ((t.template?.variables as BatchVariable[] | null) ?? []);
+        out[id] = ((t?.template?.variables as BatchVariable[] | null) ?? []);
       }
       return out;
     },
