@@ -796,12 +796,22 @@ export function CreateVariationsTab({
                   </div>
                 )}
               </div>
-              <Link
-                to="/outputs"
-                className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
-              >
-                View all outputs <ExternalLink className="h-3 w-3" />
-              </Link>
+              {lastResult.batchId ? (
+                <Link
+                  to="/batches/$batchId"
+                  params={{ batchId: lastResult.batchId }}
+                  className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
+                >
+                  Open batch dashboard <ExternalLink className="h-3 w-3" />
+                </Link>
+              ) : (
+                <Link
+                  to="/outputs"
+                  className="mt-1 flex items-center justify-center gap-1 rounded border bg-background py-1 font-medium hover:bg-muted"
+                >
+                  View all outputs <ExternalLink className="h-3 w-3" />
+                </Link>
+              )}
             </div>
           )}
         </div>
