@@ -194,6 +194,40 @@ async function uploadOutput({ apiBase, token, jobId, filePath, kind, metadata })
   return { kind, url: sig.public_url, metadata };
 }
 
+// Zip a folder using the OS's native tool (no npm deps).
+//   macOS/Linux: /usr/bin/zip
+//   Windows:     PowerShell Compress-Archive
+function zipFolder(srcDir, zipPath) {
+  return new Promise((resolve, reject) => {
+    let cmd, args, opts = { stdio: "inherit" };
+    if (process.platform === "win32") {
+      cmd = "powershell";
+      args = [
+        "-NoProfile",
+        "-Command",
+        `Compress-Archive -Path '${srcDir}\\*' -DestinationPath '${zipPath}' -Force`,
+      ];
+    } else {
+      cmd = "zip";
+      args = ["-r", "-q", zipPath, "."];
+      opts.cwd = srcDir;
+    }
+    const child = spawn(cmd, args, opts);
+    child.on("error", reject);
+    child.on("exit", (code) =>
+      code === 0 ? resolve() : reject(new Error(`zip exited ${code}`)),
+    );
+  });
+}
+
+async function safeUpload(args) {
+  try { return await uploadOutput(args); }
+  catch (e) {
+    console.warn(`upload failed for ${args.filePath}: ${e.message}`);
+    return null;
+  }
+}
+
 export async function run(job, ctx) {
   const { apiBase, token, progress } = ctx;
   await progress("opening", 10, "Opening template in Illustrator");
@@ -212,24 +246,88 @@ export async function run(job, ctx) {
   await progress("rendering", 40, "Running ExtendScript in Illustrator");
   await runIllustratorScript(jsxPath);
 
-  await progress("uploading", 80, "Uploading artefacts");
+  // Write a manifest into the package folder before zipping.
+  const pkgDir = path.join(outDir, "package");
+  await fs.mkdir(pkgDir, { recursive: true });
+  // Copy the editable .ai into the package too, so the zip is self-contained.
+  try {
+    await fs.copyFile(
+      path.join(outDir, "editable.ai"),
+      path.join(pkgDir, "editable.ai"),
+    );
+  } catch {}
+  try {
+    await fs.copyFile(
+      path.join(outDir, "master.pdf"),
+      path.join(pkgDir, "master.pdf"),
+    );
+    await fs.copyFile(
+      path.join(outDir, "preview.png"),
+      path.join(pkgDir, "preview.png"),
+    );
+  } catch {}
+  await fs.writeFile(
+    path.join(pkgDir, "manifest.json"),
+    JSON.stringify(
+      {
+        job_id: job.id,
+        template: job.template?.name ?? null,
+        source_ref: job.template?.source_ref ?? null,
+        engine: "illustrator",
+        rendered_at: new Date().toISOString(),
+        variables: job.variables ?? {},
+      },
+      null,
+      2,
+    ),
+  );
+
+  await progress("packaging", 75, "Zipping editable assets + fonts");
+  const zipPath = path.join(outDir, "package.zip");
+  try {
+    await zipFolder(pkgDir, zipPath);
+  } catch (e) {
+    console.warn(`package zip failed: ${e.message}`);
+  }
+
+  await progress("uploading", 85, "Uploading artefacts");
   const outputs = [];
-  outputs.push(
-    await uploadOutput({
+  const png = await safeUpload({
+    apiBase, token, jobId: job.id,
+    filePath: path.join(outDir, "preview.png"),
+    kind: "png",
+    metadata: { source: "illustrator" },
+  });
+  if (png) outputs.push(png);
+
+  const pdf = await safeUpload({
+    apiBase, token, jobId: job.id,
+    filePath: path.join(outDir, "master.pdf"),
+    kind: "pdf",
+    metadata: { source: "illustrator" },
+  });
+  if (pdf) outputs.push(pdf);
+
+  const ai = await safeUpload({
+    apiBase, token, jobId: job.id,
+    filePath: path.join(outDir, "editable.ai"),
+    kind: "ai",
+    metadata: { source: "illustrator", editable: true },
+  });
+  if (ai) outputs.push(ai);
+
+  if (await fs.stat(zipPath).then(() => true).catch(() => false)) {
+    const pkg = await safeUpload({
       apiBase, token, jobId: job.id,
-      filePath: path.join(outDir, "preview.png"),
-      kind: "png",
-      metadata: { source: "illustrator" },
-    }),
-  );
-  outputs.push(
-    await uploadOutput({
-      apiBase, token, jobId: job.id,
-      filePath: path.join(outDir, "master.pdf"),
-      kind: "pdf",
-      metadata: { source: "illustrator" },
-    }),
-  );
+      filePath: zipPath,
+      kind: "package",
+      metadata: {
+        source: "illustrator",
+        contents: ["editable.ai", "master.pdf", "preview.png", "Links/", "Fonts/", "manifest.json", "Report.txt"],
+      },
+    });
+    if (pkg) outputs.push(pkg);
+  }
 
   await progress("done", 100, "Outputs uploaded");
   return outputs;
