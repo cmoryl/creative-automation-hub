@@ -112,7 +112,16 @@ export const updateCompany = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      name?: string;
+      description?: string | null;
+      logo_url?: string | null;
+      primary_color?: string | null;
+      accent_color?: string | null;
+      font_family?: string | null;
+      contact_email?: string | null;
+      contact_url?: string | null;
+    } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.kit) {
       if (data.kit.description !== undefined) patch.description = data.kit.description || null;
@@ -193,7 +202,16 @@ export const updateProduct = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      name?: string;
+      description?: string | null;
+      logo_url?: string | null;
+      primary_color?: string | null;
+      accent_color?: string | null;
+      font_family?: string | null;
+      contact_email?: string | null;
+      contact_url?: string | null;
+    } = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.kit) {
       if (data.kit.description !== undefined) patch.description = data.kit.description || null;
@@ -255,27 +273,36 @@ export const getTemplateBrandPrefill = createServerFn({ method: "GET" })
     if (tErr) throw tErr;
     if (!tpl) return { prefill: {}, source: null };
 
-    let company: Record<string, string | null> | null = null;
-    let product: Record<string, string | null> | null = null;
+    type Kit = {
+      name: string;
+      logo_url: string | null;
+      primary_color: string | null;
+      accent_color: string | null;
+      font_family: string | null;
+      contact_email: string | null;
+      contact_url: string | null;
+    };
+    let company: Kit | null = null;
+    let product: Kit | null = null;
 
     if (tpl.company_id) {
       const { data: c } = await supabase
         .from("companies")
-        .select("id, name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
         .eq("id", tpl.company_id)
         .maybeSingle();
-      company = c as never;
+      company = (c as Kit | null) ?? null;
     }
     if (tpl.product_id) {
       const { data: p } = await supabase
         .from("products")
-        .select("id, name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
         .eq("id", tpl.product_id)
         .maybeSingle();
-      product = p as never;
+      product = (p as Kit | null) ?? null;
     }
 
-    const pick = (key: string): string | null =>
+    const pick = (key: keyof Kit): string | null =>
       (product?.[key] as string | null) || (company?.[key] as string | null) || null;
 
     const map: Record<string, string | null> = {
@@ -290,8 +317,8 @@ export const getTemplateBrandPrefill = createServerFn({ method: "GET" })
       email: pick("contact_email"),
       contact_url: pick("contact_url"),
       website: pick("contact_url"),
-      client_name: (product?.name as string | null) || (company?.name as string | null) || null,
-      brand: (company?.name as string | null) || null,
+      client_name: product?.name ?? company?.name ?? null,
+      brand: company?.name ?? null,
     };
 
     const prefill: Record<string, string> = {};
@@ -301,9 +328,9 @@ export const getTemplateBrandPrefill = createServerFn({ method: "GET" })
       prefill,
       source: {
         companyId: tpl.company_id,
-        companyName: (company?.name as string | null) ?? null,
+        companyName: company?.name ?? null,
         productId: tpl.product_id,
-        productName: (product?.name as string | null) ?? null,
+        productName: product?.name ?? null,
       },
     };
   });
