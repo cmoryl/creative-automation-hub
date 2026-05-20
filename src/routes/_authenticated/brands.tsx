@@ -312,11 +312,11 @@ function BrandsPage() {
       {/* New product */}
       <Dialog open={!!prFor} onOpenChange={(o) => !o && setPrFor(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New product</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{prFor?.parentProductId ? `New sub-product under ${prFor.parentName ?? "product"}` : "New product"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Product name" value={prName} onChange={(e) => setPrName(e.target.value)} />
+            <Input placeholder={prFor?.parentProductId ? "Sub-product name (e.g. GlobalLink Connect)" : "Product name"} value={prName} onChange={(e) => setPrName(e.target.value)} />
             <KitFields value={prKit} onChange={setPrKit} />
-            <p className="text-xs text-muted-foreground">Leave fields blank to inherit from the company.</p>
+            <p className="text-xs text-muted-foreground">Leave fields blank to inherit from the {prFor?.parentProductId ? "parent product, then the company" : "company"}.</p>
             <Button onClick={submitPr} disabled={!prName.trim()} className="w-full">Create</Button>
           </div>
         </DialogContent>
