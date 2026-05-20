@@ -82,7 +82,18 @@ export function CreateVariationsTab({
   const [csvRows, setCsvRows] = useState<Record<string, string>[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvMapping, setCsvMapping] = useState<Record<string, string>>({});
+  const [activityLog, setActivityLog] = useState<
+    { ts: number; text: string; kind: "info" | "ok" | "err" }[]
+  >([]);
+  const [lastResult, setLastResult] = useState<{
+    created: { projectId: string; jobIds: string[]; label: string }[];
+    hasLiveAgent: boolean;
+    engines: string[];
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const logActivity = (text: string, kind: "info" | "ok" | "err" = "info") =>
+    setActivityLog((l) => [...l, { ts: Date.now(), text, kind }]);
 
   // auto-derive sections from layers when entering stepper without AI sections
   const fallbackSections: Section[] = useMemo(() => {
