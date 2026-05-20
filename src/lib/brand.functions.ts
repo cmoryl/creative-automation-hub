@@ -35,7 +35,7 @@ export const listCompanies = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, company_id, name, slug, description, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, brand_metadata, created_at",
+          "id, company_id, parent_product_id, name, slug, description, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, brand_metadata, created_at",
         )
         .order("name"),
       supabase.from("templates").select("id, company_id, product_id"),
@@ -46,14 +46,21 @@ export const listCompanies = createServerFn({ method: "GET" })
 
     const products = pRes.data ?? [];
     const templates = tRes.data ?? [];
+    const decorate = (p: (typeof products)[number]) => ({
+      ...p,
+      templateCount: templates.filter((t) => t.product_id === p.id).length,
+      subProducts: products
+        .filter((sp) => sp.parent_product_id === p.id)
+        .map((sp) => ({
+          ...sp,
+          templateCount: templates.filter((t) => t.product_id === sp.id).length,
+        })),
+    });
     return (cRes.data ?? []).map((c) => ({
       ...c,
       products: products
-        .filter((p) => p.company_id === c.id)
-        .map((p) => ({
-          ...p,
-          templateCount: templates.filter((t) => t.product_id === p.id).length,
-        })),
+        .filter((p) => p.company_id === c.id && !p.parent_product_id)
+        .map(decorate),
       templateCount: templates.filter((t) => t.company_id === c.id).length,
     }));
   });
@@ -154,6 +161,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .object({
         companyId: z.string().uuid(),
         name: z.string().min(1).max(120),
+        parentProductId: z.string().uuid().nullish(),
         kit: brandKitInput.optional(),
       })
       .parse(input),
@@ -173,6 +181,7 @@ export const createProduct = createServerFn({ method: "POST" })
       .insert({
         company_id: company.id,
         workspace_id: company.workspace_id,
+        parent_product_id: data.parentProductId ?? null,
         created_by: userId,
         name: data.name,
         slug,
@@ -296,10 +305,31 @@ export const getTemplateBrandPrefill = createServerFn({ method: "GET" })
     if (tpl.product_id) {
       const { data: p } = await supabase
         .from("products")
-        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+        .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url, parent_product_id")
         .eq("id", tpl.product_id)
         .maybeSingle();
-      product = (p as Kit | null) ?? null;
+      product = (p as (Kit & { parent_product_id?: string | null }) | null) ?? null;
+      // Walk up to parent product if present
+      const parentId = (p as { parent_product_id?: string | null } | null)?.parent_product_id;
+      if (parentId) {
+        const { data: pp } = await supabase
+          .from("products")
+          .select("name, logo_url, primary_color, accent_color, font_family, contact_email, contact_url")
+          .eq("id", parentId)
+          .maybeSingle();
+        if (pp) {
+          // merge: child overrides parent
+          product = {
+            name: product?.name ?? (pp as Kit).name,
+            logo_url: product?.logo_url || (pp as Kit).logo_url,
+            primary_color: product?.primary_color || (pp as Kit).primary_color,
+            accent_color: product?.accent_color || (pp as Kit).accent_color,
+            font_family: product?.font_family || (pp as Kit).font_family,
+            contact_email: product?.contact_email || (pp as Kit).contact_email,
+            contact_url: product?.contact_url || (pp as Kit).contact_url,
+          };
+        }
+      }
     }
 
     const pick = (key: keyof Kit): string | null =>

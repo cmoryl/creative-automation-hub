@@ -326,6 +326,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          parent_product_id: string | null
           primary_color: string | null
           slug: string
           updated_at: string
@@ -344,6 +345,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          parent_product_id?: string | null
           primary_color?: string | null
           slug: string
           updated_at?: string
@@ -362,6 +364,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          parent_product_id?: string | null
           primary_color?: string | null
           slug?: string
           updated_at?: string
@@ -373,6 +376,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_parent_product_id_fkey"
+            columns: ["parent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
