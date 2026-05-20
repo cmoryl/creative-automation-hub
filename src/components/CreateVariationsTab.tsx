@@ -56,6 +56,51 @@ const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva"; label: stri
   { id: "canva", label: "Canva" },
 ];
 
+const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
+const IMAGE_URL_RE = /^https?:\/\/\S+$/i;
+
+/** Validate one field value. Returns error message or null. */
+function validateField(v: Variable, raw: string): string | null {
+  const val = (raw ?? "").trim();
+  const label = v.label ?? v.name;
+  if (!val) return `${label} is required`;
+  if (v.type === "color") {
+    if (!HEX_RE.test(val)) return `${label} must be a hex color (e.g. #0E2C5C)`;
+    return null;
+  }
+  if (v.type === "image" || /image|logo|photo|hero/i.test(v.name)) {
+    if (!IMAGE_URL_RE.test(val)) return `${label} must be an image URL (https://…)`;
+    return null;
+  }
+  if (/email/i.test(v.name)) {
+    if (!EMAIL_RE.test(val)) return `${label} must be a valid email`;
+    if (val.length > 255) return `${label} is too long`;
+    return null;
+  }
+  if (/url|website|link/i.test(v.name)) {
+    if (!URL_RE.test(val)) return `${label} must be a valid URL or domain`;
+    if (val.length > 500) return `${label} is too long`;
+    return null;
+  }
+  const max = v.multiline || /challenge|solution|results|quote|body|description/i.test(v.name) ? 4000 : 200;
+  if (val.length > max) return `${label} must be ≤ ${max} characters`;
+  return null;
+}
+
+function validateAll(
+  variables: Variable[],
+  values: Record<string, string>,
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  for (const v of variables) {
+    const e = validateField(v, values[v.name] ?? "");
+    if (e) errs[v.name] = e;
+  }
+  return errs;
+}
+
 export function CreateVariationsTab({
   templateId,
   templateName,
