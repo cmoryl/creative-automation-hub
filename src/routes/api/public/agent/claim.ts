@@ -34,7 +34,7 @@ export const Route = createFileRoute("/api/public/agent/claim")({
             .eq("id", job.id)
             .eq("status", "queued");
           if (error) return json({ job: null });
-          return json({ job });
+          return json({ job: flatJob });
         } catch (e) {
           if (e instanceof Response) return e;
           return json({ error: String(e) }, { status: 500 });
