@@ -415,7 +415,7 @@ function TemplateDetailPage() {
                 disabled={busy}
                 className="w-full"
               >
-                <Send className="h-4 w-4" /> {busy ? "Dispatching…" : "Send to bridge"}
+                <Wand2 className="h-4 w-4" /> {busy ? "Creating…" : "Create variation"}
               </Button>
               {isBridge && (
                 <p className="text-[11px] text-muted-foreground">
