@@ -56,12 +56,16 @@ export function CreateVariationsTab({
   variables,
   defaultEngines,
   autoOpenSingleResult = false,
+  brandPrefill,
+  brandSourceLabel,
 }: {
   templateId: string;
   templateName: string;
   variables: Variable[];
   defaultEngines?: string[];
   autoOpenSingleResult?: boolean;
+  brandPrefill?: Record<string, string>;
+  brandSourceLabel?: string | null;
 }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -71,7 +75,7 @@ export function CreateVariationsTab({
   const dispatchFn = useServerFn(dispatchVariations);
 
   const [mode, setMode] = useState<InputMode | null>(null);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(() => ({ ...(brandPrefill ?? {}) }));
   const [step, setStep] = useState(0);
   const [sections, setSections] = useState<Section[]>([]);
   const [engines, setEngines] = useState<Set<string>>(
