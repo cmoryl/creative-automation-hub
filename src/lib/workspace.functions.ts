@@ -157,7 +157,7 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
         engine: tpl.engine,
         status: "queued",
         brief: { summary: data.briefSummary ?? "" },
-        variables: data.variables,
+        variables: data.variables as never,
       })
       .select("id")
       .single();
