@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   briefAgentChat,
   createBriefUploadUrl,
+  createHeroImageUploadUrl,
   parseCsvFile,
   dispatchVariations,
 } from "@/lib/brief-agent.functions";
