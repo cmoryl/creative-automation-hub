@@ -207,36 +207,77 @@ function BrandsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2 pl-13">
+                <div className="mt-4 space-y-3 pl-13">
                   {c.products.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between rounded border bg-muted/30 px-3 py-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">· {p.templateCount} template{p.templateCount === 1 ? "" : "s"}</span>
-                        {p.primary_color && <span className="h-3 w-3 rounded-full border" style={{ background: p.primary_color }} />}
+                    <div key={p.id} className="rounded border bg-muted/30">
+                      <div className="flex items-center justify-between px-3 py-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{p.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            · {p.templateCount} template{p.templateCount === 1 ? "" : "s"}
+                            {p.subProducts.length > 0 && ` · ${p.subProducts.length} sub-product${p.subProducts.length === 1 ? "" : "s"}`}
+                          </span>
+                          {p.primary_color && <span className="h-3 w-3 rounded-full border" style={{ background: p.primary_color }} />}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs"
+                            onClick={() => { setPrFor({ companyId: c.id, parentProductId: p.id, parentName: p.name }); setPrName(""); setPrKit({}); }}>
+                            <Plus className="h-3.5 w-3.5" /> Sub-product
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditPr({ id: p.id, name: p.name, kit: {
+                            description: p.description ?? "", logo_url: p.logo_url ?? "",
+                            primary_color: p.primary_color ?? "", accent_color: p.accent_color ?? "",
+                            font_family: p.font_family ?? "", contact_email: p.contact_email ?? "", contact_url: p.contact_url ?? "",
+                          } })}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                            onClick={async () => {
+                              if (!confirm(`Delete product ${p.name}? Sub-products will be detached.`)) return;
+                              await deletePrFn({ data: { id: p.id } });
+                              toast.success("Deleted");
+                              invalidate();
+                            }}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditPr({ id: p.id, name: p.name, kit: {
-                          description: p.description ?? "", logo_url: p.logo_url ?? "",
-                          primary_color: p.primary_color ?? "", accent_color: p.accent_color ?? "",
-                          font_family: p.font_family ?? "", contact_email: p.contact_email ?? "", contact_url: p.contact_url ?? "",
-                        } })}>
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                          onClick={async () => {
-                            if (!confirm(`Delete product ${p.name}?`)) return;
-                            await deletePrFn({ data: { id: p.id } });
-                            toast.success("Deleted");
-                            invalidate();
-                          }}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                      {p.subProducts.length > 0 && (
+                        <div className="space-y-1 border-t bg-background/40 p-2 pl-8">
+                          {p.subProducts.map((sp) => (
+                            <div key={sp.id} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted/50">
+                              <div className="flex items-center gap-2">
+                                <span className="text-muted-foreground">↳</span>
+                                <span>{sp.name}</span>
+                                <span className="text-xs text-muted-foreground">· {sp.templateCount} template{sp.templateCount === 1 ? "" : "s"}</span>
+                                {sp.primary_color && <span className="h-2.5 w-2.5 rounded-full border" style={{ background: sp.primary_color }} />}
+                              </div>
+                              <div className="flex gap-1">
+                                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditPr({ id: sp.id, name: sp.name, kit: {
+                                  description: sp.description ?? "", logo_url: sp.logo_url ?? "",
+                                  primary_color: sp.primary_color ?? "", accent_color: sp.accent_color ?? "",
+                                  font_family: sp.font_family ?? "", contact_email: sp.contact_email ?? "", contact_url: sp.contact_url ?? "",
+                                } })}>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button size="icon" variant="ghost" className="h-6 w-6 text-destructive"
+                                  onClick={async () => {
+                                    if (!confirm(`Delete sub-product ${sp.name}?`)) return;
+                                    await deletePrFn({ data: { id: sp.id } });
+                                    toast.success("Deleted");
+                                    invalidate();
+                                  }}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <Button size="sm" variant="outline" onClick={() => { setPrFor(c.id); setPrName(""); setPrKit({}); }}>
+                  <Button size="sm" variant="outline" onClick={() => { setPrFor({ companyId: c.id, parentProductId: null }); setPrName(""); setPrKit({}); }}>
                     <Plus className="h-3.5 w-3.5" /> Add product
                   </Button>
                 </div>
