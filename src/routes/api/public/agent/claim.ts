@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/public/agent/claim")({
           // Claim oldest queued job for AI/ID engines in this workspace.
           const { data: job } = await supabaseAdmin
             .from("jobs")
-            .select("id, project_id, engine, template_id, brief, variables, templates:template_id (id, name, engine, source_ref, variables)")
+            .select("id, project_id, engine, template_id, brief, variables, templates:template_id (id, name, engine, source_ref, variables, pages)")
             .eq("workspace_id", auth.workspaceId)
             .in("engine", ["illustrator", "indesign"])
             .eq("status", "queued")

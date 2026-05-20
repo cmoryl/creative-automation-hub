@@ -169,7 +169,7 @@ export const getTemplate = createServerFn({ method: "GET" })
     const [tplRes, jobRes] = await Promise.all([
       supabase
         .from("templates")
-        .select("id, name, engine, preview_url, source_ref, variables, created_at, workspace_id")
+        .select("id, name, engine, preview_url, source_ref, variables, pages, created_at, workspace_id")
         .eq("id", data.id)
         .maybeSingle(),
       supabase
