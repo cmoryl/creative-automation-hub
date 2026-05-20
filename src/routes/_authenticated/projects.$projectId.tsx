@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProject } from "@/lib/workspace.functions";
 import { listChatMessages, sendChatMessage } from "@/lib/chat.functions";
-import { createJob, listProjectJobs } from "@/lib/agent.functions";
+import { createJob, listProjectJobs, preflightEngine } from "@/lib/agent.functions";
 import { createHybridRender } from "@/lib/hybrid.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
