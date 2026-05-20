@@ -98,15 +98,38 @@ export const getTemplate = createServerFn({ method: "GET" })
     if (tplRes.error) throw tplRes.error;
     if (jobRes.error) throw jobRes.error;
     if (!tplRes.data) return null;
+    const bridgeRequired = tplRes.data.source_ref?.startsWith("bridge://") ?? false;
+    const agentRes = bridgeRequired
+      ? await supabase
+          .from("agent_pairings")
+          .select("id, name, last_seen")
+          .eq("workspace_id", tplRes.data.workspace_id)
+          .order("last_seen", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null, error: null };
+    if (agentRes.error) throw agentRes.error;
     const outRes = await supabase
       .from("outputs")
       .select("id, kind, url, metadata, job_id, created_at")
       .in("job_id", (jobRes.data ?? []).map((j) => j.id))
       .order("created_at", { ascending: false });
+    const lastSeen = agentRes.data?.last_seen ?? null;
+    const isLiveAgent =
+      !!lastSeen && Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
+    const jobs = jobRes.data ?? [];
     return {
       template: tplRes.data,
-      jobs: jobRes.data ?? [],
+      jobs,
       outputs: outRes.data ?? [],
+      bridge: {
+        required: bridgeRequired,
+        agentName: agentRes.data?.name ?? null,
+        lastSeen,
+        isLiveAgent,
+        queuedJobs: jobs.filter((job) => job.status === "queued").length,
+        runningJobs: jobs.filter((job) => job.status === "running").length,
+      },
     };
   });
 
@@ -141,7 +164,8 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
     const fiveMinAgo = Date.now() - 5 * 60 * 1000;
     const hasLiveAgent = !!agents?.[0]?.last_seen && new Date(agents[0].last_seen).getTime() > fiveMinAgo;
     const needsBridge = tpl.source_ref?.startsWith("bridge://") ?? false;
-    const willMock = !needsBridge || !hasLiveAgent;
+    const shouldQueueForBridge = needsBridge;
+    const willMock = !shouldQueueForBridge;
 
     let projectId = data.projectId;
     if (!projectId) {
@@ -172,8 +196,19 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
         workspace_id: tpl.workspace_id,
         template_id: tpl.id,
         engine: tpl.engine,
-        status: willMock ? "completed" : "queued",
-        brief: { summary: data.briefSummary ?? "" },
+        status: shouldQueueForBridge ? "queued" : "completed",
+        brief: {
+          summary: data.briefSummary ?? "",
+          progress: shouldQueueForBridge
+            ? {
+                stage: hasLiveAgent ? "queued" : "awaiting_agent",
+                percent: 0,
+                message: hasLiveAgent
+                  ? "Waiting for the local bridge agent to claim this job."
+                  : "No live bridge agent detected. Start the local agent to render this template.",
+              }
+            : null,
+        },
         variables: data.variables as never,
         completed_at: willMock ? new Date().toISOString() : null,
       })
@@ -190,7 +225,13 @@ export const dispatchTemplateJob = createServerFn({ method: "POST" })
       });
     }
 
-    return { jobId: job.id, projectId, mocked: willMock };
+    return {
+      jobId: job.id,
+      projectId,
+      mocked: willMock,
+      hasLiveAgent,
+      waitingForAgent: shouldQueueForBridge,
+    };
   });
 
 export const listOutputs = createServerFn({ method: "GET" })
