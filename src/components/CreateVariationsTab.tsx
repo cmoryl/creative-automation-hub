@@ -345,6 +345,17 @@ export function CreateVariationsTab({
   };
 
   return (
+    <div className="space-y-3">
+    {brandPrefill && Object.keys(brandPrefill).length > 0 && (
+      <div className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
+        <Sparkles className="h-3.5 w-3.5 text-primary" />
+        <span>
+          Brand kit applied{brandSourceLabel ? ` from ${brandSourceLabel}` : ""} —
+          pre-filled <strong>{Object.keys(brandPrefill).length}</strong> field
+          {Object.keys(brandPrefill).length === 1 ? "" : "s"} (colors, logo, contact).
+        </span>
+      </div>
+    )}
     <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
       {/* LEFT — Chat */}
       <Card className="flex h-[600px] flex-col">
