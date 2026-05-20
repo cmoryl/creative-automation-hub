@@ -17,9 +17,11 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
+import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
 import { Route as ApiPublicAgentPingRouteImport } from './routes/api/public/agent/ping'
 import { Route as ApiPublicAgentCompleteRouteImport } from './routes/api/public/agent/complete'
 import { Route as ApiPublicAgentClaimRouteImport } from './routes/api/public/agent/claim'
+import { Route as ApiPublicV1JobsJobIdRouteImport } from './routes/api/public/v1/jobs.$jobId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -62,6 +64,11 @@ const AuthenticatedProjectsProjectIdRoute =
     path: '/$projectId',
     getParentRoute: () => AuthenticatedProjectsRoute,
   } as any)
+const ApiPublicV1JobsRoute = ApiPublicV1JobsRouteImport.update({
+  id: '/api/public/v1/jobs',
+  path: '/api/public/v1/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentPingRoute = ApiPublicAgentPingRouteImport.update({
   id: '/api/public/agent/ping',
   path: '/api/public/agent/ping',
@@ -77,6 +84,11 @@ const ApiPublicAgentClaimRoute = ApiPublicAgentClaimRouteImport.update({
   path: '/api/public/agent/claim',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1JobsJobIdRoute = ApiPublicV1JobsJobIdRouteImport.update({
+  id: '/$jobId',
+  path: '/$jobId',
+  getParentRoute: () => ApiPublicV1JobsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +101,8 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +115,8 @@ export interface FileRoutesByTo {
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +131,8 @@ export interface FileRoutesById {
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +147,8 @@ export interface FileRouteTypes {
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
+    | '/api/public/v1/jobs'
+    | '/api/public/v1/jobs/$jobId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,6 +161,8 @@ export interface FileRouteTypes {
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
+    | '/api/public/v1/jobs'
+    | '/api/public/v1/jobs/$jobId'
   id:
     | '__root__'
     | '/'
@@ -154,6 +176,8 @@ export interface FileRouteTypes {
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
     | '/api/public/agent/ping'
+    | '/api/public/v1/jobs'
+    | '/api/public/v1/jobs/$jobId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -163,6 +187,7 @@ export interface RootRouteChildren {
   ApiPublicAgentClaimRoute: typeof ApiPublicAgentClaimRoute
   ApiPublicAgentCompleteRoute: typeof ApiPublicAgentCompleteRoute
   ApiPublicAgentPingRoute: typeof ApiPublicAgentPingRoute
+  ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -223,6 +248,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProjectsProjectIdRouteImport
       parentRoute: typeof AuthenticatedProjectsRoute
     }
+    '/api/public/v1/jobs': {
+      id: '/api/public/v1/jobs'
+      path: '/api/public/v1/jobs'
+      fullPath: '/api/public/v1/jobs'
+      preLoaderRoute: typeof ApiPublicV1JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/ping': {
       id: '/api/public/agent/ping'
       path: '/api/public/agent/ping'
@@ -243,6 +275,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/agent/claim'
       preLoaderRoute: typeof ApiPublicAgentClaimRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/jobs/$jobId': {
+      id: '/api/public/v1/jobs/$jobId'
+      path: '/$jobId'
+      fullPath: '/api/public/v1/jobs/$jobId'
+      preLoaderRoute: typeof ApiPublicV1JobsJobIdRouteImport
+      parentRoute: typeof ApiPublicV1JobsRoute
     }
   }
 }
@@ -278,6 +317,18 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiPublicV1JobsRouteChildren {
+  ApiPublicV1JobsJobIdRoute: typeof ApiPublicV1JobsJobIdRoute
+}
+
+const ApiPublicV1JobsRouteChildren: ApiPublicV1JobsRouteChildren = {
+  ApiPublicV1JobsJobIdRoute: ApiPublicV1JobsJobIdRoute,
+}
+
+const ApiPublicV1JobsRouteWithChildren = ApiPublicV1JobsRoute._addFileChildren(
+  ApiPublicV1JobsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -285,7 +336,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentClaimRoute: ApiPublicAgentClaimRoute,
   ApiPublicAgentCompleteRoute: ApiPublicAgentCompleteRoute,
   ApiPublicAgentPingRoute: ApiPublicAgentPingRoute,
+  ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
