@@ -23,7 +23,10 @@ import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
+import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
+import { Route as ApiPublicAgentProgressRouteImport } from './routes/api/public/agent/progress'
 import { Route as ApiPublicAgentPingRouteImport } from './routes/api/public/agent/ping'
+import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentCompleteRouteImport } from './routes/api/public/agent/complete'
 import { Route as ApiPublicAgentClaimRouteImport } from './routes/api/public/agent/claim'
 import { Route as ApiPublicV1JobsJobIdRouteImport } from './routes/api/public/v1/jobs.$jobId'
@@ -103,9 +106,24 @@ const ApiPublicV1JobsRoute = ApiPublicV1JobsRouteImport.update({
   path: '/api/public/v1/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAgentUploadUrlRoute = ApiPublicAgentUploadUrlRouteImport.update({
+  id: '/api/public/agent/upload-url',
+  path: '/api/public/agent/upload-url',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentProgressRoute = ApiPublicAgentProgressRouteImport.update({
+  id: '/api/public/agent/progress',
+  path: '/api/public/agent/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentPingRoute = ApiPublicAgentPingRouteImport.update({
   id: '/api/public/agent/ping',
   path: '/api/public/agent/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
+  id: '/api/public/agent/heartbeat',
+  path: '/api/public/agent/heartbeat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAgentCompleteRoute = ApiPublicAgentCompleteRouteImport.update({
@@ -139,7 +157,10 @@ export interface FileRoutesByFullPath {
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
+  '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -158,7 +179,10 @@ export interface FileRoutesByTo {
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
+  '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -179,7 +203,10 @@ export interface FileRoutesById {
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
+  '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
+  '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -200,7 +227,10 @@ export interface FileRouteTypes {
     | '/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
+    | '/api/public/agent/heartbeat'
     | '/api/public/agent/ping'
+    | '/api/public/agent/progress'
+    | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesByTo: FileRoutesByTo
@@ -219,7 +249,10 @@ export interface FileRouteTypes {
     | '/templates'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
+    | '/api/public/agent/heartbeat'
     | '/api/public/agent/ping'
+    | '/api/public/agent/progress'
+    | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/v1/jobs/$jobId'
   id:
@@ -239,7 +272,10 @@ export interface FileRouteTypes {
     | '/_authenticated/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
+    | '/api/public/agent/heartbeat'
     | '/api/public/agent/ping'
+    | '/api/public/agent/progress'
+    | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesById: FileRoutesById
@@ -250,7 +286,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiPublicAgentClaimRoute: typeof ApiPublicAgentClaimRoute
   ApiPublicAgentCompleteRoute: typeof ApiPublicAgentCompleteRoute
+  ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
   ApiPublicAgentPingRoute: typeof ApiPublicAgentPingRoute
+  ApiPublicAgentProgressRoute: typeof ApiPublicAgentProgressRoute
+  ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
 }
 
@@ -354,11 +393,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/agent/upload-url': {
+      id: '/api/public/agent/upload-url'
+      path: '/api/public/agent/upload-url'
+      fullPath: '/api/public/agent/upload-url'
+      preLoaderRoute: typeof ApiPublicAgentUploadUrlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/progress': {
+      id: '/api/public/agent/progress'
+      path: '/api/public/agent/progress'
+      fullPath: '/api/public/agent/progress'
+      preLoaderRoute: typeof ApiPublicAgentProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/ping': {
       id: '/api/public/agent/ping'
       path: '/api/public/agent/ping'
       fullPath: '/api/public/agent/ping'
       preLoaderRoute: typeof ApiPublicAgentPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/heartbeat': {
+      id: '/api/public/agent/heartbeat'
+      path: '/api/public/agent/heartbeat'
+      fullPath: '/api/public/agent/heartbeat'
+      preLoaderRoute: typeof ApiPublicAgentHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/agent/complete': {
@@ -445,9 +505,22 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiPublicAgentClaimRoute: ApiPublicAgentClaimRoute,
   ApiPublicAgentCompleteRoute: ApiPublicAgentCompleteRoute,
+  ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
   ApiPublicAgentPingRoute: ApiPublicAgentPingRoute,
+  ApiPublicAgentProgressRoute: ApiPublicAgentProgressRoute,
+  ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
