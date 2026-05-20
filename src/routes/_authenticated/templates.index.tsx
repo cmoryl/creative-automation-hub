@@ -250,6 +250,18 @@ function TemplatesPage() {
                       <Pencil className="mr-2 h-4 w-4" /> Rename
                     </DropdownMenuItem>
                     <DropdownMenuItem
+                      onSelect={async () => {
+                        try {
+                          await duplicateFn({ data: { id: t.id } });
+                          toast.success(`Duplicated “${t.name}”`);
+                          qc.invalidateQueries({ queryKey: ["templates"] });
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Duplicate failed");
+                        }
+                      }}
+                    >
+                      <Copy className="mr-2 h-4 w-4" /> Duplicate
+                    <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onSelect={() => setDeleteTarget({ id: t.id, name: t.name })}
                     >
