@@ -4,8 +4,9 @@ import { z } from "zod";
 import { generateText, Output } from "ai";
 import Papa from "papaparse";
 import { createLovableAiGatewayProvider } from "./ai-gateway";
+import { generateClaudeCopy } from "./claude.functions";
 
-const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva"] as const;
+const SUPPORTED_ENGINES = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
 
 const messageSchema = z.object({
   role: z.enum(["user", "assistant"]),
