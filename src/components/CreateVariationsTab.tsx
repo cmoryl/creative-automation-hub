@@ -672,6 +672,36 @@ export function CreateVariationsTab({
 
         {/* Footer: engines + dispatch */}
         <div className="space-y-2 border-t p-3">
+          {mode !== "csv" && Object.keys(errors).length > 0 && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+              <div className="font-medium">
+                {Object.keys(errors).length} field error(s) — fix before dispatching:
+              </div>
+              <ul className="mt-1 list-disc pl-4">
+                {Object.entries(errors).slice(0, 5).map(([f, m]) => (
+                  <li key={f}>{m}</li>
+                ))}
+                {Object.keys(errors).length > 5 && (
+                  <li>+{Object.keys(errors).length - 5} more…</li>
+                )}
+              </ul>
+            </div>
+          )}
+          {mode === "csv" && csvRowErrors.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+              <div className="font-medium">
+                {csvRowErrors.length} CSV validation error(s):
+              </div>
+              <ul className="mt-1 list-disc pl-4">
+                {csvRowErrors.slice(0, 10).map((e, i) => (
+                  <li key={i}>
+                    Row {e.row}: {e.message}
+                  </li>
+                ))}
+                {csvRowErrors.length > 10 && <li>+{csvRowErrors.length - 10} more…</li>}
+              </ul>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs text-muted-foreground">Render in:</span>
             {ENGINES.map((e) => {
