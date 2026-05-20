@@ -313,7 +313,9 @@ function TemplateDetailPage() {
                       <div>
                         <div className="font-medium capitalize">
                           {j.status} · {j.engine}
-                          {j.row_label ? ` · ${j.row_label}` : ""}
+                          {(j as { row_label?: string | null }).row_label
+                            ? ` · ${(j as { row_label?: string | null }).row_label}`
+                            : ""}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(j.created_at).toLocaleString()}
