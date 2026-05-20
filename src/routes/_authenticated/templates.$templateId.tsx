@@ -180,8 +180,11 @@ function TemplateDetailPage() {
             </div>
           )}
 
-          <Tabs defaultValue="fields">
+          <Tabs defaultValue="variations">
             <TabsList>
+              <TabsTrigger value="variations">
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> Variations ({data.outputs.length})
+              </TabsTrigger>
               <TabsTrigger value="fields">
                 <Sparkles className="mr-1 h-3.5 w-3.5" /> Fields ({variables.length})
               </TabsTrigger>
@@ -192,6 +195,50 @@ function TemplateDetailPage() {
                 <PlayCircle className="mr-1 h-3.5 w-3.5" /> Runs ({data.jobs.length})
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="variations" className="mt-4">
+              {data.outputs.length === 0 ? (
+                <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                  <Wand2 className="mx-auto mb-2 h-6 w-6 opacity-50" />
+                  No variations yet. Fill the brief on the right and click{" "}
+                  <strong>Quick variation</strong> to generate one.
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {data.outputs.map((o) => {
+                    const job = data.jobs.find((j) => j.id === o.job_id);
+                    return (
+                      <a
+                        key={o.id}
+                        href={o.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
+                      >
+                        <div className="aspect-[3/4] overflow-hidden bg-muted">
+                          <img
+                            src={o.url}
+                            alt="variation"
+                            className="h-full w-full object-cover transition group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-2">
+                          <div className="truncate text-xs font-medium">
+                            {(job?.variables as Record<string, string> | null)?.case_study_title ??
+                              (job?.variables as Record<string, string> | null)?.headline ??
+                              "Untitled variation"}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {new Date(o.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
 
             <TabsContent value="fields" className="mt-4">
               <Card>
