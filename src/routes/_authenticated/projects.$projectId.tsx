@@ -127,38 +127,14 @@ function ProjectDetail() {
               key={eng}
               size="sm"
               variant="outline"
-              onClick={async () => {
-                try {
-                  await createJobFn({ data: { projectId, engine: eng, brief: {}, variables: {} } });
-                  toast.success(`Queued ${eng} render`);
-                  qc.invalidateQueries({ queryKey: ["jobs", projectId] });
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Failed");
-                }
-              }}
+              size="sm"
+              variant="outline"
+              onClick={() => queueRender(eng)}
             >
               <Play className="h-3 w-3" /> {eng}
             </Button>
           ))}
-          <Button
-            size="sm"
-            onClick={async () => {
-              try {
-                const res = await hybridFn({
-                  data: {
-                    projectId,
-                    engines: ["figma", "illustrator", "indesign"],
-                    brief: {},
-                    variables: {},
-                  },
-                });
-                toast.success(`Queued ${res.jobs.length} hybrid jobs`);
-                qc.invalidateQueries({ queryKey: ["jobs", projectId] });
-              } catch (e) {
-                toast.error(e instanceof Error ? e.message : "Failed");
-              }
-            }}
-          >
+          <Button size="sm" onClick={queueHybrid}>
             <Layers className="h-3 w-3" /> hybrid
           </Button>
         </div>
