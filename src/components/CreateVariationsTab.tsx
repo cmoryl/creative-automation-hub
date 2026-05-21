@@ -85,9 +85,26 @@ export function validateField(v: Variable, raw: string): string | null {
     if (val.length > 500) return `${label} is too long`;
     return null;
   }
-  const max = v.multiline || /challenge|solution|results|quote|body|description/i.test(v.name) ? 4000 : 200;
+  const max = getFieldLimit(v);
   if (val.length > max) return `${label} must be ≤ ${max} characters`;
   return null;
+}
+
+/**
+ * Per-section content limits. Inferred from field name/role so the UI can
+ * surface counters and prevent overflow before render time.
+ */
+export function getFieldLimit(v: Variable): number {
+  const n = (v.name + " " + (v.label ?? "")).toLowerCase();
+  if (/hero|eyebrow|tagline/.test(n)) return 60;
+  if (/headline|title|case_study_title/.test(n)) return 80;
+  if (/subhead|subtitle|cta/.test(n)) return 120;
+  if (/quote|testimonial/.test(n)) return 180;
+  if (/body|description|summary|overview|paragraph/.test(n)) return 240;
+  if (/challenge|solution|results/.test(n)) return 320;
+  if (/legal|disclaimer|footnote/.test(n)) return 320;
+  if (v.multiline) return 600;
+  return 140;
 }
 
 export function validateAll(
@@ -442,6 +459,18 @@ export function CreateVariationsTab({
       }
     };
     const errBorder = err ? "border-destructive focus-visible:ring-destructive" : "";
+    const limit = getFieldLimit(v);
+    const showCounter = v.type !== "color" && v.type !== "image" && !/image|logo|photo|hero/i.test(v.name);
+    const used = val.length;
+    const pct = used / limit;
+    const counterTone =
+      used > limit
+        ? "text-destructive"
+        : pct >= 0.9
+          ? "text-amber-500"
+          : pct >= 0.75
+            ? "text-muted-foreground"
+            : "text-muted-foreground/60";
     let control: React.ReactNode;
     if (v.type === "color") {
       control = (
@@ -471,6 +500,7 @@ export function CreateVariationsTab({
           rows={3}
           placeholder={v.placeholder ?? v.label ?? v.name}
           value={val}
+          maxLength={limit}
           onChange={(e) => onChange(e.target.value)}
           className={errBorder}
         />
@@ -480,6 +510,7 @@ export function CreateVariationsTab({
         <Input
           placeholder={v.placeholder ?? v.label ?? v.name}
           value={val}
+          maxLength={limit}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={!!err}
           className={errBorder}
@@ -489,7 +520,21 @@ export function CreateVariationsTab({
     return (
       <>
         {control}
-        {err && <p className="text-xs text-destructive">{err}</p>}
+        <div className="flex items-center justify-between gap-2">
+          {err ? (
+            <p className="text-xs text-destructive">{err}</p>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/60">
+              {pct >= 0.9 && used <= limit && "Approaching limit"}
+              {used >= limit && "Limit reached — trim copy to keep layout clean"}
+            </span>
+          )}
+          {showCounter && (
+            <span className={`shrink-0 font-mono text-[10px] tabular-nums ${counterTone}`}>
+              {used}/{limit}
+            </span>
+          )}
+        </div>
       </>
     );
   };
