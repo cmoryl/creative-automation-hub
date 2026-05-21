@@ -137,6 +137,7 @@ function FigmaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
 function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () => void }) {
   const save = useServerFn(saveCanvaCredentials);
   const disconnect = useServerFn(disconnectIntegration);
+  const startOAuth = useServerFn(startCanvaOAuth);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
 
@@ -152,6 +153,13 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
   const delMut = useMutation({
     mutationFn: async () => disconnect({ data: { provider: "canva" } }),
     onSuccess: () => { toast.success("Canva disconnected"); onChange(); },
+  });
+  const authMut = useMutation({
+    mutationFn: async () => startOAuth({ data: {} } as any),
+    onSuccess: (res: any) => {
+      if (res?.authorizeUrl) window.location.href = res.authorizeUrl;
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to start Canva authorization"),
   });
 
   const redirectUri = typeof window !== "undefined"
