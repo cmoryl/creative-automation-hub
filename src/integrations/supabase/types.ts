@@ -284,11 +284,15 @@ export type Database = {
           error_detail: Json | null
           error_stage: string | null
           id: string
+          max_retries: number
+          next_retry_at: string | null
           project_id: string
+          retry_count: number
           row_label: string | null
           status: string
           submitted_for_approval_at: string | null
           template_id: string | null
+          transient: boolean | null
           updated_at: string
           variables: Json
           workspace_id: string | null
@@ -306,11 +310,15 @@ export type Database = {
           error_detail?: Json | null
           error_stage?: string | null
           id?: string
+          max_retries?: number
+          next_retry_at?: string | null
           project_id: string
+          retry_count?: number
           row_label?: string | null
           status?: string
           submitted_for_approval_at?: string | null
           template_id?: string | null
+          transient?: boolean | null
           updated_at?: string
           variables?: Json
           workspace_id?: string | null
@@ -328,11 +336,15 @@ export type Database = {
           error_detail?: Json | null
           error_stage?: string | null
           id?: string
+          max_retries?: number
+          next_retry_at?: string | null
           project_id?: string
+          retry_count?: number
           row_label?: string | null
           status?: string
           submitted_for_approval_at?: string | null
           template_id?: string | null
+          transient?: boolean | null
           updated_at?: string
           variables?: Json
           workspace_id?: string | null
