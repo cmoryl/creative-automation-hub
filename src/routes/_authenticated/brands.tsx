@@ -168,7 +168,11 @@ function BrandsPage() {
             <Card key={c.id}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    to="/templates"
+                    search={{ company: c.id }}
+                    className="flex items-center gap-3 rounded-md -m-1 p-1 hover:bg-muted/50 transition-colors"
+                  >
                     {c.logo_url ? (
                       <img src={c.logo_url} alt="" className="h-10 w-10 rounded object-contain bg-muted" />
                     ) : (
@@ -177,7 +181,7 @@ function BrandsPage() {
                       </div>
                     )}
                     <div>
-                      <h2 className="font-semibold">{c.name}</h2>
+                      <h2 className="font-semibold hover:underline">{c.name}</h2>
                       <p className="text-xs text-muted-foreground">
                         {c.templateCount} template{c.templateCount === 1 ? "" : "s"} · {c.products.length} product{c.products.length === 1 ? "" : "s"}
                       </p>
@@ -186,7 +190,7 @@ function BrandsPage() {
                       {c.primary_color && <span className="h-5 w-5 rounded border" style={{ background: c.primary_color }} title={c.primary_color} />}
                       {c.accent_color && <span className="h-5 w-5 rounded border" style={{ background: c.accent_color }} title={c.accent_color} />}
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => setEditCo({ id: c.id, name: c.name, kit: {
                       description: c.description ?? "", logo_url: c.logo_url ?? "",
