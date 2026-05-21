@@ -144,6 +144,9 @@ function TemplatesPage() {
           <Button asChild variant="outline">
             <Link to="/templates/batch">Batch dispatch</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link to="/templates/canva">Browse Canva</Link>
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Import from Figma</Button>
