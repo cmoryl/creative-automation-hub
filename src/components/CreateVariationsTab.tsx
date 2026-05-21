@@ -168,6 +168,7 @@ export function CreateVariationsTab({
   templateId,
   templateName,
   variables,
+  pages = [],
   defaultEngines,
   autoOpenSingleResult = false,
   brandPrefill,
@@ -179,6 +180,7 @@ export function CreateVariationsTab({
   templateId: string;
   templateName: string;
   variables: Variable[];
+  pages?: TemplatePage[];
   defaultEngines?: string[];
   autoOpenSingleResult?: boolean;
   brandPrefill?: Record<string, string>;
