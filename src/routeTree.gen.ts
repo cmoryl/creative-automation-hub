@@ -39,6 +39,7 @@ import { Route as AuthenticatedBatchesBatchIdRouteImport } from './routes/_authe
 import { Route as ApiPublicWebhooksCanvaRouteImport } from './routes/api/public/webhooks/canva'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
 import { Route as ApiPublicShareSlugRouteImport } from './routes/api/public/share/$slug'
+import { Route as ApiPublicHooksRunSchedulesRouteImport } from './routes/api/public/hooks/run-schedules'
 import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
 import { Route as ApiPublicAgentTemplatesRouteImport } from './routes/api/public/agent/templates'
 import { Route as ApiPublicAgentStatusRouteImport } from './routes/api/public/agent/status'
@@ -213,6 +214,12 @@ const ApiPublicShareSlugRoute = ApiPublicShareSlugRouteImport.update({
   path: '/api/public/share/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksRunSchedulesRoute =
+  ApiPublicHooksRunSchedulesRouteImport.update({
+    id: '/api/public/hooks/run-schedules',
+    path: '/api/public/hooks/run-schedules',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAgentUploadUrlRoute = ApiPublicAgentUploadUrlRouteImport.update({
   id: '/api/public/agent/upload-url',
   path: '/api/public/agent/upload-url',
@@ -306,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/hooks/run-schedules': typeof ApiPublicHooksRunSchedulesRoute
   '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -347,6 +355,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/hooks/run-schedules': typeof ApiPublicHooksRunSchedulesRoute
   '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -391,6 +400,7 @@ export interface FileRoutesById {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/hooks/run-schedules': typeof ApiPublicHooksRunSchedulesRoute
   '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/hooks/run-schedules'
     | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/hooks/run-schedules'
     | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -519,6 +531,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/hooks/run-schedules'
     | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -540,6 +553,7 @@ export interface RootRouteChildren {
   ApiPublicAgentStatusRoute: typeof ApiPublicAgentStatusRoute
   ApiPublicAgentTemplatesRoute: typeof ApiPublicAgentTemplatesRouteWithChildren
   ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
+  ApiPublicHooksRunSchedulesRoute: typeof ApiPublicHooksRunSchedulesRoute
   ApiPublicShareSlugRoute: typeof ApiPublicShareSlugRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
   ApiPublicWebhooksCanvaRoute: typeof ApiPublicWebhooksCanvaRoute
@@ -758,6 +772,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/run-schedules': {
+      id: '/api/public/hooks/run-schedules'
+      path: '/api/public/hooks/run-schedules'
+      fullPath: '/api/public/hooks/run-schedules'
+      preLoaderRoute: typeof ApiPublicHooksRunSchedulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/upload-url': {
       id: '/api/public/agent/upload-url'
       path: '/api/public/agent/upload-url'
@@ -946,6 +967,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentStatusRoute: ApiPublicAgentStatusRoute,
   ApiPublicAgentTemplatesRoute: ApiPublicAgentTemplatesRouteWithChildren,
   ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
+  ApiPublicHooksRunSchedulesRoute: ApiPublicHooksRunSchedulesRoute,
   ApiPublicShareSlugRoute: ApiPublicShareSlugRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
   ApiPublicWebhooksCanvaRoute: ApiPublicWebhooksCanvaRoute,
@@ -954,3 +976,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
