@@ -1,7 +1,27 @@
 import { useState } from "react";
-import { AlertCircle, Copy, Type, Link as LinkIcon, FileWarning, ChevronDown } from "lucide-react";
+import {
+  AlertCircle,
+  Copy,
+  Type,
+  Link as LinkIcon,
+  FileWarning,
+  ChevronDown,
+  Lightbulb,
+  Layers,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+export type RenderErrorFrame = {
+  frame: string;
+  page?: number;
+  layer?: string;
+  variable?: string;
+  error_code?: string | number;
+  message?: string;
+  extendscript_log?: string;
+  suggestion?: string;
+};
 
 export type RenderErrorDetail = {
   message?: string;
@@ -11,6 +31,8 @@ export type RenderErrorDetail = {
   font_substitutions?: { requested: string; used: string }[];
   missing_links?: string[];
   files?: { name: string; path?: string; exists?: boolean }[];
+  frames?: RenderErrorFrame[];
+  suggestions?: string[];
   agent_version?: string;
 };
 
@@ -48,6 +70,8 @@ export function RenderErrorReport({
       (d.font_substitutions && d.font_substitutions.length) ||
       (d.missing_links && d.missing_links.length) ||
       (d.files && d.files.length) ||
+      (d.frames && d.frames.length) ||
+      (d.suggestions && d.suggestions.length) ||
       d.stack);
 
   const copyDiagnostics = () => {
