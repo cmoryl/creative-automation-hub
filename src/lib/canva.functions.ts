@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getRequestHost } from "@tanstack/react-start/server";
+import { z } from "zod";
 import crypto from "crypto";
 
 const CANVA_SCOPES = [
