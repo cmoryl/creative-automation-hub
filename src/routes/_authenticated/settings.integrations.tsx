@@ -155,7 +155,7 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
     onSuccess: () => { toast.success("Canva disconnected"); onChange(); },
   });
   const authMut = useMutation({
-    mutationFn: async () => startOAuth({ data: {} } as any),
+    mutationFn: async () => (startOAuth as any)(),
     onSuccess: (res: any) => {
       if (res?.authorizeUrl) window.location.href = res.authorizeUrl;
     },
