@@ -225,8 +225,10 @@ function TemplatesPage() {
                 params={{ templateId: t.id }}
                 className="block rounded-lg border bg-card p-4 transition hover:border-primary hover:shadow-md"
               >
-                {t.preview_url && (
+                {t.preview_url ? (
                   <img src={t.preview_url} alt={t.name} className="mb-3 aspect-video w-full rounded object-cover" />
+                ) : (
+                  <TemplatePreviewVisual engine={t.engine} name={t.name} />
                 )}
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="truncate font-medium">{t.name}</h3>
