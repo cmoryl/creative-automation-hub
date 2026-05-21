@@ -85,10 +85,26 @@ export function validateField(v: Variable, raw: string): string | null {
     if (val.length > 500) return `${label} is too long`;
     return null;
   }
-  const max = v.multiline || /challenge|solution|results|quote|body|description/i.test(v.name) ? 4000 : 200;
+  const max = getFieldLimit(v);
   if (val.length > max) return `${label} must be ≤ ${max} characters`;
   return null;
 }
+
+/**
+ * Per-section content limits. Inferred from field name/role so the UI can
+ * surface counters and prevent overflow before render time.
+ */
+export function getFieldLimit(v: Variable): number {
+  const n = (v.name + " " + (v.label ?? "")).toLowerCase();
+  if (/hero|eyebrow|tagline/.test(n)) return 60;
+  if (/headline|title|case_study_title/.test(n)) return 80;
+  if (/subhead|subtitle|cta/.test(n)) return 120;
+  if (/quote|testimonial/.test(n)) return 180;
+  if (/body|description|summary|overview|paragraph/.test(n)) return 240;
+  if (/challenge|solution|results/.test(n)) return 320;
+  if (/legal|disclaimer|footnote/.test(n)) return 320;
+  if (v.multiline) return 600;
+  return 140;
 
 export function validateAll(
   variables: Variable[],
