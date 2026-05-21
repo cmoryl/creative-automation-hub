@@ -80,14 +80,26 @@ function TemplatesPage() {
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
+  const { company: companyFilter, product: productFilter } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.filter((t) => {
       if (engineFilter !== "all" && t.engine !== engineFilter) return false;
+      if (companyFilter && (t as any).company_id !== companyFilter) return false;
+      if (productFilter && (t as any).product_id !== productFilter) return false;
       if (q && !t.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [data, search, engineFilter]);
+  }, [data, search, engineFilter, companyFilter, productFilter]);
+
+  const activeBrandFilter = companyFilter || productFilter
+    ? (data.find((t) =>
+        (productFilter && (t as any).product_id === productFilter) ||
+        (companyFilter && (t as any).company_id === companyFilter),
+      ) ?? null)
+    : null;
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: data.length };
