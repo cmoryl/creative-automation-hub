@@ -19,8 +19,9 @@ async function loadIntegration(workspaceId: string): Promise<IntegRow> {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Canva is not connected for this workspace.");
-  if (!data.metadata?.access_token) throw new Error("Canva is not authorized yet. Click Authorize Canva account.");
-  return data as IntegRow;
+  const row = data as IntegRow;
+  if (!row.metadata?.access_token) throw new Error("Canva is not authorized yet. Click Authorize Canva account.");
+  return row;
 }
 
 async function persistTokens(workspaceId: string, currentMeta: any, tokenJson: any) {
