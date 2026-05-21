@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { listTemplates } from "@/lib/workspace.functions";
 import { getTemplate } from "@/lib/workspace.functions";
 import { dispatchBatch } from "@/lib/batch.functions";
+import { createBatchSchedule } from "@/lib/batch-schedules.functions";
 import { validateField } from "@/components/CreateVariationsTab";
+
 import {
   BatchRowsTable,
   newBatchRow,
@@ -20,11 +22,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowLeft,
   ArrowRight,
+  CalendarClock,
   CheckCircle2,
   Layers,
   Loader2,
   Wand2,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/templates/batch")({
   component: TemplatesBatchPage,
