@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateAgent, json } from "@/lib/agent-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { classifyFailure, computeBackoffMs } from "@/lib/retry-classifier";
+import { classifyFailure, computeBackoffMs, suggestionsForReason } from "@/lib/retry-classifier";
 import { z } from "zod";
 
 const Body = z.object({
@@ -157,6 +157,20 @@ export const Route = createFileRoute("/api/public/agent/complete")({
             }
           }
 
+          // Build the enriched error_detail. Merge agent-supplied suggestions
+          // with classifier defaults (de-duped, agent's first), so the UI
+          // always has at least one actionable hint for known reasons.
+          let enrichedDetail = error_detail ?? null;
+          if (status === "failed" && retryReason) {
+            const fromAgent = error_detail?.suggestions ?? [];
+            const defaults = suggestionsForReason(retryReason);
+            const merged = Array.from(new Set([...fromAgent, ...defaults])).slice(0, 20);
+            enrichedDetail = {
+              ...(error_detail ?? {}),
+              suggestions: merged,
+            };
+          }
+
           const briefForRetry = {
             ...briefNext,
             last_retry_reason: retryReason ?? undefined,
@@ -168,7 +182,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
               status: nextStatus,
               error: error ?? null,
               error_stage: error_stage ?? null,
-              error_detail: (error_detail ?? null) as never,
+              error_detail: (enrichedDetail ?? null) as never,
               brief: briefForRetry as never,
               transient,
               ...(retryCountNext !== undefined ? { retry_count: retryCountNext } : {}),
