@@ -3,6 +3,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listOutputs } from "@/lib/workspace.functions";
 import { FileStack } from "lucide-react";
+import { ShareButton } from "@/components/ShareButton";
+import { OutputComments } from "@/components/OutputComments";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/outputs")({
   component: OutputsPage,
@@ -30,18 +38,36 @@ function OutputsPage() {
           <p className="mt-3 text-sm text-muted-foreground">Outputs from your jobs will appear here.</p>
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border bg-card">
+        <ul className="space-y-2">
           {data.map((o) => (
-            <li key={o.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <div className="text-sm font-medium">{o.kind.toUpperCase()}</div>
-                <a href={o.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
-                  {o.url}
-                </a>
+            <li key={o.id} className="rounded-lg border bg-card">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{o.kind.toUpperCase()}</div>
+                  <a
+                    href={o.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block truncate text-xs text-primary hover:underline"
+                  >
+                    {o.url}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{new Date(o.created_at).toLocaleString()}</span>
+                  <ShareButton kind="output" outputId={o.id} />
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(o.created_at).toLocaleString()}
-              </div>
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="ml-2 mb-2">
+                    Comments
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="px-4 pb-4">
+                  <OutputComments outputId={o.id} />
+                </CollapsibleContent>
+              </Collapsible>
             </li>
           ))}
         </ul>
