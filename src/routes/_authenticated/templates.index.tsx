@@ -226,6 +226,23 @@ function TemplatesPage() {
         </div>
       </div>
 
+      {(companyFilter || productFilter) && (
+        <div className="mb-4 flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Filtered by brand</span>
+          <span className="font-medium">
+            {productFilter ? "Product" : "Company"}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto h-7 text-xs"
+            onClick={() => navigate({ search: {} })}
+          >
+            Clear filter
+          </Button>
+        </div>
+      )}
+
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : filtered.length === 0 ? (
