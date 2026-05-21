@@ -330,6 +330,21 @@ export async function run(job, ctx) {
     try { await fs.copyFile(path.join(outDir, png), path.join(pkgDir, png)); } catch {}
   }
 
+  // Read the substitution report the .jsx wrote out.
+  let report = null;
+  try {
+    report = JSON.parse(await fs.readFile(path.join(outDir, "substitution-report.json"), "utf8"));
+  } catch (e) { /* missing report = older Illustrator install */ }
+
+  const sentKeys = Object.keys(job.variables ?? {});
+  const matchedKeys = Array.from(new Set((report?.matched ?? []).map((m) => m.key).filter(Boolean)));
+  const unmappedVars = sentKeys.filter((k) => !matchedKeys.includes(
+    k.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""),
+  ));
+  if (unmappedVars.length) {
+    console.warn(`[illustrator] ${unmappedVars.length} variable(s) sent but no matching layer/text in ${job.template?.source_ref}: ${unmappedVars.join(", ")}`);
+  }
+
   await fs.writeFile(
     path.join(pkgDir, "manifest.json"),
     JSON.stringify(
@@ -349,11 +364,29 @@ export async function run(job, ctx) {
             }))
           : [{ index: 1, name: "preview", file: "preview.png" }],
         variables: job.variables ?? {},
+        substitution: report
+          ? {
+              matched: report.matched ?? [],
+              unmatched_frames: report.unmatched ?? [],
+              unmapped_vars: unmappedVars,
+            }
+          : { error: "no substitution report — Illustrator script may have failed" },
       },
       null,
       2,
     ),
   );
+
+  // Also surface the substitution report directly in the package so it's
+  // findable without opening manifest.json.
+  if (report) {
+    try {
+      await fs.copyFile(
+        path.join(outDir, "substitution-report.json"),
+        path.join(pkgDir, "substitution-report.json"),
+      );
+    } catch {}
+  }
 
   await progress("packaging", 75, "Zipping editable assets + fonts");
   const zipPath = path.join(outDir, "package.zip");
