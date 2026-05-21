@@ -14,7 +14,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { getTemplate, updateTemplateVariables } from "@/lib/workspace.functions";
-import { getTemplateBrandPrefill } from "@/lib/brand.functions";
+import { getTemplateBrandPrefill, listCompanies, assignTemplateBrand } from "@/lib/brand.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
