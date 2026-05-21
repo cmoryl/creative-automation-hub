@@ -43,11 +43,54 @@ type Variable = {
   multiline?: boolean;
   placeholder?: string;
   layer?: string;
+  page?: number; // 1-based page/artboard index this field belongs to
+};
+
+type TemplatePage = {
+  name?: string;
+  width?: number;
+  height?: number;
+  unit?: string;
+  kind?: "artboard" | "page" | string;
+  artboard_index?: number;
+  page_index?: number;
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 type InputMode = "form" | "batch" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
+
+/**
+ * Infer which page a field belongs to for multi-page templates (InDesign
+ * newsletter, magazine, pitch deck). Used to group form inputs under each
+ * page header so the editor mirrors the actual document structure.
+ * Order of resolution:
+ *   1. Explicit `v.page` on the variable
+ *   2. Page name prefix match (e.g. "cover_image" → page named "Cover")
+ *   3. Conventional numeric patterns (story_2_*, feature_3_*, slide_4_*, page_5_*)
+ *   4. Common cover/lead/intro keywords → page 1
+ *   5. Fallback → page 1
+ */
+export function inferFieldPage(v: Variable, pages: TemplatePage[]): number {
+  if (typeof v.page === "number" && v.page > 0) return v.page;
+  const n = v.name.toLowerCase();
+  // 2. Match by page name prefix
+  for (let i = 0; i < pages.length; i++) {
+    const slug = (pages[i]?.name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    if (slug && (n.startsWith(slug + "_") || n === slug)) return i + 1;
+  }
+  // 3. Numeric patterns: story_2, feature_3, slide_4, page_5, p2_, panel_3
+  const num = n.match(/(?:story|feature|slide|page|panel|p)_?(\d+)/);
+  if (num) {
+    const idx = parseInt(num[1], 10);
+    if (idx >= 1 && idx <= pages.length) return idx;
+  }
+  // 4. Cover/intro/lead keywords → page 1
+  if (/^(cover|masthead|issue|magazine_title|company|tagline|brand|hero|lead|intro|front)/.test(n)) return 1;
+  // 5. Back cover keywords → last page
+  if (/^(back|closing|footer_note|ask)/.test(n)) return pages.length;
+  return 1;
+}
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva" | "claude"; label: string }[] = [
   { id: "illustrator", label: "Illustrator" },
