@@ -13,6 +13,8 @@ import {
   type BatchRow,
   type BatchVariable,
 } from "@/components/BatchRowsTable";
+import { TemplateAvailabilityPill } from "@/components/TemplateAvailability";
+import { getAllTemplateAvailability } from "@/lib/template-requirements.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
