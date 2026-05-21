@@ -24,6 +24,8 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { ActivitySparkline } from "@/components/ActivitySparkline";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
