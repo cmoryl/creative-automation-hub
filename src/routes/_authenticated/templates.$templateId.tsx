@@ -387,7 +387,11 @@ function TemplateDetailPage() {
                     {editVars.map((v, i) => (
                       <li
                         key={i}
-                        className="grid grid-cols-[1fr_1fr_140px_140px_auto] items-center gap-2 rounded border bg-card/50 p-2"
+                        className={
+                          pages.length > 1
+                            ? "grid grid-cols-[1fr_1fr_120px_140px_120px_auto] items-center gap-2 rounded border bg-card/50 p-2"
+                            : "grid grid-cols-[1fr_1fr_140px_140px_auto] items-center gap-2 rounded border bg-card/50 p-2"
+                        }
                       >
                         <Input
                           value={v.name}
@@ -439,6 +443,32 @@ function TemplateDetailPage() {
                           }
                           className="h-8 text-xs"
                         />
+                        {pages.length > 1 && (
+                          <Select
+                            value={v.page ? String(v.page) : "auto"}
+                            onValueChange={(val) =>
+                              setEditVars((prev) =>
+                                prev.map((x, j) =>
+                                  j === i
+                                    ? { ...x, page: val === "auto" ? undefined : Number(val) }
+                                    : x,
+                                ),
+                              )
+                            }
+                          >
+                            <SelectTrigger className="h-8 text-xs" title="Bind this field to a specific page/artboard">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="auto">Auto</SelectItem>
+                              {pages.map((p, idx) => (
+                                <SelectItem key={idx} value={String(idx + 1)}>
+                                  {String(idx + 1).padStart(2, "0")} · {p.name ?? `Page ${idx + 1}`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
