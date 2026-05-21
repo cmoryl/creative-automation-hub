@@ -287,6 +287,7 @@ function TemplateDetailPage() {
               templateId={tpl.id}
               templateName={tpl.name}
               variables={variables}
+              pages={pages}
               defaultEngines={[tpl.engine]}
               autoOpenSingleResult
               brandPrefill={brand?.prefill}
