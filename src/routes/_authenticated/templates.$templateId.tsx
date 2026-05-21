@@ -104,7 +104,7 @@ function TemplateDetailPage() {
   const listCompaniesFn = useServerFn(listCompanies);
   const { data: companies } = useQuery({
     queryKey: ["companies-for-template-assign"],
-    queryFn: () => listCompaniesFn({}),
+    queryFn: () => listCompaniesFn(),
   });
   const assignBrandFn = useServerFn(assignTemplateBrand);
   const [assigning, setAssigning] = useState(false);
