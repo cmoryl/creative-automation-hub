@@ -299,6 +299,7 @@ const CATEGORIES = [
 const ENGINE_ICON: Record<string, typeof Sparkles> = {
   "engine-illustrator": ImageIcon,
   "engine-indesign": FileType,
+  "engine-indesign-bridge": Workflow,
   "engine-claude": MessageSquare,
   "engine-image": Sparkles,
 };
