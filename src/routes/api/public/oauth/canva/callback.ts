@@ -38,7 +38,8 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
           .select("workspace_id, access_token, metadata")
           .eq("provider", "canva");
         if (lookupErr) {
-          return htmlResponse("Lookup error", `<h1>Lookup error</h1><p>${lookupErr.message}</p>`, 500);
+          console.error("[canva-oauth] lookup error", lookupErr);
+          return htmlResponse("Error", `<h1>Something went wrong</h1><p>Please try connecting again.</p><p><a href="/settings/integrations">Back to integrations</a></p>`, 500);
         }
         const match = (rows ?? []).find(
           (r: any) => r.metadata?.oauth_pending?.state === state,
