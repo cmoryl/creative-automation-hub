@@ -156,17 +156,42 @@ const INDESIGN_APP_NAMES = (process.env.LOVABLE_INDESIGN_APP || [
   "Adobe InDesign",
 ].join(",")).split(",").map((s) => s.trim()).filter(Boolean);
 
+function classifyIndesignFailure(stderr, stdout, exitCode, signal) {
+  const blob = `${stderr}\n${stdout}`;
+  if (/font.*(not found|missing|unavailable|substitut)/i.test(blob)) return { reason: "missing_font", transient: false };
+  if (/(link|image|placed file).*(missing|not found|cannot find)/i.test(blob)) return { reason: "missing_asset", transient: false };
+  if (/(locked|in use|cannot.*open|access.*denied|permission denied)/i.test(blob)) return { reason: "app_busy", transient: true };
+  if (/(no space|disk full|enospc)/i.test(blob)) return { reason: "disk_full", transient: false };
+  if (/(timed?\s*out|etimedout|econnreset)/i.test(blob)) return { reason: "timeout", transient: true };
+  if (/applescript.*error|execution error/i.test(blob)) return { reason: "app_busy", transient: true };
+  if (/syntaxerror|extendscript|line \d+/i.test(blob)) return { reason: "extendscript_bug", transient: false };
+  if (signal) return { reason: "killed", transient: true };
+  return { reason: "unknown", transient: false };
+}
+
 function spawnCapture(cmd, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args);
     let stderr = "", stdout = "";
     child.stdout?.on("data", (d) => { const s = d.toString(); stdout += s; process.stdout.write(s); });
     child.stderr?.on("data", (d) => { const s = d.toString(); stderr += s; process.stderr.write(s); });
-    child.on("error", reject);
-    child.on("exit", (code) => {
+    child.on("error", (e) => {
+      const err = new Error(`InDesign spawn failed: ${e.message}`);
+      Object.assign(err, { reason: "spawn_failed", transient: false, stderr: e.message, stdout: "", exitCode: null, signal: null });
+      reject(err);
+    });
+    child.on("exit", (code, signal) => {
       if (code === 0) return resolve({ stdout, stderr });
+      const { reason, transient } = classifyIndesignFailure(stderr, stdout, code, signal);
       const tail = (stderr || stdout).trim().split("\n").slice(-6).join(" | ");
-      reject(new Error(`exit ${code}${tail ? `: ${tail}` : ""}`));
+      const err = new Error(`InDesign exited ${code ?? signal}${tail ? `: ${tail}` : ""}`);
+      Object.assign(err, {
+        reason, transient,
+        exitCode: code, signal,
+        stderr: stderr.slice(-4000),
+        stdout: stdout.slice(-2000),
+      });
+      reject(err);
     });
   });
 }
@@ -183,10 +208,12 @@ async function runScript(jsxPath) {
         return;
       } catch (e) { lastErr = e; }
     }
-    throw new Error(
+    const err = new Error(
       `InDesign launch failed (tried ${INDESIGN_APP_NAMES.join(", ")}). ` +
       `Set LOVABLE_INDESIGN_APP to the exact app name. Last error: ${lastErr?.message || "unknown"}`,
     );
+    Object.assign(err, lastErr ?? {}, { reason: lastErr?.reason ?? "app_busy", transient: lastErr?.transient ?? true });
+    throw err;
   }
   if (process.platform === "win32") {
     const ps = `$id = New-Object -ComObject InDesign.Application; $id.DoScript("${jsxPath.replace(/\\/g, "\\\\")}", 1246973031)`;
@@ -195,6 +222,7 @@ async function runScript(jsxPath) {
   }
   throw new Error(`unsupported OS for InDesign: ${process.platform}`);
 }
+
 
 
 function zipFolder(srcDir, zipPath) {
