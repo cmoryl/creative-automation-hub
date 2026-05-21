@@ -183,6 +183,7 @@ const GUIDES: Guide[] = [
       "Outputs: PDF/X-1a (press-ready) + low-res PDF (review).",
     ],
     warnings: ["Long documents (>32pp) should be split into chapters."],
+  },
   {
     id: "engine-indesign-bridge",
     title: "InDesign bridge: payload contract",
