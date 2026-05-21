@@ -138,6 +138,7 @@ export const updateTemplateVariables = createServerFn({ method: "POST" })
           label: z.string().max(120).optional(),
           type: z.enum(["text", "image", "color", "list"]),
           layer: z.string().max(120).optional(),
+          page: z.number().int().min(1).max(64).optional(),
         }),
       ),
     }).parse(input),

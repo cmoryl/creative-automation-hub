@@ -56,6 +56,7 @@ type Guide = {
   tips?: string[];
   warnings?: string[];
   related?: { to: string; label: string }[];
+  code?: { language: string; label: string; body: string };
 };
 
 const GUIDES: Guide[] = [
@@ -184,6 +185,79 @@ const GUIDES: Guide[] = [
     warnings: ["Long documents (>32pp) should be split into chapters."],
   },
   {
+    id: "engine-indesign-bridge",
+    title: "InDesign bridge: payload contract",
+    category: "engine",
+    minutes: 6,
+    description:
+      "Reference ExtendScript for the local bridge agent — claims a job, iterates pages with the resolved field-to-page map, exports per-page PNG + PDF and a master PDF.",
+    steps: [
+      "Agent POSTs /api/public/agent/claim with its bearer token.",
+      "Response includes job.template.byPage[] — one entry per spread with fields[] scoped to that page only.",
+      "Script opens job.template.source_ref, iterates pages by docIndex, swaps text frames by field.name, places images, then exports.",
+      "Agent uploads each output via /api/public/agent/upload-url and POSTs /api/public/agent/complete with metadata.page set so the server can validate per-page completeness.",
+    ],
+    tips: [
+      "Set metadata.scope='master' on the combined PDF + ZIP so the validator recognises them.",
+      "Name InDesign text frames identically to variable names — the script uses item(name) lookup scoped to spread.",
+    ],
+    warnings: [
+      "If any page is missing from the uploads, /complete returns a warnings[] array and the job is flagged on the Runs tab.",
+    ],
+    code: {
+      language: "javascript",
+      label: "indesign-bridge.jsx (ExtendScript)",
+      body: `// Excerpt — full agent handles auth, upload-url, and retries.
+// Payload shape from /api/public/agent/claim:
+//   job.template.byPage[] = [{ pageIndex, docIndex, fields[], values }]
+//   job.template.expectedOutputs = { perPage: ["preview","pdf"], master: ["pdf","zip"] }
+
+var doc = app.open(File(localPathFor(job.template.source_ref)));
+var outputs = [];
+
+for (var i = 0; i < job.template.byPage.length; i++) {
+  var page = job.template.byPage[i];
+  var spread = doc.pages.item(page.docIndex - 1);
+
+  // Scope frame lookups to this spread only — prevents wrong-page swaps.
+  for (var f = 0; f < page.fields.length; f++) {
+    var field = page.fields[f];
+    var val = page.values[field.name];
+    if (val === undefined || val === null) continue;
+
+    if (field.type === "image") {
+      var frame = spread.rectangles.itemByName(field.name);
+      if (frame.isValid) frame.place(File(localPathFor(val)));
+    } else {
+      var tf = spread.textFrames.itemByName(field.name);
+      if (tf.isValid) {
+        tf.contents = String(val);
+        // Detect overflow and report back instead of silently truncating.
+        if (tf.overflows) report("overset", page.pageIndex, field.name);
+      }
+    }
+  }
+
+  // Export this page as preview PNG + PDF (web-safe).
+  outputs.push(exportPage(doc, page, "preview"));
+  outputs.push(exportPage(doc, page, "pdf"));
+}
+
+// Combined master PDF across all spreads + packaged ZIP.
+outputs.push(exportMasterPdf(doc));
+outputs.push(packageDoc(doc));
+
+// POST /api/public/agent/complete with outputs, each carrying
+// { kind, url, metadata: { page: 3, scope: "page" } } or
+// { kind: "pdf", metadata: { scope: "master" } } for the combined file.
+postComplete(job.id, "succeeded", outputs);`,
+    },
+    related: [
+      { to: "/settings/agent", label: "Pair an agent" },
+      { to: "/library", label: "View templates" },
+    ],
+  },
+  {
     id: "engine-claude",
     title: "Engine: Claude (copy generation)",
     category: "engine",
@@ -225,6 +299,7 @@ const CATEGORIES = [
 const ENGINE_ICON: Record<string, typeof Sparkles> = {
   "engine-illustrator": ImageIcon,
   "engine-indesign": FileType,
+  "engine-indesign-bridge": Workflow,
   "engine-claude": MessageSquare,
   "engine-image": Sparkles,
 };
@@ -421,6 +496,20 @@ function GuideCard({ guide }: { guide: Guide }) {
             <span>{w}</span>
           </div>
         ))}
+
+        {guide.code && (
+          <div className="overflow-hidden rounded-md border bg-muted/40">
+            <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span>{guide.code.label}</span>
+              <span className="font-mono text-muted-foreground/70">{guide.code.language}</span>
+            </div>
+            <pre className="max-h-72 overflow-auto p-3 text-[11px] leading-relaxed">
+              <code>{guide.code.body}</code>
+            </pre>
+          </div>
+        )}
+
+
 
         {guide.related && guide.related.length > 0 && (
           <div className="mt-auto flex flex-wrap gap-2 border-t pt-3">
