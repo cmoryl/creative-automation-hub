@@ -101,6 +101,39 @@ function TemplateDetailPage() {
     queryKey: ["template-brand", templateId],
     queryFn: () => brandPrefillFn({ data: { templateId } }),
   });
+  const listCompaniesFn = useServerFn(listCompanies);
+  const { data: companies } = useQuery({
+    queryKey: ["companies-for-template-assign"],
+    queryFn: () => listCompaniesFn({}),
+  });
+  const assignBrandFn = useServerFn(assignTemplateBrand);
+  const [assigning, setAssigning] = useState(false);
+  const assignedCompanyId = brand?.source?.companyId ?? null;
+  const assignedProductId = brand?.source?.productId ?? null;
+  const productOptions = useMemo(() => {
+    const c = (companies ?? []).find((x) => x.id === assignedCompanyId);
+    if (!c) return [] as Array<{ id: string; name: string; parent?: string | null }>;
+    const flat: Array<{ id: string; name: string; parent?: string | null }> = [];
+    for (const p of c.products ?? []) {
+      flat.push({ id: p.id, name: p.name });
+      for (const sp of p.subProducts ?? []) flat.push({ id: sp.id, name: `${p.name} → ${sp.name}` });
+    }
+    return flat;
+  }, [companies, assignedCompanyId]);
+
+  const handleAssign = async (companyId: string | null, productId: string | null) => {
+    setAssigning(true);
+    try {
+      await assignBrandFn({ data: { templateId, companyId, productId } });
+      toast.success("Template scoped");
+      qc.invalidateQueries({ queryKey: ["template-brand", templateId] });
+      qc.invalidateQueries({ queryKey: ["template", templateId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign");
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const variables: Variable[] = useMemo(() => {
     const v = data?.template?.variables;
