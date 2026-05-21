@@ -13,6 +13,8 @@ import {
 import { createHybridRender } from "@/lib/hybrid.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProjectChecklist } from "@/components/ProjectChecklist";
@@ -21,7 +23,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Bot, User, Send, ArrowLeft, Play, Layers,
-  RotateCcw, X as XIcon, Trash2, AlertCircle,
+  RotateCcw, X as XIcon, Trash2, AlertCircle, Settings2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
