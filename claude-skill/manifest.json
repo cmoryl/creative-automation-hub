@@ -1,7 +1,7 @@
 {
   "name": "creative-automation",
-  "version": "0.1.0",
-  "description": "Create and monitor creative jobs (Illustrator, InDesign, Figma, Canva, hybrid) on the Creative Automation Platform.",
+  "version": "0.2.0",
+  "description": "Create and monitor creative jobs, batches, approvals, and webhooks on the Creative Automation Platform.",
   "env": {
     "CAP_BASE_URL": "Base URL of your Creative Automation Platform deployment",
     "CAP_TOKEN": "Workspace API token (cap_...) from Settings → API Tokens"
@@ -15,47 +15,30 @@
         "required": ["projectId", "engine"],
         "properties": {
           "projectId": { "type": "string", "format": "uuid" },
-          "engine": {
-            "type": "string",
-            "enum": ["illustrator", "indesign", "figma", "canva", "claude", "hybrid", "mock"]
-          },
+          "engine": { "type": "string", "enum": ["illustrator", "indesign", "figma", "canva", "claude", "hybrid", "mock"] },
           "templateId": { "type": "string", "format": "uuid" },
           "brief": { "type": "object" },
           "variables": { "type": "object" }
         }
       },
-      "http": {
-        "method": "POST",
-        "url": "${CAP_BASE_URL}/api/public/v1/jobs",
-        "headers": { "Authorization": "Bearer ${CAP_TOKEN}" }
-      }
+      "http": { "method": "POST", "url": "${CAP_BASE_URL}/api/public/v1/jobs", "headers": { "Authorization": "Bearer ${CAP_TOKEN}" } }
     },
     {
       "name": "get_job",
-      "description": "Get a job by id, including its outputs (live-file URLs, PNG/PDF exports, bundles).",
-      "input_schema": {
-        "type": "object",
-        "required": ["jobId"],
-        "properties": { "jobId": { "type": "string", "format": "uuid" } }
-      },
-      "http": {
-        "method": "GET",
-        "url": "${CAP_BASE_URL}/api/public/v1/jobs/${jobId}",
-        "headers": { "Authorization": "Bearer ${CAP_TOKEN}" }
-      }
+      "description": "Get a job by id, including outputs (live-file URLs, PNG/PDF exports, bundles).",
+      "input_schema": { "type": "object", "required": ["jobId"], "properties": { "jobId": { "type": "string", "format": "uuid" } } },
+      "http": { "method": "GET", "url": "${CAP_BASE_URL}/api/public/v1/jobs/${jobId}", "headers": { "Authorization": "Bearer ${CAP_TOKEN}" } }
     },
     {
       "name": "list_jobs",
       "description": "List recent jobs in the workspace, optionally filtered by project.",
-      "input_schema": {
-        "type": "object",
-        "properties": { "projectId": { "type": "string", "format": "uuid" } }
-      },
-      "http": {
-        "method": "GET",
-        "url": "${CAP_BASE_URL}/api/public/v1/jobs?projectId=${projectId}",
-        "headers": { "Authorization": "Bearer ${CAP_TOKEN}" }
-      }
+      "input_schema": { "type": "object", "properties": { "projectId": { "type": "string", "format": "uuid" } } },
+      "http": { "method": "GET", "url": "${CAP_BASE_URL}/api/public/v1/jobs?projectId=${projectId}", "headers": { "Authorization": "Bearer ${CAP_TOKEN}" } }
     }
+  ],
+  "notes": [
+    "Webhooks: register an endpoint at Settings → Webhooks to receive job.completed / job.failed events. Payloads are HMAC-SHA256 signed in the x-cap-signature header using the per-webhook secret.",
+    "Share links: any output or batch can be exposed as a public read-only URL at /share/<slug> with a configurable expiry.",
+    "Token scopes: API tokens now carry a scopes array (jobs:read, jobs:write). Future versions will enforce per-scope restrictions."
   ]
 }
