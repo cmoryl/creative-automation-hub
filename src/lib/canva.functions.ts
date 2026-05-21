@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getRequestHost } from "@tanstack/react-start/server";
+import { z } from "zod";
 import crypto from "crypto";
 
 const CANVA_SCOPES = [
@@ -43,7 +43,10 @@ async function getWorkspaceId(supabase: any, userId: string) {
 // Build the Canva authorization URL and stash PKCE verifier + state.
 export const startCanvaOAuth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input) =>
+    z.object({ origin: z.string().url().max(500) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
     const wsId = await getWorkspaceId(context.supabase, context.userId);
 
     const { data: integ } = await supabaseAdmin
@@ -62,9 +65,8 @@ export const startCanvaOAuth = createServerFn({ method: "POST" })
     const challenge = b64url(crypto.createHash("sha256").update(verifier).digest());
     const state = b64url(crypto.randomBytes(24));
 
-    const host = getRequestHost();
-    const proto = host.includes("localhost") ? "http" : "https";
-    const redirectUri = `${proto}://${host}/api/public/oauth/canva/callback`;
+    const redirectUri = `${data.origin.replace(/\/$/, "")}/api/public/oauth/canva/callback`;
+
 
     const nextMeta = {
       ...(integ?.metadata as any),
@@ -99,11 +101,5 @@ export const startCanvaOAuth = createServerFn({ method: "POST" })
     };
   });
 
-// Read the redirect URI the app will use (for display in the UI / Canva app config).
-export const getCanvaRedirectUri = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const host = getRequestHost();
-    const proto = host.includes("localhost") ? "http" : "https";
-    return { redirectUri: `${proto}://${host}/api/public/oauth/canva/callback` };
-  });
+// Deprecated: redirect URI now derived from the client's window.location.origin.
+
