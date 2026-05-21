@@ -27,7 +27,6 @@ export const Route = createFileRoute("/api/public/share/$slug")({
           return json({ error: "expired" }, { status: 410 });
         }
 
-        await supabaseAdmin.rpc("noop").catch(() => {}); // best-effort; rpc may not exist
         await supabaseAdmin
           .from("share_links")
           .update({ view_count: (await currentViews(link.id)) + 1 })
