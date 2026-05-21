@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
+import { parseCsv, normaliseKey } from "@/lib/csv-parse";
+
 
 export type BatchVariable = {
   name: string;
