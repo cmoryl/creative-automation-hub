@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateAgent, json } from "@/lib/agent-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { classifyFailure, computeBackoffMs } from "@/lib/retry-classifier";
 import { z } from "zod";
 
 const Body = z.object({
