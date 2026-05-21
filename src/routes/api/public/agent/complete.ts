@@ -32,6 +32,27 @@ const Body = z.object({
         )
         .max(100)
         .optional(),
+      // Per-frame / per-layer error context. `frame` is a human label (e.g.
+      // "page 2 / headline", "artboard 'Hero'"). `error_code` is the
+      // ExtendScript runtime code when available (e.g. 1302, 9050).
+      frames: z
+        .array(
+          z.object({
+            frame: z.string().max(400),
+            page: z.number().int().nonnegative().optional(),
+            layer: z.string().max(400).optional(),
+            variable: z.string().max(200).optional(),
+            error_code: z.union([z.string().max(40), z.number().int()]).optional(),
+            message: z.string().max(2000).optional(),
+            extendscript_log: z.string().max(10000).optional(),
+            suggestion: z.string().max(800).optional(),
+          }),
+        )
+        .max(500)
+        .optional(),
+      // Free-form remediation hints. Agent may pre-fill; we also auto-append
+      // a default suggestion for well-known failure reasons (see classifier).
+      suggestions: z.array(z.string().min(1).max(600)).max(20).optional(),
       agent_version: z.string().max(40).optional(),
     })
     .optional(),
