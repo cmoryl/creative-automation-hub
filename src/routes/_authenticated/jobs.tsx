@@ -161,10 +161,22 @@ function JobRow({
               {j.projects?.name ?? "Project"}
             </Link>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {new Date(j.created_at).toLocaleString()}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+            <span>{new Date(j.created_at).toLocaleString()}</span>
+            {j.next_retry_at && j.status === "queued" && (
+              <RetryCountdown
+                until={j.next_retry_at}
+                attempt={(j.retry_count ?? 0)}
+                max={(j.max_retries ?? 1)}
+              />
+            )}
+            {(j.retry_count ?? 0) > 0 && j.status !== "queued" && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                retried {j.retry_count}×
+              </span>
+            )}
             {j.error && (
-              <span className="ml-2 text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>
+              <span className="text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>
             )}
           </div>
         </div>
