@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authenticateAgent, json } from "@/lib/agent-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { classifyFailure, computeBackoffMs, suggestionsForReason } from "@/lib/retry-classifier";
+import { dispatchWebhook } from "@/lib/webhook-dispatcher.server";
 import { z } from "zod";
 
 const Body = z.object({
@@ -206,6 +207,20 @@ export const Route = createFileRoute("/api/public/agent/complete")({
               })),
             );
           }
+
+          // Webhook fan-out — non-blocking-ish (we await but each call has an 8s cap).
+          if (nextStatus === "completed" || nextStatus === "failed") {
+            const event = nextStatus === "completed" ? "job.completed" : "job.failed";
+            dispatchWebhook(auth.workspaceId, event, {
+              jobId,
+              status: nextStatus,
+              engine: (job as { engine?: string }).engine ?? null,
+              error: error ?? null,
+              warnings,
+              outputs: outputs.map((o) => ({ kind: o.kind, url: o.url })),
+            }).catch((err) => console.warn("webhook fan-out failed:", err));
+          }
+
           return json({
             ok: true,
             warnings,
