@@ -108,7 +108,8 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
           .eq("workspace_id", match.workspace_id)
           .eq("provider", "canva");
         if (updErr) {
-          return htmlResponse("Save failed", `<h1>Could not save tokens</h1><p>${updErr.message}</p>`, 500);
+          console.error("[canva-oauth] save tokens failed", updErr);
+          return htmlResponse("Save failed", `<h1>Could not save tokens</h1><p>Please try connecting again.</p>`, 500);
         }
 
         return htmlResponse(
