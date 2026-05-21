@@ -36,6 +36,7 @@ import { Route as AuthenticatedBatchesBatchIdRouteImport } from './routes/_authe
 import { Route as ApiPublicWebhooksCanvaRouteImport } from './routes/api/public/webhooks/canva'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
 import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
+import { Route as ApiPublicAgentTemplatesRouteImport } from './routes/api/public/agent/templates'
 import { Route as ApiPublicAgentStatusRouteImport } from './routes/api/public/agent/status'
 import { Route as ApiPublicAgentProgressRouteImport } from './routes/api/public/agent/progress'
 import { Route as ApiPublicAgentPingRouteImport } from './routes/api/public/agent/ping'
@@ -191,6 +192,11 @@ const ApiPublicAgentUploadUrlRoute = ApiPublicAgentUploadUrlRouteImport.update({
   path: '/api/public/agent/upload-url',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAgentTemplatesRoute = ApiPublicAgentTemplatesRouteImport.update({
+  id: '/api/public/agent/templates',
+  path: '/api/public/agent/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentStatusRoute = ApiPublicAgentStatusRouteImport.update({
   id: '/api/public/agent/status',
   path: '/api/public/agent/status',
@@ -234,9 +240,9 @@ const ApiPublicOauthCanvaCallbackRoute =
   } as any)
 const ApiPublicAgentTemplatesInventoryRoute =
   ApiPublicAgentTemplatesInventoryRouteImport.update({
-    id: '/api/public/agent/templates/inventory',
-    path: '/api/public/agent/templates/inventory',
-    getParentRoute: () => rootRouteImport,
+    id: '/inventory',
+    path: '/inventory',
+    getParentRoute: () => ApiPublicAgentTemplatesRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
+  '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -305,6 +312,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
+  '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/api/public/agent/ping': typeof ApiPublicAgentPingRoute
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
+  '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/ping'
     | '/api/public/agent/progress'
     | '/api/public/agent/status'
+    | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -419,6 +429,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/ping'
     | '/api/public/agent/progress'
     | '/api/public/agent/status'
+    | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/ping'
     | '/api/public/agent/progress'
     | '/api/public/agent/status'
+    | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
@@ -475,10 +487,10 @@ export interface RootRouteChildren {
   ApiPublicAgentPingRoute: typeof ApiPublicAgentPingRoute
   ApiPublicAgentProgressRoute: typeof ApiPublicAgentProgressRoute
   ApiPublicAgentStatusRoute: typeof ApiPublicAgentStatusRoute
+  ApiPublicAgentTemplatesRoute: typeof ApiPublicAgentTemplatesRouteWithChildren
   ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
   ApiPublicWebhooksCanvaRoute: typeof ApiPublicWebhooksCanvaRoute
-  ApiPublicAgentTemplatesInventoryRoute: typeof ApiPublicAgentTemplatesInventoryRoute
   ApiPublicOauthCanvaCallbackRoute: typeof ApiPublicOauthCanvaCallbackRoute
 }
 
@@ -673,6 +685,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgentUploadUrlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/agent/templates': {
+      id: '/api/public/agent/templates'
+      path: '/api/public/agent/templates'
+      fullPath: '/api/public/agent/templates'
+      preLoaderRoute: typeof ApiPublicAgentTemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/status': {
       id: '/api/public/agent/status'
       path: '/api/public/agent/status'
@@ -731,10 +750,10 @@ declare module '@tanstack/react-router' {
     }
     '/api/public/agent/templates/inventory': {
       id: '/api/public/agent/templates/inventory'
-      path: '/api/public/agent/templates/inventory'
+      path: '/inventory'
       fullPath: '/api/public/agent/templates/inventory'
       preLoaderRoute: typeof ApiPublicAgentTemplatesInventoryRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof ApiPublicAgentTemplatesRoute
     }
   }
 }
@@ -803,6 +822,21 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface ApiPublicAgentTemplatesRouteChildren {
+  ApiPublicAgentTemplatesInventoryRoute: typeof ApiPublicAgentTemplatesInventoryRoute
+}
+
+const ApiPublicAgentTemplatesRouteChildren: ApiPublicAgentTemplatesRouteChildren =
+  {
+    ApiPublicAgentTemplatesInventoryRoute:
+      ApiPublicAgentTemplatesInventoryRoute,
+  }
+
+const ApiPublicAgentTemplatesRouteWithChildren =
+  ApiPublicAgentTemplatesRoute._addFileChildren(
+    ApiPublicAgentTemplatesRouteChildren,
+  )
+
 interface ApiPublicV1JobsRouteChildren {
   ApiPublicV1JobsJobIdRoute: typeof ApiPublicV1JobsJobIdRoute
 }
@@ -825,10 +859,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentPingRoute: ApiPublicAgentPingRoute,
   ApiPublicAgentProgressRoute: ApiPublicAgentProgressRoute,
   ApiPublicAgentStatusRoute: ApiPublicAgentStatusRoute,
+  ApiPublicAgentTemplatesRoute: ApiPublicAgentTemplatesRouteWithChildren,
   ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
   ApiPublicWebhooksCanvaRoute: ApiPublicWebhooksCanvaRoute,
-  ApiPublicAgentTemplatesInventoryRoute: ApiPublicAgentTemplatesInventoryRoute,
   ApiPublicOauthCanvaCallbackRoute: ApiPublicOauthCanvaCallbackRoute,
 }
 export const routeTree = rootRouteImport
