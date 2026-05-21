@@ -149,16 +149,33 @@ function TemplatesBatchPage() {
           };
         });
 
+      if (scheduleEnabled) {
+        const runAtIso = new Date(scheduleAt).toISOString();
+        const sched = await scheduleFn({
+          data: {
+            name: batchLabel.trim(),
+            runAt: runAtIso,
+            payload: { batchLabel: batchLabel.trim(), groups },
+          },
+        });
+        return { scheduled: true, sched };
+      }
       return dispatchFn({
         data: { batchLabel: batchLabel.trim(), groups },
       });
     },
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
+      if (res?.scheduled) {
+        toast.success(`Scheduled for ${new Date(res.sched.run_at).toLocaleString()}`);
+        navigate({ to: "/settings/schedules" });
+        return;
+      }
       toast.success(`Created ${res.totalJobs} job(s) across ${res.created.length} variation(s)`);
       navigate({ to: "/batches/$batchId", params: { batchId: res.batchId } });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Dispatch failed"),
   });
+
 
   const intersectionEngines = useMemo(() => {
     const all = new Set(ENGINES);
