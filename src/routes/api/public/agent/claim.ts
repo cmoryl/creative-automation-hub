@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateAgent, json } from "@/lib/agent-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  enrichVariablesWithPages,
+  type TemplatePageLite,
+  type TemplateVariableLite,
+} from "@/lib/template-pages";
 
 // Agent polls for the next queued job for its workspace.
 export const Route = createFileRoute("/api/public/agent/claim")({
@@ -20,9 +25,64 @@ export const Route = createFileRoute("/api/public/agent/claim")({
             .limit(1)
             .maybeSingle();
           if (!job) return json({ job: null });
-          // Flatten the joined template under `template` for the agent.
+          // Flatten the joined template under `template` and enrich each
+          // variable with its resolved page index so the InDesign bridge can
+          // scope frame swaps to the correct spread.
           const { templates, ...rest } = job as typeof job & { templates: unknown };
-          const flatJob = { ...rest, template: templates };
+          const tpl = templates as
+            | {
+                id: string;
+                name: string;
+                engine: string;
+                source_ref: string | null;
+                variables: unknown;
+                pages: unknown;
+              }
+            | null;
+          let template: unknown = tpl;
+          if (tpl) {
+            const pages = (Array.isArray(tpl.pages) ? tpl.pages : []) as TemplatePageLite[];
+            const variables = (Array.isArray(tpl.variables) ? tpl.variables : []) as TemplateVariableLite[];
+            const enrichedVars = enrichVariablesWithPages(variables, pages);
+            // Build per-page bundles so the bridge can iterate
+            // `payload.byPage[i].variables` directly without re-grouping.
+            const userValues = (job.variables as Record<string, unknown> | null) ?? {};
+            const byPage = pages.map((p, i) => {
+              const idx = i + 1;
+              const fields = enrichedVars.filter((v) => v.page === idx);
+              const values: Record<string, unknown> = {};
+              for (const f of fields) if (f.name in userValues) values[f.name] = userValues[f.name];
+              return {
+                pageIndex: idx,
+                pageName: p.name ?? `Page ${idx}`,
+                kind: p.kind ?? "page",
+                width: p.width ?? null,
+                height: p.height ?? null,
+                unit: p.unit ?? null,
+                // For InDesign, page_index from the .indd; for AI, the artboard index.
+                docIndex: typeof p.page_index === "number"
+                  ? p.page_index
+                  : typeof p.artboard_index === "number"
+                    ? p.artboard_index
+                    : idx,
+                fields: fields.map((f) => ({ name: f.name, type: f.type ?? "text", layer: f.layer ?? null })),
+                values,
+              };
+            });
+            template = {
+              ...tpl,
+              variables: enrichedVars,
+              pages,
+              byPage,
+              expectedOutputs: pages.length > 1
+                ? {
+                    perPage: ["preview", "pdf"],
+                    master: ["pdf", "zip"],
+                  }
+                : { perPage: [], master: ["preview", "pdf"] },
+            };
+          }
+          const flatJob = { ...rest, template };
 
           const { error } = await supabaseAdmin
             .from("jobs")

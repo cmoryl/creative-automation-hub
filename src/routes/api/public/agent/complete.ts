@@ -15,7 +15,7 @@ const Body = z.object({
         metadata: z.record(z.unknown()).optional(),
       }),
     )
-    .max(50)
+    .max(200)
     .default([]),
 });
 
@@ -29,20 +29,55 @@ export const Route = createFileRoute("/api/public/agent/complete")({
           if (!parsed.success) return json({ error: "invalid body" }, { status: 400 });
           const { jobId, status, error, outputs } = parsed.data;
 
-          // Make sure the job belongs to this agent's workspace
+          // Verify ownership and pull template page count for validation
           const { data: job } = await supabaseAdmin
             .from("jobs")
-            .select("id")
+            .select("id, brief, template_id, templates:template_id ( pages, name )")
             .eq("id", jobId)
             .eq("workspace_id", auth.workspaceId)
             .maybeSingle();
           if (!job) return json({ error: "not found" }, { status: 404 });
+
+          // Per-page output validation. We don't fail the job, but we record
+          // a structured `warnings` array onto job.brief so the UI can flag
+          // incomplete renders (e.g. agent uploaded 8 pages of a 12pp magazine).
+          const warnings: string[] = [];
+          const tpl = (job as { templates?: { pages?: unknown; name?: string } | null }).templates ?? null;
+          const pages = (Array.isArray(tpl?.pages) ? tpl!.pages : []) as Array<{ name?: string }>;
+          if (status !== "failed" && pages.length > 1) {
+            const pageNums = new Set<number>();
+            let hasMasterPdf = false;
+            for (const o of outputs) {
+              const meta = (o.metadata ?? {}) as { page?: number; scope?: string };
+              if (typeof meta.page === "number") pageNums.add(meta.page);
+              if (
+                (meta.scope === "master" || /master/i.test(o.kind)) &&
+                /pdf/i.test(o.kind)
+              ) {
+                hasMasterPdf = true;
+              }
+            }
+            for (let i = 1; i <= pages.length; i++) {
+              if (!pageNums.has(i)) {
+                warnings.push(
+                  `Missing per-page output for page ${i}${pages[i - 1]?.name ? ` (${pages[i - 1].name})` : ""}`,
+                );
+              }
+            }
+            if (!hasMasterPdf) warnings.push("Missing master PDF (combined spread)");
+          }
+
+          const briefNext = {
+            ...((job.brief as Record<string, unknown> | null) ?? {}),
+            warnings: warnings.length ? warnings : undefined,
+          };
 
           await supabaseAdmin
             .from("jobs")
             .update({
               status: status === "succeeded" ? "completed" : status,
               error: error ?? null,
+              brief: briefNext as never,
               completed_at: new Date().toISOString(),
             })
             .eq("id", jobId);
@@ -57,7 +92,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
               })),
             );
           }
-          return json({ ok: true });
+          return json({ ok: true, warnings });
         } catch (e) {
           if (e instanceof Response) return e;
           return json({ error: String(e) }, { status: 500 });
