@@ -375,6 +375,31 @@ function TemplatesBatchPage() {
               </>
             )}
 
+            <div className="rounded-md border bg-card p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={scheduleEnabled}
+                  onChange={(e) => setScheduleEnabled(e.target.checked)}
+                />
+                <CalendarClock className="h-4 w-4 text-primary" />
+                Schedule for later
+              </label>
+              {scheduleEnabled && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={scheduleAt}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Runs at {new Date(scheduleAt).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button variant="ghost" onClick={() => setStep(2)}>
                 <ArrowLeft className="h-4 w-4" /> Back
@@ -385,12 +410,15 @@ function TemplatesBatchPage() {
               >
                 {dispatch.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : scheduleEnabled ? (
+                  <CalendarClock className="h-4 w-4" />
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}{" "}
-                Dispatch · {selectedTemplates.length} template(s) × {rows.length} row(s)
+                {scheduleEnabled ? "Schedule" : "Dispatch"} · {selectedTemplates.length} template(s) × {rows.length} row(s)
               </Button>
             </div>
+
           </CardContent>
         </Card>
       )}
