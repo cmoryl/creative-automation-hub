@@ -42,6 +42,7 @@ type Variable = {
   placeholder?: string;
   layer?: string;
   extracted?: boolean;
+  page?: number;
 };
 
 type TemplatePage = {
@@ -135,6 +136,7 @@ function TemplateDetailPage() {
             label: v.label?.trim() || undefined,
             type: (v.type as "text" | "image" | "color" | "list"),
             layer: v.layer?.trim() || undefined,
+            page: typeof v.page === "number" && v.page > 0 ? v.page : undefined,
           })),
         },
       });
