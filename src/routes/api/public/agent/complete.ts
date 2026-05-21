@@ -113,19 +113,55 @@ export const Route = createFileRoute("/api/public/agent/complete")({
             warnings: warnings.length ? warnings : undefined,
           };
 
+          // Smart retry: if this is a failure, classify it. Transient failures
+          // get requeued (status='queued', next_retry_at in the future) until
+          // retry_count exceeds max_retries; everything else stays failed.
+          let nextStatus: string = status === "succeeded" ? "completed" : status;
+          let retryCountNext: number | undefined;
+          let nextRetryAt: string | null = null;
+          let transient: boolean | null = null;
+          let retryReason: string | null = null;
+
+          if (status === "failed") {
+            const cls = classifyFailure(error ?? null, error_stage ?? null, error_detail ?? null);
+            transient = cls.transient;
+            retryReason = cls.reason;
+            const used = (job as { retry_count?: number }).retry_count ?? 0;
+            const max = (job as { max_retries?: number }).max_retries ?? 1;
+            if (cls.transient && used < max) {
+              nextStatus = "queued";
+              retryCountNext = used + 1;
+              const backoff = computeBackoffMs(cls.backoff_ms, used);
+              nextRetryAt = new Date(Date.now() + backoff).toISOString();
+            }
+          }
+
+          const briefForRetry = {
+            ...briefNext,
+            last_retry_reason: retryReason ?? undefined,
+          };
+
           await supabaseAdmin
             .from("jobs")
             .update({
-              status: status === "succeeded" ? "completed" : status,
+              status: nextStatus,
               error: error ?? null,
               error_stage: error_stage ?? null,
               error_detail: (error_detail ?? null) as never,
-              brief: briefNext as never,
-              completed_at: new Date().toISOString(),
+              brief: briefForRetry as never,
+              transient,
+              ...(retryCountNext !== undefined ? { retry_count: retryCountNext } : {}),
+              next_retry_at: nextRetryAt,
+              // Only stamp completed_at when we're truly done.
+              completed_at: nextStatus === "queued" ? null : new Date().toISOString(),
+              // Free the agent slot so any agent can pick up the retry.
+              ...(nextStatus === "queued"
+                ? { assigned_agent_id: null, claimed_at: null }
+                : {}),
             })
             .eq("id", jobId);
 
-          if (outputs.length > 0) {
+          if (outputs.length > 0 && nextStatus !== "queued") {
             await supabaseAdmin.from("outputs").insert(
               outputs.map((o) => ({
                 job_id: jobId,
@@ -135,7 +171,13 @@ export const Route = createFileRoute("/api/public/agent/complete")({
               })),
             );
           }
-          return json({ ok: true, warnings });
+          return json({
+            ok: true,
+            warnings,
+            requeued: nextStatus === "queued",
+            retry_reason: retryReason,
+            next_retry_at: nextRetryAt,
+          });
         } catch (e) {
           if (e instanceof Response) return e;
           return json({ error: String(e) }, { status: 500 });
