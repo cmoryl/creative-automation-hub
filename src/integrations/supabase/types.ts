@@ -181,6 +181,48 @@ export type Database = {
         }
         Relationships: []
       }
+      batch_schedules: {
+        Row: {
+          created_at: string
+          created_by: string
+          cron: string | null
+          dispatched_at: string | null
+          error: string | null
+          id: string
+          name: string
+          payload: Json
+          run_at: string
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          cron?: string | null
+          dispatched_at?: string | null
+          error?: string | null
+          id?: string
+          name: string
+          payload: Json
+          run_at: string
+          status?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          cron?: string | null
+          dispatched_at?: string | null
+          error?: string | null
+          id?: string
+          name?: string
+          payload?: Json
+          run_at?: string
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string | null
@@ -362,6 +404,51 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      output_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          output_id: string
+          parent_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          output_id: string
+          parent_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          output_id?: string
+          parent_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "output_comments_output_id_fkey"
+            columns: ["output_id"]
+            isOneToOne: false
+            referencedRelation: "outputs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "output_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "output_comments"
             referencedColumns: ["id"]
           },
         ]
@@ -628,6 +715,56 @@ export type Database = {
           },
         ]
       }
+      share_links: {
+        Row: {
+          batch_key: string | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          kind: string
+          output_id: string | null
+          revoked_at: string | null
+          slug: string
+          view_count: number
+          workspace_id: string
+        }
+        Insert: {
+          batch_key?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          kind: string
+          output_id?: string | null
+          revoked_at?: string | null
+          slug: string
+          view_count?: number
+          workspace_id: string
+        }
+        Update: {
+          batch_key?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          output_id?: string | null
+          revoked_at?: string | null
+          slug?: string
+          view_count?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_links_output_id_fkey"
+            columns: ["output_id"]
+            isOneToOne: false
+            referencedRelation: "outputs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       template_agent_availability: {
         Row: {
           agent_id: string
@@ -753,6 +890,7 @@ export type Database = {
           id: string
           last_used_at: string | null
           name: string
+          scopes: string[]
           token_hash: string
           workspace_id: string
         }
@@ -762,6 +900,7 @@ export type Database = {
           id?: string
           last_used_at?: string | null
           name: string
+          scopes?: string[]
           token_hash: string
           workspace_id: string
         }
@@ -771,6 +910,7 @@ export type Database = {
           id?: string
           last_used_at?: string | null
           name?: string
+          scopes?: string[]
           token_hash?: string
           workspace_id?: string
         }
@@ -845,6 +985,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workspace_webhook_deliveries: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          event: string
+          id: string
+          ok: boolean
+          payload: Json
+          status_code: number | null
+          webhook_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          event: string
+          id?: string
+          ok?: boolean
+          payload?: Json
+          status_code?: number | null
+          webhook_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          event?: string
+          id?: string
+          ok?: boolean
+          payload?: Json
+          status_code?: number | null
+          webhook_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_webhooks: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          events: string[]
+          id: string
+          last_used_at: string | null
+          name: string
+          secret: string
+          url: string
+          workspace_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          events?: string[]
+          id?: string
+          last_used_at?: string | null
+          name: string
+          secret: string
+          url: string
+          workspace_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          events?: string[]
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          secret?: string
+          url?: string
+          workspace_id?: string
+        }
+        Relationships: []
       }
       workspaces: {
         Row: {

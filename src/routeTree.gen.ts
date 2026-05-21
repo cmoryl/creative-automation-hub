@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShareSlugRouteImport } from './routes/share.$slug'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
@@ -28,6 +29,8 @@ import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedTemplatesCanvaRouteImport } from './routes/_authenticated/templates.canva'
 import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
+import { Route as AuthenticatedSettingsWebhooksRouteImport } from './routes/_authenticated/settings.webhooks'
+import { Route as AuthenticatedSettingsSchedulesRouteImport } from './routes/_authenticated/settings.schedules'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
@@ -35,6 +38,7 @@ import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_au
 import { Route as AuthenticatedBatchesBatchIdRouteImport } from './routes/_authenticated/batches.$batchId'
 import { Route as ApiPublicWebhooksCanvaRouteImport } from './routes/api/public/webhooks/canva'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
+import { Route as ApiPublicShareSlugRouteImport } from './routes/api/public/share/$slug'
 import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
 import { Route as ApiPublicAgentTemplatesRouteImport } from './routes/api/public/agent/templates'
 import { Route as ApiPublicAgentStatusRouteImport } from './routes/api/public/agent/status'
@@ -59,6 +63,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareSlugRoute = ShareSlugRouteImport.update({
+  id: '/share/$slug',
+  path: '/share/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
@@ -147,6 +156,18 @@ const AuthenticatedTemplatesTemplateIdRoute =
     path: '/templates/$templateId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsWebhooksRoute =
+  AuthenticatedSettingsWebhooksRouteImport.update({
+    id: '/settings/webhooks',
+    path: '/settings/webhooks',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsSchedulesRoute =
+  AuthenticatedSettingsSchedulesRouteImport.update({
+    id: '/settings/schedules',
+    path: '/settings/schedules',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/settings/integrations',
@@ -185,6 +206,11 @@ const ApiPublicWebhooksCanvaRoute = ApiPublicWebhooksCanvaRouteImport.update({
 const ApiPublicV1JobsRoute = ApiPublicV1JobsRouteImport.update({
   id: '/api/public/v1/jobs',
   path: '/api/public/v1/jobs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicShareSlugRoute = ApiPublicShareSlugRouteImport.update({
+  id: '/api/public/share/$slug',
+  path: '/api/public/share/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAgentUploadUrlRoute = ApiPublicAgentUploadUrlRouteImport.update({
@@ -258,11 +284,14 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
   '/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/share/$slug': typeof ShareSlugRoute
   '/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -277,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/agent/templates/inventory': typeof ApiPublicAgentTemplatesInventoryRoute
@@ -295,11 +325,14 @@ export interface FileRoutesByTo {
   '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
+  '/share/$slug': typeof ShareSlugRoute
   '/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -314,6 +347,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/agent/templates/inventory': typeof ApiPublicAgentTemplatesInventoryRoute
@@ -335,11 +369,14 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRouteWithChildren
+  '/share/$slug': typeof ShareSlugRoute
   '/_authenticated/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/_authenticated/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/_authenticated/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/_authenticated/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -354,6 +391,7 @@ export interface FileRoutesById {
   '/api/public/agent/status': typeof ApiPublicAgentStatusRoute
   '/api/public/agent/templates': typeof ApiPublicAgentTemplatesRouteWithChildren
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
+  '/api/public/share/$slug': typeof ApiPublicShareSlugRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
   '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/agent/templates/inventory': typeof ApiPublicAgentTemplatesInventoryRoute
@@ -375,11 +413,14 @@ export interface FileRouteTypes {
     | '/library'
     | '/outputs'
     | '/projects'
+    | '/share/$slug'
     | '/batches/$batchId'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/settings/schedules'
+    | '/settings/webhooks'
     | '/templates/$templateId'
     | '/templates/batch'
     | '/templates/canva'
@@ -394,6 +435,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
     | '/api/public/agent/templates/inventory'
@@ -412,11 +454,14 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/library'
     | '/outputs'
+    | '/share/$slug'
     | '/batches/$batchId'
     | '/projects/$projectId'
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/settings/schedules'
+    | '/settings/webhooks'
     | '/templates/$templateId'
     | '/templates/batch'
     | '/templates/canva'
@@ -431,6 +476,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
     | '/api/public/agent/templates/inventory'
@@ -451,11 +497,14 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/_authenticated/outputs'
     | '/_authenticated/projects'
+    | '/share/$slug'
     | '/_authenticated/batches/$batchId'
     | '/_authenticated/projects/$projectId'
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/settings/schedules'
+    | '/_authenticated/settings/webhooks'
     | '/_authenticated/templates/$templateId'
     | '/_authenticated/templates/batch'
     | '/_authenticated/templates/canva'
@@ -470,6 +519,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/status'
     | '/api/public/agent/templates'
     | '/api/public/agent/upload-url'
+    | '/api/public/share/$slug'
     | '/api/public/v1/jobs'
     | '/api/public/webhooks/canva'
     | '/api/public/agent/templates/inventory'
@@ -481,6 +531,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ShareSlugRoute: typeof ShareSlugRoute
   ApiPublicAgentClaimRoute: typeof ApiPublicAgentClaimRoute
   ApiPublicAgentCompleteRoute: typeof ApiPublicAgentCompleteRoute
   ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
@@ -489,6 +540,7 @@ export interface RootRouteChildren {
   ApiPublicAgentStatusRoute: typeof ApiPublicAgentStatusRoute
   ApiPublicAgentTemplatesRoute: typeof ApiPublicAgentTemplatesRouteWithChildren
   ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
+  ApiPublicShareSlugRoute: typeof ApiPublicShareSlugRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
   ApiPublicWebhooksCanvaRoute: typeof ApiPublicWebhooksCanvaRoute
   ApiPublicOauthCanvaCallbackRoute: typeof ApiPublicOauthCanvaCallbackRoute
@@ -515,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$slug': {
+      id: '/share/$slug'
+      path: '/share/$slug'
+      fullPath: '/share/$slug'
+      preLoaderRoute: typeof ShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/projects': {
@@ -629,6 +688,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesTemplateIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/webhooks': {
+      id: '/_authenticated/settings/webhooks'
+      path: '/settings/webhooks'
+      fullPath: '/settings/webhooks'
+      preLoaderRoute: typeof AuthenticatedSettingsWebhooksRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/schedules': {
+      id: '/_authenticated/settings/schedules'
+      path: '/settings/schedules'
+      fullPath: '/settings/schedules'
+      preLoaderRoute: typeof AuthenticatedSettingsSchedulesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
       path: '/settings/integrations'
@@ -676,6 +749,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/jobs'
       fullPath: '/api/public/v1/jobs'
       preLoaderRoute: typeof ApiPublicV1JobsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/share/$slug': {
+      id: '/api/public/share/$slug'
+      path: '/api/public/share/$slug'
+      fullPath: '/api/public/share/$slug'
+      preLoaderRoute: typeof ApiPublicShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/agent/upload-url': {
@@ -788,6 +868,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedSettingsSchedulesRoute: typeof AuthenticatedSettingsSchedulesRoute
+  AuthenticatedSettingsWebhooksRoute: typeof AuthenticatedSettingsWebhooksRoute
   AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
   AuthenticatedTemplatesBatchRoute: typeof AuthenticatedTemplatesBatchRoute
   AuthenticatedTemplatesCanvaRoute: typeof AuthenticatedTemplatesCanvaRoute
@@ -811,6 +893,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsSchedulesRoute: AuthenticatedSettingsSchedulesRoute,
+  AuthenticatedSettingsWebhooksRoute: AuthenticatedSettingsWebhooksRoute,
   AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
   AuthenticatedTemplatesBatchRoute: AuthenticatedTemplatesBatchRoute,
   AuthenticatedTemplatesCanvaRoute: AuthenticatedTemplatesCanvaRoute,
@@ -853,6 +937,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ShareSlugRoute: ShareSlugRoute,
   ApiPublicAgentClaimRoute: ApiPublicAgentClaimRoute,
   ApiPublicAgentCompleteRoute: ApiPublicAgentCompleteRoute,
   ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
@@ -861,6 +946,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentStatusRoute: ApiPublicAgentStatusRoute,
   ApiPublicAgentTemplatesRoute: ApiPublicAgentTemplatesRouteWithChildren,
   ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
+  ApiPublicShareSlugRoute: ApiPublicShareSlugRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
   ApiPublicWebhooksCanvaRoute: ApiPublicWebhooksCanvaRoute,
   ApiPublicOauthCanvaCallbackRoute: ApiPublicOauthCanvaCallbackRoute,
