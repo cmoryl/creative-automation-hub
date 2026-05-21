@@ -3,10 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAllJobs, retryJob, cancelJob } from "@/lib/agent.functions";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, X as XIcon, ArrowRight } from "lucide-react";
+import { RotateCcw, X as XIcon, ArrowRight, ChevronDown } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RenderErrorReport, type RenderErrorDetail } from "@/components/RenderErrorReport";
+import { AgentBadge } from "@/components/AgentBadge";
 
 export const Route = createFileRoute("/_authenticated/jobs")({
   component: JobsPage,
@@ -17,6 +19,8 @@ type Row = {
   engine: string;
   status: string;
   error: string | null;
+  error_stage: string | null;
+  error_detail: RenderErrorDetail | null;
   created_at: string;
   completed_at: string | null;
   project_id: string;
@@ -67,7 +71,10 @@ function JobsPage() {
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
       <header className="mb-4">
-        <h1 className="text-2xl font-bold">All renders</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold">All renders</h1>
+          <AgentBadge />
+        </div>
         <p className="text-sm text-muted-foreground">Every job across this workspace · live via realtime.</p>
       </header>
 
@@ -86,47 +93,108 @@ function JobsPage() {
       ) : (
         <ul className="space-y-2">
           {filtered.map((j) => (
-            <li key={j.id} className="flex items-center justify-between rounded-lg border bg-card p-3 text-sm">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${colour(j.status)}`}>{j.status}</span>
-                  <span className="font-medium">{j.engine}</span>
-                  <span className="text-muted-foreground">·</span>
-                  <Link
-                    to="/projects/$projectId"
-                    params={{ projectId: j.project_id }}
-                    className="truncate text-muted-foreground hover:text-foreground"
-                  >
-                    {j.projects?.name ?? "Project"}
-                  </Link>
-                </div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {new Date(j.created_at).toLocaleString()}
-                  {j.error && <span className="ml-2 text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {(j.status === "queued" || j.status === "running") && (
-                  <Button size="sm" variant="ghost"
-                    onClick={async () => { try { await cancel({ data: { jobId: j.id } }); qc.invalidateQueries({ queryKey: ["all-jobs"] }); } catch (e) { toast.error(String(e)); } }}>
-                    <XIcon className="h-3 w-3" />
-                  </Button>
-                )}
-                {(j.status === "failed" || j.status === "cancelled") && (
-                  <Button size="sm" variant="ghost"
-                    onClick={async () => { try { await retry({ data: { jobId: j.id } }); toast.success("Re-queued"); qc.invalidateQueries({ queryKey: ["all-jobs"] }); } catch (e) { toast.error(String(e)); } }}>
-                    <RotateCcw className="h-3 w-3" />
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost"
-                  onClick={() => navigate({ to: "/projects/$projectId", params: { projectId: j.project_id } })}>
-                  <ArrowRight className="h-3 w-3" />
-                </Button>
-              </div>
-            </li>
+            <JobRow
+              key={j.id}
+              row={j}
+              colour={colour}
+              onCancel={async () => {
+                try {
+                  await cancel({ data: { jobId: j.id } });
+                  qc.invalidateQueries({ queryKey: ["all-jobs"] });
+                } catch (e) {
+                  toast.error(String(e));
+                }
+              }}
+              onRetry={async () => {
+                try {
+                  await retry({ data: { jobId: j.id } });
+                  toast.success("Re-queued");
+                  qc.invalidateQueries({ queryKey: ["all-jobs"] });
+                } catch (e) {
+                  toast.error(String(e));
+                }
+              }}
+              onOpen={() =>
+                navigate({ to: "/projects/$projectId", params: { projectId: j.project_id } })
+              }
+            />
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function JobRow({
+  row: j,
+  colour,
+  onCancel,
+  onRetry,
+  onOpen,
+}: {
+  row: Row;
+  colour: (s: string) => string;
+  onCancel: () => void;
+  onRetry: () => void;
+  onOpen: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const isFailed = j.status === "failed";
+  const hasReport = isFailed && (j.error_detail || j.error || j.error_stage);
+  return (
+    <li className="rounded-lg border bg-card text-sm">
+      <div className="flex items-center justify-between p-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className={`rounded px-2 py-0.5 text-xs ${colour(j.status)}`}>{j.status}</span>
+            <span className="font-medium">{j.engine}</span>
+            <span className="text-muted-foreground">·</span>
+            <Link
+              to="/projects/$projectId"
+              params={{ projectId: j.project_id }}
+              className="truncate text-muted-foreground hover:text-foreground"
+            >
+              {j.projects?.name ?? "Project"}
+            </Link>
+          </div>
+          <div className="mt-0.5 text-xs text-muted-foreground">
+            {new Date(j.created_at).toLocaleString()}
+            {j.error && (
+              <span className="ml-2 text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {hasReport && (
+            <Button size="sm" variant="ghost" onClick={() => setOpen((o) => !o)}>
+              <ChevronDown className={`h-3 w-3 transition ${open ? "rotate-180" : ""}`} />
+            </Button>
+          )}
+          {(j.status === "queued" || j.status === "running") && (
+            <Button size="sm" variant="ghost" onClick={onCancel}>
+              <XIcon className="h-3 w-3" />
+            </Button>
+          )}
+          {(j.status === "failed" || j.status === "cancelled") && (
+            <Button size="sm" variant="ghost" onClick={onRetry}>
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={onOpen}>
+            <ArrowRight className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+      {open && hasReport && (
+        <div className="border-t p-3">
+          <RenderErrorReport
+            jobId={j.id}
+            error={j.error}
+            errorStage={j.error_stage}
+            errorDetail={j.error_detail}
+          />
+        </div>
+      )}
+    </li>
   );
 }

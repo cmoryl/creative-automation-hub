@@ -6,7 +6,34 @@ import { z } from "zod";
 const Body = z.object({
   jobId: z.string().uuid(),
   status: z.enum(["succeeded", "completed", "failed"]),
-  error: z.string().max(2000).optional(),
+  error: z.string().max(4000).optional(),
+  error_stage: z
+    .enum(["open", "fonts", "links", "swap", "export", "upload", "other"])
+    .optional(),
+  error_detail: z
+    .object({
+      message: z.string().max(4000).optional(),
+      stack: z.string().max(20000).optional(),
+      extendscript_log: z.string().max(40000).optional(),
+      missing_fonts: z.array(z.string().max(200)).max(200).optional(),
+      font_substitutions: z
+        .array(z.object({ requested: z.string().max(200), used: z.string().max(200) }))
+        .max(200)
+        .optional(),
+      missing_links: z.array(z.string().max(400)).max(200).optional(),
+      files: z
+        .array(
+          z.object({
+            name: z.string().max(400),
+            path: z.string().max(800).optional(),
+            exists: z.boolean().optional(),
+          }),
+        )
+        .max(100)
+        .optional(),
+      agent_version: z.string().max(40).optional(),
+    })
+    .optional(),
   outputs: z
     .array(
       z.object({
@@ -27,7 +54,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
           const auth = await authenticateAgent(request);
           const parsed = Body.safeParse(await request.json());
           if (!parsed.success) return json({ error: "invalid body" }, { status: 400 });
-          const { jobId, status, error, outputs } = parsed.data;
+          const { jobId, status, error, error_stage, error_detail, outputs } = parsed.data;
 
           // Verify ownership and pull template page count for validation
           const { data: job } = await supabaseAdmin
@@ -90,6 +117,8 @@ export const Route = createFileRoute("/api/public/agent/complete")({
             .update({
               status: status === "succeeded" ? "completed" : status,
               error: error ?? null,
+              error_stage: error_stage ?? null,
+              error_detail: (error_detail ?? null) as never,
               brief: briefNext as never,
               completed_at: new Date().toISOString(),
             })
