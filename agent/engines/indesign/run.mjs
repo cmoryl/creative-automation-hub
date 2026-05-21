@@ -147,26 +147,55 @@ doc.close(SaveOptions.NO);
 `;
 }
 
-function runScript(jsxPath) {
+// Try multiple InDesign app names so the bridge works across CC / 2023-2025.
+// Override with LOVABLE_INDESIGN_APP="Adobe InDesign 2025" (comma-separated).
+const INDESIGN_APP_NAMES = (process.env.LOVABLE_INDESIGN_APP || [
+  "Adobe InDesign 2025",
+  "Adobe InDesign 2024",
+  "Adobe InDesign 2023",
+  "Adobe InDesign",
+].join(",")).split(",").map((s) => s.trim()).filter(Boolean);
+
+function spawnCapture(cmd, args) {
   return new Promise((resolve, reject) => {
-    let cmd, args;
-    if (process.platform === "darwin") {
-      cmd = "osascript";
-      args = ["-e", `tell application "Adobe InDesign 2024" to do script file "${jsxPath}" language javascript`];
-    } else if (process.platform === "win32") {
-      const ps = `$id = New-Object -ComObject InDesign.Application; $id.DoScript("${jsxPath.replace(/\\/g, "\\\\")}", 1246973031)`;
-      cmd = "powershell";
-      args = ["-NoProfile", "-Command", ps];
-    } else {
-      return reject(new Error(`unsupported OS for InDesign: ${process.platform}`));
-    }
-    const child = spawn(cmd, args, { stdio: "inherit" });
+    const child = spawn(cmd, args);
+    let stderr = "", stdout = "";
+    child.stdout?.on("data", (d) => { const s = d.toString(); stdout += s; process.stdout.write(s); });
+    child.stderr?.on("data", (d) => { const s = d.toString(); stderr += s; process.stderr.write(s); });
     child.on("error", reject);
-    child.on("exit", (code) =>
-      code === 0 ? resolve() : reject(new Error(`InDesign exited ${code}`)),
-    );
+    child.on("exit", (code) => {
+      if (code === 0) return resolve({ stdout, stderr });
+      const tail = (stderr || stdout).trim().split("\n").slice(-6).join(" | ");
+      reject(new Error(`exit ${code}${tail ? `: ${tail}` : ""}`));
+    });
   });
 }
+
+async function runScript(jsxPath) {
+  if (process.platform === "darwin") {
+    let lastErr;
+    for (const appName of INDESIGN_APP_NAMES) {
+      try {
+        await spawnCapture("osascript", [
+          "-e",
+          `tell application "${appName}" to do script file "${jsxPath}" language javascript`,
+        ]);
+        return;
+      } catch (e) { lastErr = e; }
+    }
+    throw new Error(
+      `InDesign launch failed (tried ${INDESIGN_APP_NAMES.join(", ")}). ` +
+      `Set LOVABLE_INDESIGN_APP to the exact app name. Last error: ${lastErr?.message || "unknown"}`,
+    );
+  }
+  if (process.platform === "win32") {
+    const ps = `$id = New-Object -ComObject InDesign.Application; $id.DoScript("${jsxPath.replace(/\\/g, "\\\\")}", 1246973031)`;
+    await spawnCapture("powershell", ["-NoProfile", "-Command", ps]);
+    return;
+  }
+  throw new Error(`unsupported OS for InDesign: ${process.platform}`);
+}
+
 
 function zipFolder(srcDir, zipPath) {
   return new Promise((resolve, reject) => {
