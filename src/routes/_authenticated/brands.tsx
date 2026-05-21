@@ -255,12 +255,16 @@ function BrandsPage() {
                         <div className="space-y-1 border-t bg-background/40 p-2 pl-8">
                           {p.subProducts.map((sp) => (
                             <div key={sp.id} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted/50">
-                              <div className="flex items-center gap-2">
+                              <Link
+                                to="/templates"
+                                search={{ product: sp.id }}
+                                className="flex items-center gap-2 flex-1 hover:underline"
+                              >
                                 <span className="text-muted-foreground">↳</span>
                                 <span>{sp.name}</span>
                                 <span className="text-xs text-muted-foreground">· {sp.templateCount} template{sp.templateCount === 1 ? "" : "s"}</span>
                                 {sp.primary_color && <span className="h-2.5 w-2.5 rounded-full border" style={{ background: sp.primary_color }} />}
-                              </div>
+                              </Link>
                               <div className="flex gap-1">
                                 <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditPr({ id: sp.id, name: sp.name, kit: {
                                   description: sp.description ?? "", logo_url: sp.logo_url ?? "",
