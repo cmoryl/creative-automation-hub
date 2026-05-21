@@ -256,6 +256,10 @@ export function BatchRowsTable({
         >
           <Copy className="h-3.5 w-3.5" /> Duplicate last
         </Button>
+        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+          <FileSpreadsheet className="h-3.5 w-3.5" /> Import CSV
+        </Button>
+        {csvInput}
       </div>
     </div>
   );
