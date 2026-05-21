@@ -286,7 +286,7 @@ function CanvaAdvancedPanel() {
 
   const revealWebhook = async () => {
     try {
-      const r: any = await webhookFn({ data: {} });
+      const r: any = await (webhookFn as any)();
       const url = `${window.location.origin}${r.url}`;
       setWebhook({ url, secret: r.secret });
     } catch (e: any) {
