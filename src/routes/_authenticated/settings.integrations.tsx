@@ -14,7 +14,13 @@ import {
   saveCanvaCredentials,
   disconnectIntegration,
 } from "@/lib/integrations.functions";
-import { startCanvaOAuth } from "@/lib/canva.functions";
+import {
+  startCanvaOAuth,
+  listCanvaBrandTemplates,
+  listCanvaDesigns,
+  importCanvaTemplate,
+  ensureCanvaWebhookSecret,
+} from "@/lib/canva.functions";
 import { saveFigmaToken } from "@/lib/figma.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
@@ -239,8 +245,142 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
             Canva Connect docs <ExternalLink className="h-3 w-3" />
           </a>
         </div>
+        {connected?.metadata?.status === "connected" && (
+          <CanvaAdvancedPanel />
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function CanvaAdvancedPanel() {
+  const listBT = useServerFn(listCanvaBrandTemplates);
+  const listDs = useServerFn(listCanvaDesigns);
+  const importFn = useServerFn(importCanvaTemplate);
+  const webhookFn = useServerFn(ensureCanvaWebhookSecret);
+  const qc = useQueryClient();
+  const [importing, setImporting] = useState<string | null>(null);
+  const [webhook, setWebhook] = useState<{ url: string; secret: string } | null>(null);
+
+  const bt = useQuery({
+    queryKey: ["canva-brand-templates"],
+    queryFn: () => listBT({ data: {} }) as any,
+  });
+  const ds = useQuery({
+    queryKey: ["canva-designs"],
+    queryFn: () => listDs({ data: {} }) as any,
+  });
+
+  const doImport = async (kind: "brand_template" | "design", id: string, label: string) => {
+    setImporting(id);
+    try {
+      await importFn({ data: { kind, id } });
+      toast.success(`Imported "${label}" as a template`);
+      qc.invalidateQueries({ queryKey: ["templates"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Import failed");
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  const revealWebhook = async () => {
+    try {
+      const r: any = await (webhookFn as any)();
+      const url = `${window.location.origin}${r.url}`;
+      setWebhook({ url, secret: r.secret });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed");
+    }
+  };
+
+  return (
+    <div className="space-y-4 border-t pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => bt.refetch()} disabled={bt.isFetching}>
+          {bt.isFetching ? "Syncing…" : "Sync brand templates"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => ds.refetch()} disabled={ds.isFetching}>
+          {ds.isFetching ? "Syncing…" : "Sync designs"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={revealWebhook}>
+          Reveal webhook URL & secret
+        </Button>
+      </div>
+
+      {bt.error && (
+        <p className="text-xs text-destructive">Brand templates: {(bt.error as any).message}</p>
+      )}
+      {bt.data?.items?.length > 0 && (
+        <div>
+          <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+            Brand templates ({bt.data.items.length})
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {bt.data.items.slice(0, 12).map((it: any) => (
+              <li key={it.id} className="flex items-center gap-2 rounded-md border p-2">
+                {it.thumbnail && <img src={it.thumbnail} alt="" className="h-10 w-14 rounded object-cover" />}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm">{it.title || it.id}</div>
+                  <code className="text-[10px] text-muted-foreground">{it.id}</code>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={importing === it.id}
+                  onClick={() => doImport("brand_template", it.id, it.title || it.id)}
+                >
+                  {importing === it.id ? "…" : "Import"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {ds.data?.items?.length > 0 && (
+        <div>
+          <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+            Recent designs ({ds.data.items.length})
+          </div>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {ds.data.items.slice(0, 12).map((it: any) => (
+              <li key={it.id} className="flex items-center gap-2 rounded-md border p-2">
+                {it.thumbnail && <img src={it.thumbnail} alt="" className="h-10 w-14 rounded object-cover" />}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm">{it.title || it.id}</div>
+                  <code className="text-[10px] text-muted-foreground">{it.id}</code>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={importing === it.id}
+                  onClick={() => doImport("design", it.id, it.title || it.id)}
+                >
+                  {importing === it.id ? "…" : "Import"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {webhook && (
+        <div className="rounded-md border bg-muted/40 p-3 text-xs space-y-2">
+          <div>
+            <div className="mb-1 font-medium">Webhook URL</div>
+            <code className="break-all">{webhook.url}</code>
+          </div>
+          <div>
+            <div className="mb-1 font-medium">Signing secret</div>
+            <code className="break-all">{webhook.secret}</code>
+            <p className="mt-1 text-muted-foreground">
+              In Canva's developer portal → Webhooks, paste this URL and use this secret for HMAC-SHA256 signing (header <code>x-canva-signature</code>).
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
