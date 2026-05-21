@@ -214,3 +214,26 @@ function JobRow({
     </li>
   );
 }
+
+function RetryCountdown({ until, attempt, max }: { until: string; attempt: number; max: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const ms = new Date(until).getTime() - now;
+  if (ms <= 0) {
+    return (
+      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+        retry {attempt}/{max} ready
+      </span>
+    );
+  }
+  const s = Math.ceil(ms / 1000);
+  const label = s < 60 ? `${s}s` : `${Math.ceil(s / 60)}m`;
+  return (
+    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+      retry {attempt}/{max} in {label}
+    </span>
+  );
+}
