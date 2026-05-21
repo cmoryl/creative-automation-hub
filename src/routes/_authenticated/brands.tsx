@@ -215,7 +215,11 @@ function BrandsPage() {
                   {c.products.map((p) => (
                     <div key={p.id} className="rounded border bg-muted/30">
                       <div className="flex items-center justify-between px-3 py-2">
-                        <div className="flex items-center gap-2 text-sm">
+                        <Link
+                          to="/templates"
+                          search={{ product: p.id }}
+                          className="flex items-center gap-2 text-sm flex-1 hover:underline"
+                        >
                           <Package className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{p.name}</span>
                           <span className="text-xs text-muted-foreground">
@@ -223,7 +227,7 @@ function BrandsPage() {
                             {p.subProducts.length > 0 && ` · ${p.subProducts.length} sub-product${p.subProducts.length === 1 ? "" : "s"}`}
                           </span>
                           {p.primary_color && <span className="h-3 w-3 rounded-full border" style={{ background: p.primary_color }} />}
-                        </div>
+                        </Link>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" className="h-7 text-xs"
                             onClick={() => { setPrFor({ companyId: c.id, parentProductId: p.id, parentName: p.name }); setPrName(""); setPrKit({}); }}>
