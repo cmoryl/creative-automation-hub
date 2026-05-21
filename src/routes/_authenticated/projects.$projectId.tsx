@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProjectChecklist } from "@/components/ProjectChecklist";
+import { CanvaJobRunner } from "@/components/canva/CanvaJobRunner";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -193,6 +194,7 @@ function ProjectDetail() {
               <Play className="h-3 w-3" /> {eng}
             </Button>
           ))}
+          <CanvaJobRunner projectId={projectId} />
           <Button size="sm" onClick={queueHybrid}>
             <Layers className="h-3 w-3" /> hybrid
           </Button>
