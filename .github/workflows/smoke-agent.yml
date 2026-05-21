@@ -10,6 +10,7 @@ on:
       - "src/routes/api/public/agent/**"
       - "tests/smoke-agent-endpoints.mjs"
       - "tests/smoke-complete-failure.mjs"
+      - "tests/smoke-preflight-readiness.mjs"
       - ".github/workflows/smoke-agent.yml"
 
 jobs:
