@@ -21,6 +21,10 @@ type Row = {
   error: string | null;
   error_stage: string | null;
   error_detail: RenderErrorDetail | null;
+  retry_count: number | null;
+  max_retries: number | null;
+  next_retry_at: string | null;
+  transient: boolean | null;
   created_at: string;
   completed_at: string | null;
   project_id: string;
@@ -157,10 +161,22 @@ function JobRow({
               {j.projects?.name ?? "Project"}
             </Link>
           </div>
-          <div className="mt-0.5 text-xs text-muted-foreground">
-            {new Date(j.created_at).toLocaleString()}
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+            <span>{new Date(j.created_at).toLocaleString()}</span>
+            {j.next_retry_at && j.status === "queued" && (
+              <RetryCountdown
+                until={j.next_retry_at}
+                attempt={(j.retry_count ?? 0)}
+                max={(j.max_retries ?? 1)}
+              />
+            )}
+            {(j.retry_count ?? 0) > 0 && j.status !== "queued" && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">
+                retried {j.retry_count}×
+              </span>
+            )}
             {j.error && (
-              <span className="ml-2 text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>
+              <span className="text-red-500">· {j.error.split("\n")[0].slice(0, 80)}</span>
             )}
           </div>
         </div>
@@ -196,5 +212,28 @@ function JobRow({
         </div>
       )}
     </li>
+  );
+}
+
+function RetryCountdown({ until, attempt, max }: { until: string; attempt: number; max: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const ms = new Date(until).getTime() - now;
+  if (ms <= 0) {
+    return (
+      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+        retry {attempt}/{max} ready
+      </span>
+    );
+  }
+  const s = Math.ceil(ms / 1000);
+  const label = s < 60 ? `${s}s` : `${Math.ceil(s / 60)}m`;
+  return (
+    <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-700 dark:text-amber-300">
+      retry {attempt}/{max} in {label}
+    </span>
   );
 }
