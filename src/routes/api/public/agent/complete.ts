@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
           // Verify ownership and pull template page count for validation
           const { data: job } = await supabaseAdmin
             .from("jobs")
-            .select("id, brief, template_id, retry_count, max_retries, templates:template_id ( pages, name )")
+            .select("id, brief, template_id, engine, retry_count, max_retries, templates:template_id ( pages, name )")
             .eq("id", jobId)
             .eq("workspace_id", auth.workspaceId)
             .maybeSingle();
