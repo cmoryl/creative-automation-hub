@@ -529,3 +529,23 @@ export const ensureCanvaWebhookSecret = createServerFn({ method: "POST" })
       .eq("provider", "canva");
     return { secret, url: `/api/public/webhooks/canva` };
   });
+
+// ---------- List Canva templates (with variables) for runner UI ----------
+export const listCanvaTemplates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("templates")
+      .select("id, name, preview_url, source_ref, variables")
+      .eq("engine", "canva")
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((t) => ({
+      id: t.id as string,
+      name: t.name as string,
+      preview_url: t.preview_url as string | null,
+      source_ref: t.source_ref as string | null,
+      variables: Array.isArray(t.variables) ? (t.variables as any[]) : [],
+    }));
+  });
