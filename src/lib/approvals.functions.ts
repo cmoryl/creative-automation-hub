@@ -61,10 +61,10 @@ export const submitBatchForApproval = createServerFn({ method: "POST" })
     if (existing && existing.status === "pending") {
       approvalId = existing.id;
     } else {
-      const { data: created, error: createErr } = await supabase
+    const { data: created, error: createErr } = await supabase
         .from("batch_approvals")
         .insert({
-          workspace_id: sample.workspace_id,
+          workspace_id: sample.workspace_id!,
           project_id: sample.project_id,
           batch_key: data.batchId,
           title: data.title,
@@ -88,7 +88,7 @@ export const submitBatchForApproval = createServerFn({ method: "POST" })
 
     await writeAudit(
       supabase,
-      sample.workspace_id,
+      sample.workspace_id!,
       userId,
       "approval.submitted",
       approvalId,
