@@ -110,14 +110,31 @@ export function BatchRowsTable({
 
   const remove = (rowId: string) => onChange(rows.filter((r) => r.id !== rowId));
 
+  const csvInput = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept=".csv,.tsv,text/csv,text/tab-separated-values"
+      className="hidden"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) handleCsv(f);
+      }}
+    />
+  );
+
   if (!rows.length) {
     return (
       <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
         {emptyHint ?? "No rows yet. Add one to get started."}
-        <div className="mt-3">
+        <div className="mt-3 flex justify-center gap-2">
           <Button size="sm" variant="outline" onClick={() => onChange([newBatchRow()])}>
             <Plus className="h-3.5 w-3.5" /> Add row
           </Button>
+          <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Import CSV
+          </Button>
+          {csvInput}
         </div>
       </div>
     );
