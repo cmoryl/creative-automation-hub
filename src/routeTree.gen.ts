@@ -24,6 +24,7 @@ import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
 import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authenticated/batches.index'
+import { Route as AuthenticatedTemplatesCanvaRouteImport } from './routes/_authenticated/templates.canva'
 import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
@@ -116,6 +117,12 @@ const AuthenticatedBatchesIndexRoute =
   AuthenticatedBatchesIndexRouteImport.update({
     id: '/batches/',
     path: '/batches/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTemplatesCanvaRoute =
+  AuthenticatedTemplatesCanvaRouteImport.update({
+    id: '/templates/canva',
+    path: '/templates/canva',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTemplatesBatchRoute =
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/batches/': typeof AuthenticatedBatchesIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -265,6 +273,7 @@ export interface FileRoutesByTo {
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/batches': typeof AuthenticatedBatchesIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -300,6 +309,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
+  '/_authenticated/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/_authenticated/batches/': typeof AuthenticatedBatchesIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/templates/$templateId'
     | '/templates/batch'
+    | '/templates/canva'
     | '/batches/'
     | '/templates/'
     | '/api/public/agent/claim'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/settings/integrations'
     | '/templates/$templateId'
     | '/templates/batch'
+    | '/templates/canva'
     | '/batches'
     | '/templates'
     | '/api/public/agent/claim'
@@ -402,6 +414,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/integrations'
     | '/_authenticated/templates/$templateId'
     | '/_authenticated/templates/batch'
+    | '/_authenticated/templates/canva'
     | '/_authenticated/batches/'
     | '/_authenticated/templates/'
     | '/api/public/agent/claim'
@@ -536,6 +549,13 @@ declare module '@tanstack/react-router' {
       path: '/batches'
       fullPath: '/batches/'
       preLoaderRoute: typeof AuthenticatedBatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/templates/canva': {
+      id: '/_authenticated/templates/canva'
+      path: '/templates/canva'
+      fullPath: '/templates/canva'
+      preLoaderRoute: typeof AuthenticatedTemplatesCanvaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/templates/batch': {
@@ -690,6 +710,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
   AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
   AuthenticatedTemplatesBatchRoute: typeof AuthenticatedTemplatesBatchRoute
+  AuthenticatedTemplatesCanvaRoute: typeof AuthenticatedTemplatesCanvaRoute
   AuthenticatedBatchesIndexRoute: typeof AuthenticatedBatchesIndexRoute
   AuthenticatedTemplatesIndexRoute: typeof AuthenticatedTemplatesIndexRoute
 }
@@ -712,6 +733,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedSettingsIntegrationsRoute,
   AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
   AuthenticatedTemplatesBatchRoute: AuthenticatedTemplatesBatchRoute,
+  AuthenticatedTemplatesCanvaRoute: AuthenticatedTemplatesCanvaRoute,
   AuthenticatedBatchesIndexRoute: AuthenticatedBatchesIndexRoute,
   AuthenticatedTemplatesIndexRoute: AuthenticatedTemplatesIndexRoute,
 }
