@@ -15,12 +15,16 @@ export const Route = createFileRoute("/api/public/agent/claim")({
         try {
           const auth = await authenticateAgent(request);
           // Claim oldest queued job for AI/ID engines in this workspace.
+          // Skip jobs whose next_retry_at is still in the future (transient
+          // failures awaiting backoff).
+          const nowIso = new Date().toISOString();
           const { data: job } = await supabaseAdmin
             .from("jobs")
-            .select("id, project_id, engine, template_id, brief, variables, templates:template_id (id, name, engine, source_ref, variables, pages)")
+            .select("id, project_id, engine, template_id, brief, variables, retry_count, max_retries, templates:template_id (id, name, engine, source_ref, variables, pages)")
             .eq("workspace_id", auth.workspaceId)
             .in("engine", ["illustrator", "indesign"])
             .eq("status", "queued")
+            .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
             .order("created_at", { ascending: true })
             .limit(1)
             .maybeSingle();
