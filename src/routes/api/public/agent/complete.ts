@@ -48,10 +48,23 @@ export const Route = createFileRoute("/api/public/agent/complete")({
             const pageNums = new Set<number>();
             let hasMasterPdf = false;
             for (const o of outputs) {
-              const meta = (o.metadata ?? {}) as { page?: number; scope?: string };
-              if (typeof meta.page === "number") pageNums.add(meta.page);
+              const meta = (o.metadata ?? {}) as {
+                page?: number;
+                page_index?: number;
+                scope?: string;
+                master?: boolean;
+              };
+              const pageNum =
+                typeof meta.page === "number"
+                  ? meta.page
+                  : typeof meta.page_index === "number"
+                    ? meta.page_index
+                    : null;
+              if (pageNum) pageNums.add(pageNum);
               if (
-                (meta.scope === "master" || /master/i.test(o.kind)) &&
+                (meta.master === true ||
+                  meta.scope === "master" ||
+                  /master/i.test(o.kind)) &&
                 /pdf/i.test(o.kind)
               ) {
                 hasMasterPdf = true;
