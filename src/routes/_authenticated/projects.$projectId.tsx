@@ -13,6 +13,8 @@ import {
 import { createHybridRender } from "@/lib/hybrid.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProjectChecklist } from "@/components/ProjectChecklist";
@@ -21,7 +23,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Bot, User, Send, ArrowLeft, Play, Layers,
-  RotateCcw, X as XIcon, Trash2, AlertCircle,
+  RotateCcw, X as XIcon, Trash2, AlertCircle, Settings2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/projects/$projectId")({
@@ -36,6 +38,7 @@ type JobRow = {
   status: string;
   error: string | null;
   brief: unknown;
+  variables: Record<string, unknown> | null;
   created_at: string;
   completed_at: string | null;
   outputs: Output[] | null;
@@ -111,12 +114,29 @@ function ProjectDetail() {
 
   const buildBrief = () => (briefFromChat ? { source: "chat", text: briefFromChat } : {});
 
+  // Seed editable variables from the most recent job that had any.
+  const seedVars = useMemo<Record<string, string>>(() => {
+    const src = jobs.find((j) => j.variables && Object.keys(j.variables).length > 0);
+    if (!src?.variables) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(src.variables)) {
+      out[k] = v == null ? "" : String(v);
+    }
+    return out;
+  }, [jobs]);
+  const [editVars, setEditVars] = useState<Record<string, string>>({});
+  const [varsDirty, setVarsDirty] = useState(false);
+  useEffect(() => {
+    if (!varsDirty) setEditVars(seedVars);
+  }, [seedVars, varsDirty]);
+  const [showVars, setShowVars] = useState(true);
+
   const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "claude" | "mock") => {
     try {
       const pre = await preflightFn({ data: { projectId, engine } });
       pre.warnings.forEach((w) => toast.warning(w));
       if (!pre.ok) { pre.blockers.forEach((b) => toast.error(b)); return; }
-      await createJobFn({ data: { projectId, engine, brief: buildBrief(), variables: {} } });
+      await createJobFn({ data: { projectId, engine, brief: buildBrief(), variables: editVars } });
       toast.success(`Queued ${engine} render${briefFromChat ? " with brief from chat" : ""}`);
       qc.invalidateQueries({ queryKey: ["jobs", projectId] });
     } catch (e) {
@@ -131,7 +151,7 @@ function ProjectDetail() {
       checks.forEach((c) => c.warnings.forEach((w) => toast.warning(w)));
       const blockers = checks.flatMap((c) => c.blockers);
       if (blockers.length) { blockers.forEach((b) => toast.error(b)); return; }
-      const res = await hybridFn({ data: { projectId, engines, brief: buildBrief(), variables: {} } });
+      const res = await hybridFn({ data: { projectId, engines, brief: buildBrief(), variables: editVars } });
       toast.success(`Queued ${res.jobs.length} hybrid jobs`);
       qc.invalidateQueries({ queryKey: ["jobs", projectId] });
     } catch (e) {
@@ -251,6 +271,66 @@ function ProjectDetail() {
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
           <ProjectChecklist messages={messages} jobs={jobs} />
+
+          {Object.keys(editVars).length > 0 && (
+            <section className="rounded-lg border bg-card p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-semibold">
+                  <Settings2 className="h-4 w-4" /> Field values
+                  <span className="text-xs font-normal text-muted-foreground">
+                    sent with the next render
+                  </span>
+                </h2>
+                <div className="flex items-center gap-2">
+                  {varsDirty && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setVarsDirty(false); setEditVars(seedVars); }}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={() => setShowVars((s) => !s)}>
+                    {showVars ? "Hide" : "Show"}
+                  </Button>
+                </div>
+              </div>
+              {showVars && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {Object.keys(editVars).sort().map((k) => {
+                    const val = editVars[k] ?? "";
+                    const isLong = val.length > 60 || /challenge|solution|results|quote|description|body/i.test(k);
+                    const isColor = typeof val === "string" && /^#[0-9a-fA-F]{6}$/.test(val);
+                    return (
+                      <div key={k} className="space-y-1">
+                        <Label className="text-xs">{k}</Label>
+                        {isColor ? (
+                          <Input
+                            type="color"
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        ) : isLong ? (
+                          <Textarea
+                            rows={3}
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        ) : (
+                          <Input
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
           {allOutputs.length > 0 && (
             <section className="rounded-lg border bg-card p-4">
               <h2 className="mb-3 text-sm font-semibold">Renders ({allOutputs.length})</h2>
