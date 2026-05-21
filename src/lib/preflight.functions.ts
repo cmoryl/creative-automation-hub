@@ -67,34 +67,21 @@ export const runPreflight = createServerFn({ method: "POST" })
     const isCanva = data.engine === "canva";
 
     // ---- Template check ----
-    let template:
-      | {
-          id: string;
-          name: string;
-          engine: string;
-          variables: unknown;
-          requirements: { fonts?: { family: string }[]; links?: { name: string }[] } | null;
-        }
-      | null = null;
+    type Tpl = {
+      id: string;
+      name: string;
+      engine: string;
+      variables: unknown;
+      requirements: { fonts?: { family: string }[]; links?: { name: string }[] } | null;
+    };
+    let template: Tpl | null = null;
     if (data.templateId) {
       const { data: t } = await supabase
         .from("templates")
         .select("id, name, engine, variables, requirements")
         .eq("id", data.templateId)
         .maybeSingle();
-      template = t
-        ? {
-            id: t.id as string,
-            name: t.name as string,
-            engine: t.engine as string,
-            variables: t.variables,
-            requirements: (t.requirements as typeof template extends infer R
-              ? R extends { requirements: infer Q }
-                ? Q
-                : never
-              : never) ?? null,
-          }
-        : null;
+      template = (t as unknown as Tpl | null) ?? null;
       if (!template) {
         checks.push({
           id: "template",
