@@ -29,6 +29,8 @@ import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedTemplatesCanvaRouteImport } from './routes/_authenticated/templates.canva'
 import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
 import { Route as AuthenticatedTemplatesTemplateIdRouteImport } from './routes/_authenticated/templates.$templateId'
+import { Route as AuthenticatedSettingsWebhooksRouteImport } from './routes/_authenticated/settings.webhooks'
+import { Route as AuthenticatedSettingsSchedulesRouteImport } from './routes/_authenticated/settings.schedules'
 import { Route as AuthenticatedSettingsIntegrationsRouteImport } from './routes/_authenticated/settings.integrations'
 import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenticated/settings.api'
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
@@ -154,6 +156,18 @@ const AuthenticatedTemplatesTemplateIdRoute =
     path: '/templates/$templateId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsWebhooksRoute =
+  AuthenticatedSettingsWebhooksRouteImport.update({
+    id: '/settings/webhooks',
+    path: '/settings/webhooks',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsSchedulesRoute =
+  AuthenticatedSettingsSchedulesRouteImport.update({
+    id: '/settings/schedules',
+    path: '/settings/schedules',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedSettingsIntegrationsRoute =
   AuthenticatedSettingsIntegrationsRouteImport.update({
     id: '/settings/integrations',
@@ -276,6 +290,8 @@ export interface FileRoutesByFullPath {
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -315,6 +331,8 @@ export interface FileRoutesByTo {
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/settings/api': typeof AuthenticatedSettingsApiRoute
   '/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -357,6 +375,8 @@ export interface FileRoutesById {
   '/_authenticated/settings/agent': typeof AuthenticatedSettingsAgentRoute
   '/_authenticated/settings/api': typeof AuthenticatedSettingsApiRoute
   '/_authenticated/settings/integrations': typeof AuthenticatedSettingsIntegrationsRoute
+  '/_authenticated/settings/schedules': typeof AuthenticatedSettingsSchedulesRoute
+  '/_authenticated/settings/webhooks': typeof AuthenticatedSettingsWebhooksRoute
   '/_authenticated/templates/$templateId': typeof AuthenticatedTemplatesTemplateIdRoute
   '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/_authenticated/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
@@ -399,6 +419,8 @@ export interface FileRouteTypes {
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/settings/schedules'
+    | '/settings/webhooks'
     | '/templates/$templateId'
     | '/templates/batch'
     | '/templates/canva'
@@ -438,6 +460,8 @@ export interface FileRouteTypes {
     | '/settings/agent'
     | '/settings/api'
     | '/settings/integrations'
+    | '/settings/schedules'
+    | '/settings/webhooks'
     | '/templates/$templateId'
     | '/templates/batch'
     | '/templates/canva'
@@ -479,6 +503,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/agent'
     | '/_authenticated/settings/api'
     | '/_authenticated/settings/integrations'
+    | '/_authenticated/settings/schedules'
+    | '/_authenticated/settings/webhooks'
     | '/_authenticated/templates/$templateId'
     | '/_authenticated/templates/batch'
     | '/_authenticated/templates/canva'
@@ -662,6 +688,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTemplatesTemplateIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/webhooks': {
+      id: '/_authenticated/settings/webhooks'
+      path: '/settings/webhooks'
+      fullPath: '/settings/webhooks'
+      preLoaderRoute: typeof AuthenticatedSettingsWebhooksRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/schedules': {
+      id: '/_authenticated/settings/schedules'
+      path: '/settings/schedules'
+      fullPath: '/settings/schedules'
+      preLoaderRoute: typeof AuthenticatedSettingsSchedulesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/settings/integrations': {
       id: '/_authenticated/settings/integrations'
       path: '/settings/integrations'
@@ -828,6 +868,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSettingsAgentRoute: typeof AuthenticatedSettingsAgentRoute
   AuthenticatedSettingsApiRoute: typeof AuthenticatedSettingsApiRoute
   AuthenticatedSettingsIntegrationsRoute: typeof AuthenticatedSettingsIntegrationsRoute
+  AuthenticatedSettingsSchedulesRoute: typeof AuthenticatedSettingsSchedulesRoute
+  AuthenticatedSettingsWebhooksRoute: typeof AuthenticatedSettingsWebhooksRoute
   AuthenticatedTemplatesTemplateIdRoute: typeof AuthenticatedTemplatesTemplateIdRoute
   AuthenticatedTemplatesBatchRoute: typeof AuthenticatedTemplatesBatchRoute
   AuthenticatedTemplatesCanvaRoute: typeof AuthenticatedTemplatesCanvaRoute
@@ -851,6 +893,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsApiRoute: AuthenticatedSettingsApiRoute,
   AuthenticatedSettingsIntegrationsRoute:
     AuthenticatedSettingsIntegrationsRoute,
+  AuthenticatedSettingsSchedulesRoute: AuthenticatedSettingsSchedulesRoute,
+  AuthenticatedSettingsWebhooksRoute: AuthenticatedSettingsWebhooksRoute,
   AuthenticatedTemplatesTemplateIdRoute: AuthenticatedTemplatesTemplateIdRoute,
   AuthenticatedTemplatesBatchRoute: AuthenticatedTemplatesBatchRoute,
   AuthenticatedTemplatesCanvaRoute: AuthenticatedTemplatesCanvaRoute,
@@ -910,3 +954,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
