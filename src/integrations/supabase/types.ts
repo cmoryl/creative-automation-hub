@@ -49,6 +49,93 @@ export type Database = {
           },
         ]
       }
+      audit_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          project_id: string | null
+          summary: string | null
+          target_id: string | null
+          target_type: string
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id?: string | null
+          summary?: string | null
+          target_id?: string | null
+          target_type: string
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id?: string | null
+          summary?: string | null
+          target_id?: string | null
+          target_type?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      batch_approvals: {
+        Row: {
+          batch_key: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          metadata: Json
+          project_id: string
+          reviewer_id: string | null
+          reviewer_notes: string | null
+          status: Database["public"]["Enums"]["approval_status"]
+          submitted_by: string
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          batch_key: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          metadata?: Json
+          project_id: string
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+          submitted_by: string
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          batch_key?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          metadata?: Json
+          project_id?: string
+          reviewer_id?: string | null
+          reviewer_notes?: string | null
+          status?: Database["public"]["Enums"]["approval_status"]
+          submitted_by?: string
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string | null
@@ -140,6 +227,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          approval_id: string | null
           assigned_agent_id: string | null
           brief: Json
           claimed_at: string | null
@@ -152,12 +240,14 @@ export type Database = {
           project_id: string
           row_label: string | null
           status: string
+          submitted_for_approval_at: string | null
           template_id: string | null
           updated_at: string
           variables: Json
           workspace_id: string | null
         }
         Insert: {
+          approval_id?: string | null
           assigned_agent_id?: string | null
           brief?: Json
           claimed_at?: string | null
@@ -170,12 +260,14 @@ export type Database = {
           project_id: string
           row_label?: string | null
           status?: string
+          submitted_for_approval_at?: string | null
           template_id?: string | null
           updated_at?: string
           variables?: Json
           workspace_id?: string | null
         }
         Update: {
+          approval_id?: string | null
           assigned_agent_id?: string | null
           brief?: Json
           claimed_at?: string | null
@@ -188,6 +280,7 @@ export type Database = {
           project_id?: string
           row_label?: string | null
           status?: string
+          submitted_for_approval_at?: string | null
           template_id?: string | null
           updated_at?: string
           variables?: Json
@@ -701,6 +794,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "member"
+      approval_status: "pending" | "approved" | "changes_requested" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -829,6 +923,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "member"],
+      approval_status: ["pending", "approved", "changes_requested", "rejected"],
     },
   },
 } as const
