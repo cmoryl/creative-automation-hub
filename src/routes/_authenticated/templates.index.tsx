@@ -225,8 +225,10 @@ function TemplatesPage() {
                 params={{ templateId: t.id }}
                 className="block rounded-lg border bg-card p-4 transition hover:border-primary hover:shadow-md"
               >
-                {t.preview_url && (
+                {t.preview_url ? (
                   <img src={t.preview_url} alt={t.name} className="mb-3 aspect-video w-full rounded object-cover" />
+                ) : (
+                  <TemplatePreviewVisual engine={t.engine} name={t.name} />
                 )}
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="truncate font-medium">{t.name}</h3>
@@ -318,6 +320,83 @@ function TemplatesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+const ENGINE_VISUAL: Record<
+  string,
+  { gradient: string; accent: string; label: string; pattern: "poster" | "doc" | "card" | "chat" | "frame" }
+> = {
+  illustrator: { gradient: "from-orange-500/30 via-amber-500/20 to-rose-500/30", accent: "bg-orange-400", label: "AI", pattern: "poster" },
+  indesign: { gradient: "from-pink-500/30 via-fuchsia-500/20 to-purple-500/30", accent: "bg-pink-400", label: "ID", pattern: "doc" },
+  figma: { gradient: "from-purple-500/30 via-indigo-500/20 to-blue-500/30", accent: "bg-purple-400", label: "Fig", pattern: "frame" },
+  canva: { gradient: "from-cyan-500/30 via-sky-500/20 to-blue-500/30", accent: "bg-cyan-400", label: "Cv", pattern: "card" },
+  claude: { gradient: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30", accent: "bg-emerald-400", label: "Cl", pattern: "chat" },
+};
+
+function TemplatePreviewVisual({ engine, name }: { engine: string; name: string }) {
+  const v = ENGINE_VISUAL[engine] ?? {
+    gradient: "from-primary/30 via-primary/10 to-muted",
+    accent: "bg-primary",
+    label: engine.slice(0, 2).toUpperCase(),
+    pattern: "card" as const,
+  };
+  return (
+    <div
+      className={`relative mb-3 aspect-video w-full overflow-hidden rounded bg-gradient-to-br ${v.gradient} ring-1 ring-inset ring-white/5`}
+    >
+      <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(0,0,0,0.25),transparent_45%)]" />
+      <div className="absolute inset-0 p-3">
+        {v.pattern === "poster" && (
+          <div className="flex h-full flex-col justify-between">
+            <div className="h-2 w-1/3 rounded-full bg-white/70" />
+            <div className="space-y-1">
+              <div className="h-3 w-3/4 rounded bg-white/85" />
+              <div className="h-3 w-1/2 rounded bg-white/60" />
+              <div className={`mt-1 h-1.5 w-10 rounded-full ${v.accent}`} />
+            </div>
+          </div>
+        )}
+        {v.pattern === "doc" && (
+          <div className="flex h-full gap-2">
+            <div className="flex-1 space-y-1">
+              <div className="h-1.5 w-3/4 rounded bg-white/70" />
+              <div className="h-1.5 w-2/3 rounded bg-white/50" />
+              <div className="h-1.5 w-4/5 rounded bg-white/50" />
+              <div className="h-1.5 w-1/2 rounded bg-white/50" />
+            </div>
+            <div className={`h-full w-12 rounded ${v.accent} opacity-70`} />
+          </div>
+        )}
+        {v.pattern === "frame" && (
+          <div className="grid h-full grid-cols-3 gap-1.5">
+            <div className="col-span-2 rounded bg-white/15 ring-1 ring-white/20" />
+            <div className="space-y-1.5">
+              <div className="h-1/2 rounded bg-white/20" />
+              <div className={`h-1/2 rounded ${v.accent} opacity-80`} />
+            </div>
+          </div>
+        )}
+        {v.pattern === "card" && (
+          <div className="flex h-full flex-col justify-end gap-1">
+            <div className="h-2 w-2/3 rounded bg-white/80" />
+            <div className="h-1.5 w-1/2 rounded bg-white/55" />
+            <div className={`mt-1 h-5 w-16 rounded ${v.accent}`} />
+          </div>
+        )}
+        {v.pattern === "chat" && (
+          <div className="flex h-full flex-col justify-end gap-1.5">
+            <div className="h-2.5 w-3/5 self-start rounded-2xl bg-white/70" />
+            <div className={`h-2.5 w-2/5 self-end rounded-2xl ${v.accent}`} />
+            <div className="h-2.5 w-1/2 self-start rounded-2xl bg-white/60" />
+          </div>
+        )}
+      </div>
+      <div className="absolute right-2 top-2 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-white/90 backdrop-blur">
+        {v.label}
+      </div>
+      <span className="sr-only">{name} preview</span>
     </div>
   );
 }
