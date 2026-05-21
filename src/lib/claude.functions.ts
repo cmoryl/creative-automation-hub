@@ -60,6 +60,7 @@ async function callFallback({ system, user }: { system: string; user: string }) 
 
 // --- generateClaudeCopy: produce copy for a set of template variables ---
 export const generateClaudeCopy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
