@@ -497,6 +497,20 @@ function GuideCard({ guide }: { guide: Guide }) {
           </div>
         ))}
 
+        {guide.code && (
+          <div className="overflow-hidden rounded-md border bg-muted/40">
+            <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              <span>{guide.code.label}</span>
+              <span className="font-mono text-muted-foreground/70">{guide.code.language}</span>
+            </div>
+            <pre className="max-h-72 overflow-auto p-3 text-[11px] leading-relaxed">
+              <code>{guide.code.body}</code>
+            </pre>
+          </div>
+        )}
+
+
+
         {guide.related && guide.related.length > 0 && (
           <div className="mt-auto flex flex-wrap gap-2 border-t pt-3">
             {guide.related.map((r) => (
