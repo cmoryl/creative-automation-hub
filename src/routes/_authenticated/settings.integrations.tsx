@@ -14,7 +14,13 @@ import {
   saveCanvaCredentials,
   disconnectIntegration,
 } from "@/lib/integrations.functions";
-import { startCanvaOAuth } from "@/lib/canva.functions";
+import {
+  startCanvaOAuth,
+  listCanvaBrandTemplates,
+  listCanvaDesigns,
+  importCanvaTemplate,
+  ensureCanvaWebhookSecret,
+} from "@/lib/canva.functions";
 import { saveFigmaToken } from "@/lib/figma.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
