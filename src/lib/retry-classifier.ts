@@ -81,3 +81,60 @@ export function computeBackoffMs(baseMs: number, retryCount: number): number {
   const factor = Math.min(2 ** retryCount, 8);
   return Math.min(baseMs * factor, 5 * 60_000);
 }
+
+// Default remediation hints keyed by the classifier `reason`. Surfaced in the
+// substitution / error report UI when the agent doesn't pre-fill suggestions.
+const REASON_SUGGESTIONS: Record<string, string[]> = {
+  missing_font: [
+    "Install the missing font on the render host, or add a fallback in the template's font map.",
+    "Confirm the font file is licensed and reachable from the agent's font directory.",
+  ],
+  missing_link: [
+    "Re-upload the linked asset to the project, or update the template to point at the new URL.",
+    "If the link is a CDN URL, verify it's still reachable from the agent's network.",
+  ],
+  missing_file: [
+    "The template file referenced doesn't exist on the agent. Re-sync templates from the dashboard.",
+  ],
+  extendscript_bug: [
+    "ExtendScript runtime error — usually a null reference inside the template script. Re-export the .ai/.indd from Illustrator/InDesign and re-upload.",
+    "If this started after a template edit, roll back the template's last change and retry.",
+  ],
+  doc_invalid: [
+    "The source document couldn't be opened. Verify the file isn't corrupted and was saved by a supported app version.",
+  ],
+  unsupported_format: [
+    "Illustrator/InDesign version mismatch. Save the template down to a version the render host supports.",
+  ],
+  timeout: [
+    "Network timeout — the agent will auto-retry. If this keeps happening, check the agent's outbound connectivity.",
+  ],
+  network: [
+    "Network blip — auto-retried. Persistent failures usually mean DNS or proxy issues on the agent.",
+  ],
+  file_locked: [
+    "The template file is open in another process on the agent host. Close Illustrator/InDesign and let the retry run.",
+  ],
+  app_busy: [
+    "Illustrator/InDesign is busy (modal dialog or another script). The agent will retry — make sure no dialogs are blocking the UI.",
+  ],
+  tmp_missing: [
+    "Temp working directory was cleared mid-render. The retry will recreate it.",
+  ],
+  disk_full: [
+    "Render host is out of disk space. Free space in the agent's working/output directory.",
+  ],
+  upload: [
+    "Upload to storage failed. The retry will request a fresh signed URL.",
+  ],
+  upstream_5xx: [
+    "Upstream service returned a 5xx. Auto-retrying; check the storage provider's status page if it persists.",
+  ],
+  unknown: [
+    "Unknown failure — review the raw ExtendScript log below and copy diagnostics if you need to share.",
+  ],
+};
+
+export function suggestionsForReason(reason: string): string[] {
+  return REASON_SUGGESTIONS[reason] ?? REASON_SUGGESTIONS.unknown;
+}
