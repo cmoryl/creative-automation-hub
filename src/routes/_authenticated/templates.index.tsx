@@ -125,8 +125,16 @@ function TemplatesPage() {
     setBusy(true);
     try {
       if (pat.trim()) await saveTokenFn({ data: { token: pat.trim() } });
-      await importFn({ data: { fileUrl: fileUrl.trim() } });
-      toast.success("Template imported");
+      const res: any = await importFn({ data: { fileUrl: fileUrl.trim() } });
+      if (res?.ok === false) {
+        if (res.needs_secret) {
+          toast.error("Figma access token (FIGMA_PAT) not configured for this workspace.");
+        } else {
+          toast.error(res.error ?? "Import failed");
+        }
+        return;
+      }
+      toast.success(`Imported "${res.template?.name ?? "template"}" — ${res.variables_count ?? 0} variable(s) detected`);
       setOpen(false);
       setFileUrl("");
       setPat("");

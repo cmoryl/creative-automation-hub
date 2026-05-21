@@ -1,8 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, FileSpreadsheet, Plus, Trash2 } from "lucide-react";
+import { parseCsv, normaliseKey } from "@/lib/csv-parse";
+
 
 export type BatchVariable = {
   name: string;
@@ -40,6 +43,45 @@ export function BatchRowsTable({
   emptyHint?: string;
 }) {
   const cols = useMemo(() => variables, [variables]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleCsv = async (file: File) => {
+    try {
+      const text = await file.text();
+      const grid = parseCsv(text);
+      if (grid.length < 2) throw new Error("CSV needs a header row and at least one data row");
+      const headers = grid[0].map((h) => h.trim());
+      const normHeaders = headers.map(normaliseKey);
+      const labelIdx = (() => {
+        const cands = ["label", "row", "row_label", "name", "variation"];
+        for (const c of cands) {
+          const i = normHeaders.indexOf(c);
+          if (i >= 0) return i;
+        }
+        return 0;
+      })();
+      // build header -> variable.name map
+      const varByKey = new Map(variables.map((v) => [normaliseKey(v.name), v.name]));
+      const colMap = normHeaders.map((h) => varByKey.get(h) ?? null);
+      const out: BatchRow[] = grid.slice(1).map((cells) => {
+        const values: Record<string, string> = {};
+        cells.forEach((cell, i) => {
+          const varName = colMap[i];
+          if (varName && i !== labelIdx) values[varName] = cell;
+        });
+        return { id: crypto.randomUUID(), label: (cells[labelIdx] ?? "").trim() || `Row ${Math.random().toString(36).slice(2, 6)}`, values };
+      });
+      if (!out.length) throw new Error("No data rows parsed from CSV");
+      onChange(out);
+      const matched = colMap.filter(Boolean).length;
+      toast.success(`Imported ${out.length} row(s), matched ${matched}/${variables.length} field(s)`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "CSV import failed");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
 
   const update = (rowId: string, patch: Partial<BatchRow>) =>
     onChange(rows.map((r) => (r.id === rowId ? { ...r, ...patch } : r)));
@@ -68,14 +110,31 @@ export function BatchRowsTable({
 
   const remove = (rowId: string) => onChange(rows.filter((r) => r.id !== rowId));
 
+  const csvInput = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept=".csv,.tsv,text/csv,text/tab-separated-values"
+      className="hidden"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        if (f) handleCsv(f);
+      }}
+    />
+  );
+
   if (!rows.length) {
     return (
       <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
         {emptyHint ?? "No rows yet. Add one to get started."}
-        <div className="mt-3">
+        <div className="mt-3 flex justify-center gap-2">
           <Button size="sm" variant="outline" onClick={() => onChange([newBatchRow()])}>
             <Plus className="h-3.5 w-3.5" /> Add row
           </Button>
+          <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+            <FileSpreadsheet className="h-3.5 w-3.5" /> Import CSV
+          </Button>
+          {csvInput}
         </div>
       </div>
     );
@@ -197,6 +256,10 @@ export function BatchRowsTable({
         >
           <Copy className="h-3.5 w-3.5" /> Duplicate last
         </Button>
+        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}>
+          <FileSpreadsheet className="h-3.5 w-3.5" /> Import CSV
+        </Button>
+        {csvInput}
       </div>
     </div>
   );
