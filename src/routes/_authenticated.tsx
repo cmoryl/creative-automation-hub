@@ -21,6 +21,7 @@ const nav = [
   { to: "/batches", label: "Batches", icon: Layers },
   { to: "/approvals", label: "Approvals", icon: ClipboardCheck },
   { to: "/audit", label: "Audit Log", icon: ScrollText },
+  { to: "/guides", label: "Guides", icon: BookOpen },
   { to: "/brands", label: "Brands", icon: Building2 },
   { to: "/library", label: "Library", icon: FolderTree },
   { to: "/outputs", label: "Outputs", icon: FileStack },
