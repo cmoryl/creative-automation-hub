@@ -85,6 +85,17 @@ export async function getFileTopLevel(fileKey: string, depth = 2): Promise<{
   };
 }
 
+function trimNode(node: any, depth: number): FigmaNodeSummary {
+  return {
+    id: node.id,
+    name: node.name,
+    type: node.type,
+    children: depth > 0 && Array.isArray(node.children)
+      ? node.children.map((c: any) => trimNode(c, depth - 1))
+      : undefined,
+  };
+}
+
 // Fetch a specific node subtree with full detail (used by template import to
 // discover TEXT layer names → variables).
 export async function getNodeDetail(fileKey: string, nodeId: string): Promise<any> {
