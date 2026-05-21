@@ -38,7 +38,8 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
           .select("workspace_id, access_token, metadata")
           .eq("provider", "canva");
         if (lookupErr) {
-          return htmlResponse("Lookup error", `<h1>Lookup error</h1><p>${lookupErr.message}</p>`, 500);
+          console.error("[canva-oauth] lookup error", lookupErr);
+          return htmlResponse("Error", `<h1>Something went wrong</h1><p>Please try connecting again.</p><p><a href="/settings/integrations">Back to integrations</a></p>`, 500);
         }
         const match = (rows ?? []).find(
           (r: any) => r.metadata?.oauth_pending?.state === state,
@@ -74,9 +75,10 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
 
         const tokenJson = (await tokenRes.json().catch(() => ({}))) as any;
         if (!tokenRes.ok) {
+          console.error("[canva-oauth] token exchange failed", tokenRes.status, tokenJson);
           return htmlResponse(
             "Token exchange failed",
-            `<h1>Token exchange failed</h1><p>${tokenRes.status}: ${JSON.stringify(tokenJson)}</p><p><a href="/settings/integrations">Back</a></p>`,
+            `<h1>Token exchange failed</h1><p>Please try connecting again.</p><p><a href="/settings/integrations">Back</a></p>`,
             500,
           );
         }
@@ -106,7 +108,8 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
           .eq("workspace_id", match.workspace_id)
           .eq("provider", "canva");
         if (updErr) {
-          return htmlResponse("Save failed", `<h1>Could not save tokens</h1><p>${updErr.message}</p>`, 500);
+          console.error("[canva-oauth] save tokens failed", updErr);
+          return htmlResponse("Save failed", `<h1>Could not save tokens</h1><p>Please try connecting again.</p>`, 500);
         }
 
         return htmlResponse(

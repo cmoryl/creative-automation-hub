@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateText, Output } from "ai";
 import { createLovableAiGatewayProvider } from "./ai-gateway";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const variableSchema = z.object({
   name: z.string(),
@@ -59,6 +60,7 @@ async function callFallback({ system, user }: { system: string; user: string }) 
 
 // --- generateClaudeCopy: produce copy for a set of template variables ---
 export const generateClaudeCopy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
