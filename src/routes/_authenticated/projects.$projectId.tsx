@@ -271,6 +271,66 @@ function ProjectDetail() {
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
           <ProjectChecklist messages={messages} jobs={jobs} />
+
+          {Object.keys(editVars).length > 0 && (
+            <section className="rounded-lg border bg-card p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-semibold">
+                  <Settings2 className="h-4 w-4" /> Field values
+                  <span className="text-xs font-normal text-muted-foreground">
+                    sent with the next render
+                  </span>
+                </h2>
+                <div className="flex items-center gap-2">
+                  {varsDirty && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => { setVarsDirty(false); setEditVars(seedVars); }}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={() => setShowVars((s) => !s)}>
+                    {showVars ? "Hide" : "Show"}
+                  </Button>
+                </div>
+              </div>
+              {showVars && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {Object.keys(editVars).sort().map((k) => {
+                    const val = editVars[k] ?? "";
+                    const isLong = val.length > 60 || /challenge|solution|results|quote|description|body/i.test(k);
+                    const isColor = typeof val === "string" && /^#[0-9a-fA-F]{6}$/.test(val);
+                    return (
+                      <div key={k} className="space-y-1">
+                        <Label className="text-xs">{k}</Label>
+                        {isColor ? (
+                          <Input
+                            type="color"
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        ) : isLong ? (
+                          <Textarea
+                            rows={3}
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        ) : (
+                          <Input
+                            value={val}
+                            onChange={(e) => { setVarsDirty(true); setEditVars((s) => ({ ...s, [k]: e.target.value })); }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
           {allOutputs.length > 0 && (
             <section className="rounded-lg border bg-card p-4">
               <h2 className="mb-3 text-sm font-semibold">Renders ({allOutputs.length})</h2>
