@@ -48,6 +48,8 @@ function TemplatesBatchPage() {
   const listFn = useServerFn(listTemplates);
   const getTplFn = useServerFn(getTemplate);
   const dispatchFn = useServerFn(dispatchBatch);
+  const scheduleFn = useServerFn(createBatchSchedule);
+
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates"],
