@@ -50,12 +50,13 @@ async function reportProgress(jobId, stage, percent, message) {
   }
 }
 
-async function complete(jobId, status, outputs = [], error) {
+async function complete(jobId, status, outputs = [], error, extras = {}) {
   await api("/api/public/agent/complete", {
     method: "POST",
-    body: JSON.stringify({ jobId, status, outputs, error }),
+    body: JSON.stringify({ jobId, status, outputs, error, ...extras }),
   });
 }
+
 
 function pickEngine(name) {
   switch (name) {
@@ -105,11 +106,25 @@ async function main() {
           await complete(job.id, "succeeded", outputs);
           console.log(`✓ ${job.id} — ${outputs.length} output(s)`);
         } catch (err) {
-          const msg = String(err?.stack ?? err?.message ?? err);
-          console.error(`✗ ${job.id}`, msg);
+          const msg = String(err?.message ?? err);
+          const stack = String(err?.stack ?? msg);
+          console.error(`✗ ${job.id}`, stack);
+          const extras = {
+            error_stage: err?.reason ? "render" : undefined,
+            error_detail: err?.stderr || err?.stdout || err?.exitCode != null ? {
+              message: msg,
+              extendscript_log: err.stderr ?? "",
+              stdout: err.stdout ?? "",
+              exit_code: err.exitCode ?? null,
+              signal: err.signal ?? null,
+              jsx_path: err.jsxPath ?? null,
+              suggestions: err.reason ? [`Classified as ${err.reason} (transient=${!!err.transient})`] : undefined,
+            } : undefined,
+          };
           await reportProgress(job.id, "failed", 100, msg.split("\n")[0]).catch(() => {});
-          await complete(job.id, "failed", [], msg).catch(() => {});
+          await complete(job.id, "failed", [], msg, extras).catch(() => {});
         }
+
       }
     } catch (err) {
       console.error("poll error", err.message);
