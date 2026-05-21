@@ -37,7 +37,13 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+type TemplatesSearch = { company?: string; product?: string };
+
 export const Route = createFileRoute("/_authenticated/templates/")({
+  validateSearch: (search: Record<string, unknown>): TemplatesSearch => ({
+    company: typeof search.company === "string" ? search.company : undefined,
+    product: typeof search.product === "string" ? search.product : undefined,
+  }),
   component: TemplatesPage,
 });
 
@@ -74,14 +80,26 @@ function TemplatesPage() {
   const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
+  const { company: companyFilter, product: productFilter } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.filter((t) => {
       if (engineFilter !== "all" && t.engine !== engineFilter) return false;
+      if (companyFilter && (t as any).company_id !== companyFilter) return false;
+      if (productFilter && (t as any).product_id !== productFilter) return false;
       if (q && !t.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [data, search, engineFilter]);
+  }, [data, search, engineFilter, companyFilter, productFilter]);
+
+  const activeBrandFilter = companyFilter || productFilter
+    ? (data.find((t) =>
+        (productFilter && (t as any).product_id === productFilter) ||
+        (companyFilter && (t as any).company_id === companyFilter),
+      ) ?? null)
+    : null;
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: data.length };
@@ -207,6 +225,23 @@ function TemplatesPage() {
           ))}
         </div>
       </div>
+
+      {(companyFilter || productFilter) && (
+        <div className="mb-4 flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Filtered by brand</span>
+          <span className="font-medium">
+            {productFilter ? "Product" : "Company"}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto h-7 text-xs"
+            onClick={() => navigate({ search: {} })}
+          >
+            Clear filter
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

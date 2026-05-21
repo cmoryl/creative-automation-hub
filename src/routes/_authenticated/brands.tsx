@@ -168,7 +168,11 @@ function BrandsPage() {
             <Card key={c.id}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <Link
+                    to="/templates"
+                    search={{ company: c.id }}
+                    className="flex items-center gap-3 rounded-md -m-1 p-1 hover:bg-muted/50 transition-colors"
+                  >
                     {c.logo_url ? (
                       <img src={c.logo_url} alt="" className="h-10 w-10 rounded object-contain bg-muted" />
                     ) : (
@@ -177,7 +181,7 @@ function BrandsPage() {
                       </div>
                     )}
                     <div>
-                      <h2 className="font-semibold">{c.name}</h2>
+                      <h2 className="font-semibold hover:underline">{c.name}</h2>
                       <p className="text-xs text-muted-foreground">
                         {c.templateCount} template{c.templateCount === 1 ? "" : "s"} · {c.products.length} product{c.products.length === 1 ? "" : "s"}
                       </p>
@@ -186,7 +190,7 @@ function BrandsPage() {
                       {c.primary_color && <span className="h-5 w-5 rounded border" style={{ background: c.primary_color }} title={c.primary_color} />}
                       {c.accent_color && <span className="h-5 w-5 rounded border" style={{ background: c.accent_color }} title={c.accent_color} />}
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={() => setEditCo({ id: c.id, name: c.name, kit: {
                       description: c.description ?? "", logo_url: c.logo_url ?? "",
@@ -211,7 +215,11 @@ function BrandsPage() {
                   {c.products.map((p) => (
                     <div key={p.id} className="rounded border bg-muted/30">
                       <div className="flex items-center justify-between px-3 py-2">
-                        <div className="flex items-center gap-2 text-sm">
+                        <Link
+                          to="/templates"
+                          search={{ product: p.id }}
+                          className="flex items-center gap-2 text-sm flex-1 hover:underline"
+                        >
                           <Package className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{p.name}</span>
                           <span className="text-xs text-muted-foreground">
@@ -219,7 +227,7 @@ function BrandsPage() {
                             {p.subProducts.length > 0 && ` · ${p.subProducts.length} sub-product${p.subProducts.length === 1 ? "" : "s"}`}
                           </span>
                           {p.primary_color && <span className="h-3 w-3 rounded-full border" style={{ background: p.primary_color }} />}
-                        </div>
+                        </Link>
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" className="h-7 text-xs"
                             onClick={() => { setPrFor({ companyId: c.id, parentProductId: p.id, parentName: p.name }); setPrName(""); setPrKit({}); }}>
@@ -247,12 +255,16 @@ function BrandsPage() {
                         <div className="space-y-1 border-t bg-background/40 p-2 pl-8">
                           {p.subProducts.map((sp) => (
                             <div key={sp.id} className="flex items-center justify-between rounded px-2 py-1 text-sm hover:bg-muted/50">
-                              <div className="flex items-center gap-2">
+                              <Link
+                                to="/templates"
+                                search={{ product: sp.id }}
+                                className="flex items-center gap-2 flex-1 hover:underline"
+                              >
                                 <span className="text-muted-foreground">↳</span>
                                 <span>{sp.name}</span>
                                 <span className="text-xs text-muted-foreground">· {sp.templateCount} template{sp.templateCount === 1 ? "" : "s"}</span>
                                 {sp.primary_color && <span className="h-2.5 w-2.5 rounded-full border" style={{ background: sp.primary_color }} />}
-                              </div>
+                              </Link>
                               <div className="flex gap-1">
                                 <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditPr({ id: sp.id, name: sp.name, kit: {
                                   description: sp.description ?? "", logo_url: sp.logo_url ?? "",
