@@ -85,16 +85,45 @@ export async function getFileTopLevel(fileKey: string, depth = 2): Promise<{
   };
 }
 
-function trimNode(node: any, depth: number): FigmaNodeSummary {
-  return {
-    id: node.id,
-    name: node.name,
-    type: node.type,
-    children: depth > 0 && Array.isArray(node.children)
-      ? node.children.map((c: any) => trimNode(c, depth - 1))
-      : undefined,
-  };
+// Fetch a specific node subtree with full detail (used by template import to
+// discover TEXT layer names → variables).
+export async function getNodeDetail(fileKey: string, nodeId: string): Promise<any> {
+  const data = await figmaFetch<{ nodes: Record<string, { document: any }> }>(
+    `/files/${fileKey}/nodes?ids=${encodeURIComponent(nodeId)}`,
+  );
+  const entry = data.nodes[nodeId] ?? data.nodes[Object.keys(data.nodes)[0]];
+  return entry?.document ?? null;
 }
+
+// Walk a node tree and collect text/image layer names. Names like `{{headline}}`
+// or `var:headline` are treated as variable bindings; otherwise the raw layer
+// name is used.
+export function extractVariables(root: any): Array<{ name: string; type: "text" | "image"; label?: string }> {
+  const out = new Map<string, { name: string; type: "text" | "image"; label?: string }>();
+  const norm = (s: string) => {
+    const m = String(s ?? "").match(/(?:\{\{\s*([^}]+?)\s*\}\}|^var:(.+)$)/);
+    return (m ? (m[1] ?? m[2]) : s).trim();
+  };
+  function walk(n: any) {
+    if (!n || typeof n !== "object") return;
+    const nm = typeof n.name === "string" ? n.name.trim() : "";
+    if (nm && (n.type === "TEXT" || n.type === "RECTANGLE" || n.type === "ELLIPSE" || n.type === "FRAME")) {
+      const key = norm(nm);
+      if (key && !key.startsWith("_") && key.length <= 80) {
+        const isImage = n.type !== "TEXT" && (n.fills ?? []).some((f: any) => f.type === "IMAGE");
+        if (n.type === "TEXT" && !out.has(key)) {
+          out.set(key, { name: key, type: "text", label: nm !== key ? nm : undefined });
+        } else if (isImage && !out.has(key)) {
+          out.set(key, { name: key, type: "image", label: nm !== key ? nm : undefined });
+        }
+      }
+    }
+    if (Array.isArray(n.children)) for (const c of n.children) walk(c);
+  }
+  walk(root);
+  return Array.from(out.values());
+}
+
 
 export async function downloadAsBuffer(url: string): Promise<{ buffer: Uint8Array; contentType: string }> {
   const res = await fetch(url);
