@@ -23,6 +23,7 @@ import { Route as AuthenticatedBrandsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedTemplatesIndexRouteImport } from './routes/_authenticated/templates.index'
+import { Route as AuthenticatedProjectsIndexRouteImport } from './routes/_authenticated/projects.index'
 import { Route as AuthenticatedBatchesIndexRouteImport } from './routes/_authenticated/batches.index'
 import { Route as AuthenticatedTemplatesCanvaRouteImport } from './routes/_authenticated/templates.canva'
 import { Route as AuthenticatedTemplatesBatchRouteImport } from './routes/_authenticated/templates.batch'
@@ -112,6 +113,12 @@ const AuthenticatedTemplatesIndexRoute =
     id: '/templates/',
     path: '/templates/',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProjectsIndexRoute =
+  AuthenticatedProjectsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedProjectsRoute,
   } as any)
 const AuthenticatedBatchesIndexRoute =
   AuthenticatedBatchesIndexRouteImport.update({
@@ -241,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/batches/': typeof AuthenticatedBatchesIndexRoute
+  '/projects/': typeof AuthenticatedProjectsIndexRoute
   '/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -265,7 +273,6 @@ export interface FileRoutesByTo {
   '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
-  '/projects': typeof AuthenticatedProjectsRouteWithChildren
   '/batches/$batchId': typeof AuthenticatedBatchesBatchIdRoute
   '/projects/$projectId': typeof AuthenticatedProjectsProjectIdRoute
   '/settings/agent': typeof AuthenticatedSettingsAgentRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/batches': typeof AuthenticatedBatchesIndexRoute
+  '/projects': typeof AuthenticatedProjectsIndexRoute
   '/templates': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -311,6 +319,7 @@ export interface FileRoutesById {
   '/_authenticated/templates/batch': typeof AuthenticatedTemplatesBatchRoute
   '/_authenticated/templates/canva': typeof AuthenticatedTemplatesCanvaRoute
   '/_authenticated/batches/': typeof AuthenticatedBatchesIndexRoute
+  '/_authenticated/projects/': typeof AuthenticatedProjectsIndexRoute
   '/_authenticated/templates/': typeof AuthenticatedTemplatesIndexRoute
   '/api/public/agent/claim': typeof ApiPublicAgentClaimRoute
   '/api/public/agent/complete': typeof ApiPublicAgentCompleteRoute
@@ -347,6 +356,7 @@ export interface FileRouteTypes {
     | '/templates/batch'
     | '/templates/canva'
     | '/batches/'
+    | '/projects/'
     | '/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -371,7 +381,6 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/library'
     | '/outputs'
-    | '/projects'
     | '/batches/$batchId'
     | '/projects/$projectId'
     | '/settings/agent'
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/templates/batch'
     | '/templates/canva'
     | '/batches'
+    | '/projects'
     | '/templates'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -416,6 +426,7 @@ export interface FileRouteTypes {
     | '/_authenticated/templates/batch'
     | '/_authenticated/templates/canva'
     | '/_authenticated/batches/'
+    | '/_authenticated/projects/'
     | '/_authenticated/templates/'
     | '/api/public/agent/claim'
     | '/api/public/agent/complete'
@@ -543,6 +554,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/templates/'
       preLoaderRoute: typeof AuthenticatedTemplatesIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/projects/': {
+      id: '/_authenticated/projects/'
+      path: '/'
+      fullPath: '/projects/'
+      preLoaderRoute: typeof AuthenticatedProjectsIndexRouteImport
+      parentRoute: typeof AuthenticatedProjectsRoute
     }
     '/_authenticated/batches/': {
       id: '/_authenticated/batches/'
@@ -682,10 +700,12 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedProjectsRouteChildren {
   AuthenticatedProjectsProjectIdRoute: typeof AuthenticatedProjectsProjectIdRoute
+  AuthenticatedProjectsIndexRoute: typeof AuthenticatedProjectsIndexRoute
 }
 
 const AuthenticatedProjectsRouteChildren: AuthenticatedProjectsRouteChildren = {
   AuthenticatedProjectsProjectIdRoute: AuthenticatedProjectsProjectIdRoute,
+  AuthenticatedProjectsIndexRoute: AuthenticatedProjectsIndexRoute,
 }
 
 const AuthenticatedProjectsRouteWithChildren =
