@@ -155,6 +155,8 @@ export const importCanvaTemplate = createServerFn({ method: "POST" })
     z.object({
       kind: z.enum(["brand_template", "design"]),
       id: z.string().min(1).max(200),
+      companyId: z.string().uuid().nullable().optional(),
+      productId: z.string().uuid().nullable().optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -180,7 +182,6 @@ export const importCanvaTemplate = createServerFn({ method: "POST" })
     }
 
     const sourceRef = `canva://${data.kind}/${data.id}`;
-    // Upsert on (workspace_id, source_ref)
     const { data: existing } = await supabaseAdmin
       .from("templates")
       .select("id")
@@ -188,10 +189,15 @@ export const importCanvaTemplate = createServerFn({ method: "POST" })
       .eq("source_ref", sourceRef)
       .maybeSingle();
 
+    const brandPatch = {
+      company_id: data.companyId ?? null,
+      product_id: data.productId ?? null,
+    };
+
     if (existing) {
       const { error } = await supabaseAdmin
         .from("templates")
-        .update({ name, preview_url: thumbnail, variables, engine: "canva" })
+        .update({ name, preview_url: thumbnail, variables, engine: "canva", ...brandPatch })
         .eq("id", existing.id);
       if (error) throw error;
       return { id: existing.id, updated: true };
@@ -205,6 +211,7 @@ export const importCanvaTemplate = createServerFn({ method: "POST" })
         source_ref: sourceRef,
         preview_url: thumbnail,
         variables,
+        ...brandPatch,
       })
       .select("id")
       .single();
