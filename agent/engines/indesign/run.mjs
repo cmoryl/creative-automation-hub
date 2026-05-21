@@ -46,14 +46,41 @@ function buildJsx({ templatePath, variables, outDir, pages }) {
 var swaps = {};
 ${swapLines}
 
+// Normalise keys so "Lead Headline", "lead_headline", "LEAD-HEADLINE" and
+// "{{lead_headline}}" all resolve to the same variable. Falls back to the
+// frame's current contents when the placeholder copy IS the token.
+function normKey(s) {
+  if (s == null) return "";
+  var t = String(s).replace(/^\\s*\\{\\{\\s*|\\s*\\}\\}\\s*$/g, "");
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+var normSwaps = {};
+for (var sk in swaps) {
+  if (swaps.hasOwnProperty(sk)) normSwaps[normKey(sk)] = swaps[sk];
+}
+
+function lookupSwap(label, name, contents) {
+  var v = normSwaps[normKey(label)];
+  if (v !== undefined) return v;
+  v = normSwaps[normKey(name)];
+  if (v !== undefined) return v;
+  if (contents != null) {
+    v = normSwaps[normKey(contents)];
+    if (v !== undefined) return v;
+  }
+  return undefined;
+}
+
 var doc = app.open(File("${esc(templatePath)}"));
 
 // --- Variable substitution ---------------------------------------------------
 for (var i = 0; i < doc.textFrames.length; i++) {
   var tf = doc.textFrames[i];
-  var key = tf.label || tf.name;
-  if (swaps[key] !== undefined) {
-    tf.contents = swaps[key];
+  var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
+  var v = lookupSwap(tf.label, tf.name, contents);
+  if (v !== undefined) {
+    tf.contents = v;
   }
 }
 
