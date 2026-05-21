@@ -8,6 +8,8 @@ import {
   duplicateTemplate,
 } from "@/lib/workspace.functions";
 import { saveFigmaToken, importFigmaTemplate } from "@/lib/figma.functions";
+import { getAllTemplateAvailability } from "@/lib/template-requirements.functions";
+import { TemplateAvailabilityPill } from "@/components/TemplateAvailability";
 import { LayoutTemplate, Plus, MoreVertical, Pencil, Trash2, Search, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +71,17 @@ function TemplatesPage() {
     queryKey: ["templates"],
     queryFn: () => fetchTemplates(),
   });
+  const availFn = useServerFn(getAllTemplateAvailability);
+  const { data: availability = [] } = useQuery({
+    queryKey: ["template-availability"],
+    queryFn: () => availFn(),
+    refetchInterval: 30_000,
+  });
+  const availabilityById = useMemo(() => {
+    const m = new Map<string, (typeof availability)[number]>();
+    for (const a of availability) m.set(a.template_id, a);
+    return m;
+  }, [availability]);
 
   const [open, setOpen] = useState(false);
   const [pat, setPat] = useState("");
@@ -274,6 +287,11 @@ function TemplatesPage() {
                     {t.engine}
                   </span>
                 </div>
+                {(t.engine === "illustrator" || t.engine === "indesign") && (
+                  <div className="mt-2">
+                    <TemplateAvailabilityPill summary={availabilityById.get(t.id) ?? null} />
+                  </div>
+                )}
                 {t.source_ref && (
                   <p className="mt-2 truncate text-xs text-muted-foreground">{t.source_ref}</p>
                 )}
