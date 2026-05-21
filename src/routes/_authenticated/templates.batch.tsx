@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { listTemplates } from "@/lib/workspace.functions";
 import { getTemplate } from "@/lib/workspace.functions";
 import { dispatchBatch } from "@/lib/batch.functions";
+import { createBatchSchedule } from "@/lib/batch-schedules.functions";
 import { validateField } from "@/components/CreateVariationsTab";
+
 import {
   BatchRowsTable,
   newBatchRow,
@@ -20,11 +22,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   ArrowLeft,
   ArrowRight,
+  CalendarClock,
   CheckCircle2,
   Layers,
   Loader2,
   Wand2,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/templates/batch")({
   component: TemplatesBatchPage,
@@ -44,6 +48,8 @@ function TemplatesBatchPage() {
   const listFn = useServerFn(listTemplates);
   const getTplFn = useServerFn(getTemplate);
   const dispatchFn = useServerFn(dispatchBatch);
+  const scheduleFn = useServerFn(createBatchSchedule);
+
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ["templates"],
@@ -58,6 +64,13 @@ function TemplatesBatchPage() {
     `Multi-template batch ${new Date().toLocaleDateString()}`,
   );
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState(() => {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setSeconds(0, 0);
+    return d.toISOString().slice(0, 16);
+  });
+
 
   // Fetch full variable lists for each selected template
   const tplQueries = useQuery({
@@ -136,16 +149,33 @@ function TemplatesBatchPage() {
           };
         });
 
+      if (scheduleEnabled) {
+        const runAtIso = new Date(scheduleAt).toISOString();
+        const sched = await scheduleFn({
+          data: {
+            name: batchLabel.trim(),
+            runAt: runAtIso,
+            payload: { batchLabel: batchLabel.trim(), groups },
+          },
+        });
+        return { scheduled: true, sched };
+      }
       return dispatchFn({
         data: { batchLabel: batchLabel.trim(), groups },
       });
     },
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
+      if (res?.scheduled) {
+        toast.success(`Scheduled for ${new Date(res.sched.run_at).toLocaleString()}`);
+        navigate({ to: "/settings/schedules" });
+        return;
+      }
       toast.success(`Created ${res.totalJobs} job(s) across ${res.created.length} variation(s)`);
       navigate({ to: "/batches/$batchId", params: { batchId: res.batchId } });
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Dispatch failed"),
   });
+
 
   const intersectionEngines = useMemo(() => {
     const all = new Set(ENGINES);
@@ -345,6 +375,31 @@ function TemplatesBatchPage() {
               </>
             )}
 
+            <div className="rounded-md border bg-card p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={scheduleEnabled}
+                  onChange={(e) => setScheduleEnabled(e.target.checked)}
+                />
+                <CalendarClock className="h-4 w-4 text-primary" />
+                Schedule for later
+              </label>
+              {scheduleEnabled && (
+                <div className="mt-2 flex items-center gap-2">
+                  <Input
+                    type="datetime-local"
+                    value={scheduleAt}
+                    onChange={(e) => setScheduleAt(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Runs at {new Date(scheduleAt).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Button variant="ghost" onClick={() => setStep(2)}>
                 <ArrowLeft className="h-4 w-4" /> Back
@@ -355,12 +410,15 @@ function TemplatesBatchPage() {
               >
                 {dispatch.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
+                ) : scheduleEnabled ? (
+                  <CalendarClock className="h-4 w-4" />
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}{" "}
-                Dispatch · {selectedTemplates.length} template(s) × {rows.length} row(s)
+                {scheduleEnabled ? "Schedule" : "Dispatch"} · {selectedTemplates.length} template(s) × {rows.length} row(s)
               </Button>
             </div>
+
           </CardContent>
         </Card>
       )}

@@ -24,6 +24,8 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { ActivitySparkline } from "@/components/ActivitySparkline";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -142,6 +144,18 @@ function DashboardPage() {
             <StatCard label="Failed" value={data.totals.failed} icon={XCircle} accent="text-destructive" />
             <StatCard label="Outputs" value={data.totals.outputs} icon={FileStack} accent="text-emerald-500" />
           </section>
+
+          {data.last24 && (
+            <section className="mb-8">
+              <ActivitySparkline
+                buckets={data.last24.buckets}
+                successRate={data.last24.successRate}
+                total={data.last24.total}
+                completed={data.last24.completed}
+              />
+            </section>
+          )}
+
 
           {/* Engines */}
           <section className="mb-8">

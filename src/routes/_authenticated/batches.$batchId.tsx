@@ -23,6 +23,8 @@ import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { ApprovalPanel } from "@/components/ApprovalPanel";
 import { AuditFeed } from "@/components/AuditFeed";
+import { ShareButton } from "@/components/ShareButton";
+
 
 export const Route = createFileRoute("/_authenticated/batches/$batchId")({
   component: BatchDetailPage,
@@ -200,6 +202,7 @@ function BatchDetailPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <ShareButton kind="batch" batchKey={batchId} />
               <Button
                 variant="outline"
                 size="sm"
@@ -213,6 +216,7 @@ function BatchDetailPage() {
                 )}{" "}
                 Download ZIP ({outputs.length})
               </Button>
+
               <Button
                 variant="outline"
                 size="sm"
