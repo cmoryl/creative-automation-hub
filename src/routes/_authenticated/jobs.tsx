@@ -21,6 +21,10 @@ type Row = {
   error: string | null;
   error_stage: string | null;
   error_detail: RenderErrorDetail | null;
+  retry_count: number | null;
+  max_retries: number | null;
+  next_retry_at: string | null;
+  transient: boolean | null;
   created_at: string;
   completed_at: string | null;
   project_id: string;
