@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { ApprovalPanel } from "@/components/ApprovalPanel";
+import { AuditFeed } from "@/components/AuditFeed";
 
 export const Route = createFileRoute("/_authenticated/batches/$batchId")({
   component: BatchDetailPage,
@@ -263,6 +265,16 @@ function BatchDetailPage() {
             <div className="text-right text-xs text-muted-foreground">
               {done} / {total} complete · {pct}%
             </div>
+          </div>
+
+          <div className="mb-6 grid gap-4 lg:grid-cols-2">
+            <ApprovalPanel batchId={batchId} defaultTitle={batchLabel} />
+            <AuditFeed
+              limit={15}
+              projectId={jobs[0]?.project_id}
+              title="Batch activity"
+              description="Approval and job events for this batch."
+            />
           </div>
 
           <ul className="space-y-1.5">

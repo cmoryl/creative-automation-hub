@@ -172,6 +172,27 @@ export const dispatchBatch = createServerFn({ method: "POST" })
       }
     }
 
+    // Audit event for the dispatched batch
+    if (created.length > 0) {
+      const firstProj = created[0];
+      const { data: proj } = await supabase
+        .from("projects")
+        .select("workspace_id")
+        .eq("id", firstProj.projectId)
+        .single();
+      if (proj?.workspace_id) {
+        await supabase.from("audit_events").insert({
+          workspace_id: proj.workspace_id,
+          actor_id: userId,
+          action: "batch.dispatched",
+          target_type: "batch",
+          target_id: batchId,
+          summary: `Dispatched batch "${data.batchLabel}" — ${totalJobs} job(s)`,
+          metadata: { batchId, totalJobs, groups: data.groups.length } as never,
+        });
+      }
+    }
+
     return {
       batchId,
       batchLabel: data.batchLabel,
