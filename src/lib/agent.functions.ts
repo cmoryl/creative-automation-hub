@@ -102,7 +102,7 @@ export const listProjectJobs = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const { data: jobs, error } = await context.supabase
       .from("jobs")
-      .select("id, engine, status, error, brief, created_at, completed_at, outputs(id, kind, url, metadata)")
+      .select("id, engine, status, error, brief, variables, created_at, completed_at, outputs(id, kind, url, metadata)")
       .eq("project_id", data.projectId)
       .order("created_at", { ascending: false });
     if (error) throw error;
