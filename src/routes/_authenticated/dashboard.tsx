@@ -145,6 +145,18 @@ function DashboardPage() {
             <StatCard label="Outputs" value={data.totals.outputs} icon={FileStack} accent="text-emerald-500" />
           </section>
 
+          {data.last24 && (
+            <section className="mb-8">
+              <ActivitySparkline
+                buckets={data.last24.buckets}
+                successRate={data.last24.successRate}
+                total={data.last24.total}
+                completed={data.last24.completed}
+              />
+            </section>
+          )}
+
+
           {/* Engines */}
           <section className="mb-8">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
