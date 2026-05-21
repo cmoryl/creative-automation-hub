@@ -75,9 +75,10 @@ export const Route = createFileRoute("/api/public/oauth/canva/callback")({
 
         const tokenJson = (await tokenRes.json().catch(() => ({}))) as any;
         if (!tokenRes.ok) {
+          console.error("[canva-oauth] token exchange failed", tokenRes.status, tokenJson);
           return htmlResponse(
             "Token exchange failed",
-            `<h1>Token exchange failed</h1><p>${tokenRes.status}: ${JSON.stringify(tokenJson)}</p><p><a href="/settings/integrations">Back</a></p>`,
+            `<h1>Token exchange failed</h1><p>Please try connecting again.</p><p><a href="/settings/integrations">Back</a></p>`,
             500,
           );
         }
