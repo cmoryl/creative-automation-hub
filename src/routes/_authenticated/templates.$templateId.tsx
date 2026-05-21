@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateVariationsTab } from "@/components/CreateVariationsTab";
+import { TemplateAvailabilityDetail } from "@/components/TemplateAvailabilityDetail";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/templates/$templateId")({
@@ -359,6 +360,8 @@ function TemplateDetailPage() {
               </p>
             </div>
           )}
+
+          {isBridge && <TemplateAvailabilityDetail templateId={tpl.id} />}
         </div>
       </section>
 
