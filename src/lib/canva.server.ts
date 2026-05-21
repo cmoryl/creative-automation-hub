@@ -4,11 +4,36 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CANVA_BASE = "https://api.canva.com/rest/v1";
 
+// Typed error so server fns / UI can show a "Reconnect Canva" prompt instead
+// of a blank screen. The lineage is gone — only re-auth fixes it.
+export class CanvaReauthRequiredError extends Error {
+  code = "canva_reauth_required" as const;
+  constructor(message = "Canva needs to be reconnected. Click Authorize Canva account.") {
+    super(message);
+    this.name = "CanvaReauthRequiredError";
+  }
+}
+
+export class CanvaRateLimitedError extends Error {
+  code = "canva_rate_limited" as const;
+  retryAfterMs: number;
+  constructor(retryAfterMs: number) {
+    super(`Canva is rate-limiting token refreshes. Try again in ${Math.ceil(retryAfterMs / 1000)}s.`);
+    this.name = "CanvaRateLimitedError";
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
 type IntegRow = {
   workspace_id: string;
   access_token: string; // we store the user's OAuth access token here once connected
   metadata: any;
 };
+
+// Single-flight refresh per workspace within this worker instance — prevents a
+// burst of parallel server-fn calls from each firing their own refresh and
+// tripping Canva's 429.
+const inflightRefreshes = new Map<string, Promise<IntegRow>>();
 
 async function loadIntegration(workspaceId: string): Promise<IntegRow> {
   const { data, error } = await supabaseAdmin
@@ -20,7 +45,7 @@ async function loadIntegration(workspaceId: string): Promise<IntegRow> {
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Canva is not connected for this workspace.");
   const row = data as IntegRow;
-  if (!row.metadata?.access_token) throw new Error("Canva is not authorized yet. Click Authorize Canva account.");
+  if (!row.metadata?.access_token) throw new CanvaReauthRequiredError();
   return row;
 }
 
@@ -35,6 +60,8 @@ async function persistTokens(workspaceId: string, currentMeta: any, tokenJson: a
     token_type: tokenJson.token_type ?? "Bearer",
     expires_at: expiresAt,
     scope: tokenJson.scope ?? currentMeta.scope ?? null,
+    refresh_cooldown_until: null,
+    needs_reauth: false,
   };
   await supabaseAdmin
     .from("workspace_integrations")
@@ -44,11 +71,50 @@ async function persistTokens(workspaceId: string, currentMeta: any, tokenJson: a
   return nextMeta;
 }
 
-async function refreshIfNeeded(integ: IntegRow): Promise<IntegRow> {
+async function markReauthRequired(workspaceId: string, currentMeta: any, reason: string) {
+  const nextMeta = {
+    ...currentMeta,
+    // Drop the dead credentials so we stop trying to refresh them.
+    access_token: null,
+    refresh_token: null,
+    expires_at: null,
+    needs_reauth: true,
+    reauth_reason: reason,
+    reauth_at: new Date().toISOString(),
+  };
+  await supabaseAdmin
+    .from("workspace_integrations")
+    .update({ metadata: nextMeta, updated_at: new Date().toISOString() })
+    .eq("workspace_id", workspaceId)
+    .eq("provider", "canva");
+}
+
+async function markRefreshCooldown(workspaceId: string, currentMeta: any, untilMs: number) {
+  const nextMeta = {
+    ...currentMeta,
+    refresh_cooldown_until: new Date(untilMs).toISOString(),
+  };
+  await supabaseAdmin
+    .from("workspace_integrations")
+    .update({ metadata: nextMeta, updated_at: new Date().toISOString() })
+    .eq("workspace_id", workspaceId)
+    .eq("provider", "canva");
+}
+
+async function doRefresh(integ: IntegRow): Promise<IntegRow> {
   const meta = integ.metadata as any;
-  const expiresAt = meta.expires_at ? new Date(meta.expires_at).getTime() : 0;
-  const stale = !expiresAt || expiresAt - Date.now() < 60_000;
-  if (!stale || !meta.refresh_token) return integ;
+
+  // If a previous refresh tripped 429, honour the cooldown rather than retrying.
+  const cooldownUntil = meta.refresh_cooldown_until
+    ? new Date(meta.refresh_cooldown_until).getTime()
+    : 0;
+  if (cooldownUntil && cooldownUntil > Date.now()) {
+    throw new CanvaRateLimitedError(cooldownUntil - Date.now());
+  }
+
+  if (meta.needs_reauth || !meta.refresh_token) {
+    throw new CanvaReauthRequiredError();
+  }
 
   const clientId = meta.client_id as string;
   const clientSecret = integ.access_token as string;
@@ -66,10 +132,45 @@ async function refreshIfNeeded(integ: IntegRow): Promise<IntegRow> {
       refresh_token: meta.refresh_token,
     }).toString(),
   });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Canva token refresh failed (${res.status}): ${JSON.stringify(json)}`);
-  const nextMeta = await persistTokens(integ.workspace_id, meta, json);
-  return { ...integ, metadata: nextMeta };
+  const json = await res.json().catch(() => ({} as any));
+
+  if (res.ok) {
+    const nextMeta = await persistTokens(integ.workspace_id, meta, json);
+    return { ...integ, metadata: nextMeta };
+  }
+
+  // Permanent: refresh token revoked / lineage gone. Drop creds, demand re-auth.
+  if (res.status === 400 && /invalid_grant|revoked/i.test(JSON.stringify(json))) {
+    await markReauthRequired(integ.workspace_id, meta, json?.error_description ?? "invalid_grant");
+    throw new CanvaReauthRequiredError();
+  }
+
+  // Transient: rate limited. Park a cooldown so concurrent / subsequent callers
+  // back off instead of stampeding the endpoint.
+  if (res.status === 429) {
+    const retryAfterHeader = Number(res.headers.get("retry-after")) || 60;
+    const untilMs = Date.now() + retryAfterHeader * 1000;
+    await markRefreshCooldown(integ.workspace_id, meta, untilMs);
+    throw new CanvaRateLimitedError(retryAfterHeader * 1000);
+  }
+
+  throw new Error(`Canva token refresh failed (${res.status}): ${JSON.stringify(json)}`);
+}
+
+async function refreshIfNeeded(integ: IntegRow): Promise<IntegRow> {
+  const meta = integ.metadata as any;
+  const expiresAt = meta.expires_at ? new Date(meta.expires_at).getTime() : 0;
+  const stale = !expiresAt || expiresAt - Date.now() < 60_000;
+  if (!stale) return integ;
+  if (meta.needs_reauth) throw new CanvaReauthRequiredError();
+  if (!meta.refresh_token) throw new CanvaReauthRequiredError();
+
+  const key = integ.workspace_id;
+  const existing = inflightRefreshes.get(key);
+  if (existing) return existing;
+  const p = doRefresh(integ).finally(() => inflightRefreshes.delete(key));
+  inflightRefreshes.set(key, p);
+  return p;
 }
 
 export async function canvaFetch<T = any>(
