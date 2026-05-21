@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateAgent, json } from "@/lib/agent-auth.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { classifyFailure, computeBackoffMs } from "@/lib/retry-classifier";
+import { classifyFailure, computeBackoffMs, suggestionsForReason } from "@/lib/retry-classifier";
 import { z } from "zod";
 
 const Body = z.object({
@@ -32,6 +32,27 @@ const Body = z.object({
         )
         .max(100)
         .optional(),
+      // Per-frame / per-layer error context. `frame` is a human label (e.g.
+      // "page 2 / headline", "artboard 'Hero'"). `error_code` is the
+      // ExtendScript runtime code when available (e.g. 1302, 9050).
+      frames: z
+        .array(
+          z.object({
+            frame: z.string().max(400),
+            page: z.number().int().nonnegative().optional(),
+            layer: z.string().max(400).optional(),
+            variable: z.string().max(200).optional(),
+            error_code: z.union([z.string().max(40), z.number().int()]).optional(),
+            message: z.string().max(2000).optional(),
+            extendscript_log: z.string().max(10000).optional(),
+            suggestion: z.string().max(800).optional(),
+          }),
+        )
+        .max(500)
+        .optional(),
+      // Free-form remediation hints. Agent may pre-fill; we also auto-append
+      // a default suggestion for well-known failure reasons (see classifier).
+      suggestions: z.array(z.string().min(1).max(600)).max(20).optional(),
       agent_version: z.string().max(40).optional(),
     })
     .optional(),
@@ -136,6 +157,20 @@ export const Route = createFileRoute("/api/public/agent/complete")({
             }
           }
 
+          // Build the enriched error_detail. Merge agent-supplied suggestions
+          // with classifier defaults (de-duped, agent's first), so the UI
+          // always has at least one actionable hint for known reasons.
+          let enrichedDetail = error_detail ?? null;
+          if (status === "failed" && retryReason) {
+            const fromAgent = error_detail?.suggestions ?? [];
+            const defaults = suggestionsForReason(retryReason);
+            const merged = Array.from(new Set([...fromAgent, ...defaults])).slice(0, 20);
+            enrichedDetail = {
+              ...(error_detail ?? {}),
+              suggestions: merged,
+            };
+          }
+
           const briefForRetry = {
             ...briefNext,
             last_retry_reason: retryReason ?? undefined,
@@ -147,7 +182,7 @@ export const Route = createFileRoute("/api/public/agent/complete")({
               status: nextStatus,
               error: error ?? null,
               error_stage: error_stage ?? null,
-              error_detail: (error_detail ?? null) as never,
+              error_detail: (enrichedDetail ?? null) as never,
               brief: briefForRetry as never,
               transient,
               ...(retryCountNext !== undefined ? { retry_count: retryCountNext } : {}),

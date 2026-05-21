@@ -1,7 +1,27 @@
 import { useState } from "react";
-import { AlertCircle, Copy, Type, Link as LinkIcon, FileWarning, ChevronDown } from "lucide-react";
+import {
+  AlertCircle,
+  Copy,
+  Type,
+  Link as LinkIcon,
+  FileWarning,
+  ChevronDown,
+  Lightbulb,
+  Layers,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+export type RenderErrorFrame = {
+  frame: string;
+  page?: number;
+  layer?: string;
+  variable?: string;
+  error_code?: string | number;
+  message?: string;
+  extendscript_log?: string;
+  suggestion?: string;
+};
 
 export type RenderErrorDetail = {
   message?: string;
@@ -11,6 +31,8 @@ export type RenderErrorDetail = {
   font_substitutions?: { requested: string; used: string }[];
   missing_links?: string[];
   files?: { name: string; path?: string; exists?: boolean }[];
+  frames?: RenderErrorFrame[];
+  suggestions?: string[];
   agent_version?: string;
 };
 
@@ -48,6 +70,8 @@ export function RenderErrorReport({
       (d.font_substitutions && d.font_substitutions.length) ||
       (d.missing_links && d.missing_links.length) ||
       (d.files && d.files.length) ||
+      (d.frames && d.frames.length) ||
+      (d.suggestions && d.suggestions.length) ||
       d.stack);
 
   const copyDiagnostics = () => {
@@ -139,6 +163,79 @@ export function RenderErrorReport({
               </ul>
             </Section>
           )}
+
+          {d?.frames && d.frames.length > 0 && (
+            <Section icon={Layers} label={`Per-frame errors (${d.frames.length})`}>
+              <ul className="space-y-1.5 text-[11px]">
+                {d.frames.slice(0, 30).map((fr, i) => (
+                  <li
+                    key={i}
+                    className="rounded border border-red-500/20 bg-background/60 p-1.5"
+                  >
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-medium text-foreground">{fr.frame}</span>
+                      {typeof fr.page === "number" && (
+                        <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+                          page {fr.page}
+                        </span>
+                      )}
+                      {fr.layer && (
+                        <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+                          layer: {fr.layer}
+                        </span>
+                      )}
+                      {fr.variable && (
+                        <span className="rounded bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+                          var: {fr.variable}
+                        </span>
+                      )}
+                      {fr.error_code !== undefined && (
+                        <span className="rounded bg-red-500/15 px-1 py-0.5 text-[10px] text-red-700 dark:text-red-300">
+                          code {String(fr.error_code)}
+                        </span>
+                      )}
+                    </div>
+                    {fr.message && (
+                      <p className="mt-0.5 text-red-700/90 dark:text-red-300/90">
+                        {fr.message}
+                      </p>
+                    )}
+                    {fr.suggestion && (
+                      <p className="mt-0.5 text-muted-foreground">
+                        <Lightbulb className="mr-1 inline h-3 w-3" />
+                        {fr.suggestion}
+                      </p>
+                    )}
+                    {fr.extendscript_log && (
+                      <pre className="mt-1 max-h-32 overflow-auto rounded bg-background/80 p-1 text-[10px] leading-snug text-muted-foreground">
+                        {fr.extendscript_log}
+                      </pre>
+                    )}
+                  </li>
+                ))}
+                {d.frames.length > 30 && (
+                  <li className="text-[10px] text-muted-foreground">
+                    +{d.frames.length - 30} more frames (copy diagnostics for full list)
+                  </li>
+                )}
+              </ul>
+            </Section>
+          )}
+
+          {d?.suggestions && d.suggestions.length > 0 && (
+            <Section icon={Lightbulb} label="Suggestions">
+              <ul className="space-y-1 text-[11px] text-muted-foreground">
+                {d.suggestions.slice(0, 10).map((s, i) => (
+                  <li key={i} className="flex gap-1.5">
+                    <span className="text-amber-500">›</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+
 
           {hasStructured && (d?.extendscript_log || d?.stack) && (
             <button
