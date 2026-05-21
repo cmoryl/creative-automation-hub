@@ -104,41 +104,45 @@ function lookupVar(rawName, rawContents) {
 
 var doc = app.open(new File("${escapeForJsx(templatePath)}"));
 
-function applyToTextFrames(layer) {
-  for (var i = 0; i < layer.textFrames.length; i++) {
-    var tf = layer.textFrames[i];
-    var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
-    var v = lookupVar(tf.name, contents);
-    if (v && v.kind === "text") {
-      tf.contents = v.value;
-    }
-  }
-  for (var j = 0; j < layer.layers.length; j++) {
-    applyToTextFrames(layer.layers[j]);
+var matched = [];
+var unmatchedFrames = [];
+
+// doc.textFrames and doc.pathItems return EVERY item in the document
+// regardless of layer / group nesting — which is how real .ai files are
+// organised. Walking layer.textFrames + sublayers only would miss anything
+// inside a group.
+for (var i = 0; i < doc.textFrames.length; i++) {
+  var tf = doc.textFrames[i];
+  var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
+  var v = lookupVar(tf.name, contents);
+  if (v && v.kind === "text") {
+    tf.contents = v.value;
+    matched.push({ kind: "text", name: tf.name, key: normKey(tf.name) || normKey(contents) });
+  } else {
+    unmatchedFrames.push({ name: tf.name, contents: contents.substring(0, 60) });
   }
 }
 
-function applyColours(layer) {
-  for (var i = 0; i < layer.pathItems.length; i++) {
-    var p = layer.pathItems[i];
-    var v = lookupVar(p.name, null);
-    if (v && v.kind === "color") {
-      var c = new RGBColor();
-      c.red = v.r;
-      c.green = v.g;
-      c.blue = v.b;
-      if (p.filled) p.fillColor = c;
+for (var p = 0; p < doc.pathItems.length; p++) {
+  var pi = doc.pathItems[p];
+  var pv = lookupVar(pi.name, null);
+  if (pv && pv.kind === "color") {
+    var c = new RGBColor();
+    c.red = pv.r;
+    c.green = pv.g;
+    c.blue = pv.b;
+    if (pi.filled) {
+      pi.fillColor = c;
+      matched.push({ kind: "color", name: pi.name, key: normKey(pi.name) });
     }
-  }
-  for (var j = 0; j < layer.layers.length; j++) {
-    applyColours(layer.layers[j]);
   }
 }
 
-for (var k = 0; k < doc.layers.length; k++) {
-  applyToTextFrames(doc.layers[k]);
-  applyColours(doc.layers[k]);
-}
+// Write a sidecar JSON so the Node wrapper can surface what matched vs not.
+var report = new File("${escapeForJsx(path.join(outDir, "substitution-report.json"))}");
+report.open("w");
+report.write('{"matched":' + matched.toSource() + ',"unmatched":' + unmatchedFrames.toSource() + ',"vars":' + (function(){ var keys=[]; for (var k in normVars) keys.push(k); return '["' + keys.join('","') + '"]'; })() + '}');
+report.close();
 
 // --- Per-artboard PNG export -------------------------------------------------
 var pngOpts = new ExportOptionsPNG24();
@@ -326,6 +330,21 @@ export async function run(job, ctx) {
     try { await fs.copyFile(path.join(outDir, png), path.join(pkgDir, png)); } catch {}
   }
 
+  // Read the substitution report the .jsx wrote out.
+  let report = null;
+  try {
+    report = JSON.parse(await fs.readFile(path.join(outDir, "substitution-report.json"), "utf8"));
+  } catch (e) { /* missing report = older Illustrator install */ }
+
+  const sentKeys = Object.keys(job.variables ?? {});
+  const matchedKeys = Array.from(new Set((report?.matched ?? []).map((m) => m.key).filter(Boolean)));
+  const unmappedVars = sentKeys.filter((k) => !matchedKeys.includes(
+    k.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""),
+  ));
+  if (unmappedVars.length) {
+    console.warn(`[illustrator] ${unmappedVars.length} variable(s) sent but no matching layer/text in ${job.template?.source_ref}: ${unmappedVars.join(", ")}`);
+  }
+
   await fs.writeFile(
     path.join(pkgDir, "manifest.json"),
     JSON.stringify(
@@ -345,11 +364,29 @@ export async function run(job, ctx) {
             }))
           : [{ index: 1, name: "preview", file: "preview.png" }],
         variables: job.variables ?? {},
+        substitution: report
+          ? {
+              matched: report.matched ?? [],
+              unmatched_frames: report.unmatched ?? [],
+              unmapped_vars: unmappedVars,
+            }
+          : { error: "no substitution report — Illustrator script may have failed" },
       },
       null,
       2,
     ),
   );
+
+  // Also surface the substitution report directly in the package so it's
+  // findable without opening manifest.json.
+  if (report) {
+    try {
+      await fs.copyFile(
+        path.join(outDir, "substitution-report.json"),
+        path.join(pkgDir, "substitution-report.json"),
+      );
+    } catch {}
+  }
 
   await progress("packaging", 75, "Zipping editable assets + fonts");
   const zipPath = path.join(outDir, "package.zip");
