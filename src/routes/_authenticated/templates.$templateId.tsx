@@ -250,6 +250,78 @@ function TemplateDetailPage() {
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{tpl.source_ref}</code>
           </p>
 
+          {/* Brand scoping — assign this template to a company + optional product/sub-brand */}
+          <div className="mt-5 rounded-lg border bg-card p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Scope
+              </div>
+              {(assignedCompanyId || assignedProductId) && (
+                <button
+                  type="button"
+                  disabled={assigning}
+                  onClick={() => handleAssign(null, null)}
+                  className="text-[11px] text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Select
+                value={assignedCompanyId ?? "__none"}
+                onValueChange={(v) => handleAssign(v === "__none" ? null : v, null)}
+                disabled={assigning}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Company (workspace-wide)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No company (workspace-wide)</SelectItem>
+                  {(companies ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={assignedProductId ?? "__none"}
+                onValueChange={(v) =>
+                  handleAssign(assignedCompanyId, v === "__none" ? null : v)
+                }
+                disabled={assigning || !assignedCompanyId || productOptions.length === 0}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue
+                    placeholder={
+                      !assignedCompanyId
+                        ? "Pick a company first"
+                        : productOptions.length === 0
+                          ? "No products"
+                          : "Product / sub-brand (optional)"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">All products (company-wide)</SelectItem>
+                  {productOptions.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {brand?.source && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Brand kit autofills from{" "}
+                <strong>
+                  {[brand.source.productName, brand.source.companyName]
+                    .filter(Boolean)
+                    .join(" / ") || "this scope"}
+                </strong>
+                . Fields, colors, and logo carry into every render.
+              </p>
+            )}
+          </div>
+
           {/* Stat tiles */}
           <div className="mt-5 grid grid-cols-4 gap-2">
             {[
