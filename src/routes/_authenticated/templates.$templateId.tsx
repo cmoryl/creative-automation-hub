@@ -360,6 +360,8 @@ function TemplateDetailPage() {
               </p>
             </div>
           )}
+
+          {isBridge && <TemplateAvailabilityDetail templateId={tpl.id} />}
         </div>
       </section>
 
