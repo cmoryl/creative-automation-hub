@@ -37,7 +37,13 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+type TemplatesSearch = { company?: string; product?: string };
+
 export const Route = createFileRoute("/_authenticated/templates/")({
+  validateSearch: (search: Record<string, unknown>): TemplatesSearch => ({
+    company: typeof search.company === "string" ? search.company : undefined,
+    product: typeof search.product === "string" ? search.product : undefined,
+  }),
   component: TemplatesPage,
 });
 
