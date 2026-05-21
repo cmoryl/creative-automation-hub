@@ -101,11 +101,5 @@ export const startCanvaOAuth = createServerFn({ method: "POST" })
     };
   });
 
-// Read the redirect URI the app will use (for display in the UI / Canva app config).
-export const getCanvaRedirectUri = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async () => {
-    const host = getRequestHost();
-    const proto = host.includes("localhost") ? "http" : "https";
-    return { redirectUri: `${proto}://${host}/api/public/oauth/canva/callback` };
-  });
+// Deprecated: redirect URI now derived from the client's window.location.origin.
+
