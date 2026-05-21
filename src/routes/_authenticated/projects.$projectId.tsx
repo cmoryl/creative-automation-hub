@@ -194,6 +194,7 @@ function ProjectDetail() {
               <Play className="h-3 w-3" /> {eng}
             </Button>
           ))}
+          <CanvaJobRunner projectId={projectId} />
           <Button size="sm" onClick={queueHybrid}>
             <Layers className="h-3 w-3" /> hybrid
           </Button>
