@@ -261,6 +261,19 @@ doc.close(SaveOptions.DONOTSAVECHANGES);
 `;
 }
 
+function classifyIllustratorFailure(stderr, stdout, exitCode, signal) {
+  const blob = `${stderr}\n${stdout}`;
+  if (/font.*(not found|missing|unavailable|substitut)/i.test(blob)) return { reason: "missing_font", transient: false };
+  if (/(link|asset|placed file|file).*(not found|missing|cannot find)/i.test(blob)) return { reason: "missing_asset", transient: false };
+  if (/(locked|in use|cannot.*open|access.*denied|permission denied)/i.test(blob)) return { reason: "app_busy", transient: true };
+  if (/(no space|disk full|enospc)/i.test(blob)) return { reason: "disk_full", transient: false };
+  if (/(timed?\s*out|etimedout|econnreset)/i.test(blob)) return { reason: "timeout", transient: true };
+  if (/(applescript|osascript).*error|execution error/i.test(blob)) return { reason: "app_busy", transient: true };
+  if (/syntaxerror|extendscript|line \d+/i.test(blob)) return { reason: "extendscript_bug", transient: false };
+  if (signal) return { reason: "killed", transient: true };
+  return { reason: "unknown", transient: false };
+}
+
 function runIllustratorScript(jsxPath) {
   return new Promise((resolve, reject) => {
     let cmd, args;
@@ -269,21 +282,41 @@ function runIllustratorScript(jsxPath) {
       cmd = "osascript";
       args = ["-e", apple];
     } else if (process.platform === "win32") {
-      // Illustrator on Windows is driven via the COM bridge; we shell out to
-      // a tiny PowerShell wrapper.
       const ps = `$ai = New-Object -ComObject Illustrator.Application; $ai.DoJavaScriptFile("${jsxPath.replace(/\\/g, "\\\\")}")`;
       cmd = "powershell";
       args = ["-NoProfile", "-Command", ps];
     } else {
       return reject(new Error(`unsupported OS for Illustrator: ${process.platform}`));
     }
-    const child = spawn(cmd, args, { stdio: "inherit" });
-    child.on("error", reject);
-    child.on("exit", (code) =>
-      code === 0 ? resolve() : reject(new Error(`Illustrator exited ${code}`)),
-    );
+    const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => { const s = d.toString(); stdout += s; process.stdout.write(s); });
+    child.stderr.on("data", (d) => { const s = d.toString(); stderr += s; process.stderr.write(s); });
+    child.on("error", (e) => {
+      const err = new Error(`Illustrator spawn failed: ${e.message}`);
+      Object.assign(err, { reason: "spawn_failed", transient: false, stderr: e.message, stdout: "", exitCode: null, signal: null });
+      reject(err);
+    });
+    child.on("exit", (code, signal) => {
+      if (code === 0) return resolve();
+      const { reason, transient } = classifyIllustratorFailure(stderr, stdout, code, signal);
+      const tail = (stderr || stdout || "no output").trim().split("\n").slice(-3).join(" | ");
+      const err = new Error(`Illustrator exited ${code ?? signal}: ${tail}`);
+      Object.assign(err, {
+        reason,
+        transient,
+        exitCode: code,
+        signal,
+        stderr: stderr.slice(-4000),
+        stdout: stdout.slice(-2000),
+        jsxPath,
+      });
+      reject(err);
+    });
   });
 }
+
 
 async function uploadOutput({ apiBase, token, jobId, filePath, kind, metadata }) {
   const filename = path.basename(filePath);
