@@ -64,29 +64,48 @@ Your job each turn:
 
 Be concise and concrete. Never invent data the user didn't give.`;
 
-    const { output } = await generateText({
-      model,
-      system,
-      messages: data.messages,
-      output: Output.object({
-        schema: z.object({
-          reply: z.string(),
-          suggestedMode: z.enum(["form", "stepper", "csv"]).nullable().optional(),
-          prefillValues: z.record(z.string(), z.string()).optional(),
-          suggestedSections: z
-            .array(
-              z.object({
-                id: z.string(),
-                title: z.string(),
-                fieldNames: z.array(z.string()),
-              }),
-            )
-            .optional(),
+    try {
+      const { output } = await generateText({
+        model,
+        system,
+        messages: data.messages,
+        output: Output.object({
+          schema: z.object({
+            reply: z.string(),
+            suggestedMode: z.enum(["form", "stepper", "csv"]).nullable().optional(),
+            prefillValues: z.record(z.string(), z.string()).optional(),
+            suggestedSections: z
+              .array(
+                z.object({
+                  id: z.string(),
+                  title: z.string(),
+                  fieldNames: z.array(z.string()),
+                }),
+              )
+              .optional(),
+          }),
         }),
-      }),
-    });
-
-    return output;
+      });
+      return output;
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      const status = e?.statusCode ?? e?.status;
+      if (status === 402 || /payment required/i.test(msg)) {
+        return {
+          reply:
+            "The workspace AI credits have run out. Add credits in Settings → Workspace → Usage, then try again. In the meantime you can fill the brief manually below.",
+        };
+      }
+      if (status === 429 || /rate limit/i.test(msg)) {
+        return {
+          reply: "The AI is rate-limited right now. Give it a few seconds and try again.",
+        };
+      }
+      console.error("briefAgentChat failed:", e);
+      return {
+        reply: "I couldn't reach the AI just now. You can still fill the brief manually below.",
+      };
+    }
   });
 
 // --- parseCsvFile: read uploaded CSV from storage, suggest column→variable mapping ---
