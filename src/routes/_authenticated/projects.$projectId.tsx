@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProjectChecklist } from "@/components/ProjectChecklist";
+import { CanvaJobRunner } from "@/components/canva/CanvaJobRunner";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
