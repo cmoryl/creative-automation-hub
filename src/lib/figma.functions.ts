@@ -5,8 +5,11 @@ import {
   parseFigmaUrl,
   renderNode,
   getFileTopLevel,
+  getNodeDetail,
+  extractVariables,
   type FigmaImageFormat,
 } from "./figma.server";
+
 
 export const inspectFigmaFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
