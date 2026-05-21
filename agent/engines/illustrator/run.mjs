@@ -76,14 +76,41 @@ function buildJsx({ templatePath, variables, outDir, pages }) {
 var vars = {};
 ${assignments}
 
+// Normalise both layer/frame names and variable keys so that
+// "Challenge Header", "challenge_header", "CHALLENGE-HEADER" and
+// "challenge header" all match the variable key "challenge_header" (or
+// "challenge"). We also strip a leading {{ }} mustache wrapper that some
+// templates use as a placeholder.
+function normKey(s) {
+  if (s == null) return "";
+  var t = String(s).replace(/^\\s*\\{\\{\\s*|\\s*\\}\\}\\s*$/g, "");
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+var normVars = {};
+for (var vk in vars) {
+  if (vars.hasOwnProperty(vk)) normVars[normKey(vk)] = vars[vk];
+}
+
+function lookupVar(rawName, rawContents) {
+  var byName = normVars[normKey(rawName)];
+  if (byName) return byName;
+  if (rawContents != null) {
+    var byContent = normVars[normKey(rawContents)];
+    if (byContent) return byContent;
+  }
+  return null;
+}
+
 var doc = app.open(new File("${escapeForJsx(templatePath)}"));
 
 function applyToTextFrames(layer) {
   for (var i = 0; i < layer.textFrames.length; i++) {
     var tf = layer.textFrames[i];
-    var key = tf.name || (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
-    if (vars[key] && vars[key].kind === "text") {
-      tf.contents = vars[key].value;
+    var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
+    var v = lookupVar(tf.name, contents);
+    if (v && v.kind === "text") {
+      tf.contents = v.value;
     }
   }
   for (var j = 0; j < layer.layers.length; j++) {
@@ -94,11 +121,12 @@ function applyToTextFrames(layer) {
 function applyColours(layer) {
   for (var i = 0; i < layer.pathItems.length; i++) {
     var p = layer.pathItems[i];
-    if (vars[p.name] && vars[p.name].kind === "color") {
+    var v = lookupVar(p.name, null);
+    if (v && v.kind === "color") {
       var c = new RGBColor();
-      c.red = vars[p.name].r;
-      c.green = vars[p.name].g;
-      c.blue = vars[p.name].b;
+      c.red = v.r;
+      c.green = v.g;
+      c.blue = v.b;
       if (p.filled) p.fillColor = c;
     }
   }
