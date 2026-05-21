@@ -14,7 +14,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { getTemplate, updateTemplateVariables } from "@/lib/workspace.functions";
-import { getTemplateBrandPrefill } from "@/lib/brand.functions";
+import { getTemplateBrandPrefill, listCompanies, assignTemplateBrand } from "@/lib/brand.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,6 +101,39 @@ function TemplateDetailPage() {
     queryKey: ["template-brand", templateId],
     queryFn: () => brandPrefillFn({ data: { templateId } }),
   });
+  const listCompaniesFn = useServerFn(listCompanies);
+  const { data: companies } = useQuery({
+    queryKey: ["companies-for-template-assign"],
+    queryFn: () => listCompaniesFn(),
+  });
+  const assignBrandFn = useServerFn(assignTemplateBrand);
+  const [assigning, setAssigning] = useState(false);
+  const assignedCompanyId = brand?.source?.companyId ?? null;
+  const assignedProductId = brand?.source?.productId ?? null;
+  const productOptions = useMemo(() => {
+    const c = (companies ?? []).find((x) => x.id === assignedCompanyId);
+    if (!c) return [] as Array<{ id: string; name: string; parent?: string | null }>;
+    const flat: Array<{ id: string; name: string; parent?: string | null }> = [];
+    for (const p of c.products ?? []) {
+      flat.push({ id: p.id, name: p.name });
+      for (const sp of p.subProducts ?? []) flat.push({ id: sp.id, name: `${p.name} → ${sp.name}` });
+    }
+    return flat;
+  }, [companies, assignedCompanyId]);
+
+  const handleAssign = async (companyId: string | null, productId: string | null) => {
+    setAssigning(true);
+    try {
+      await assignBrandFn({ data: { templateId, companyId, productId } });
+      toast.success("Template scoped");
+      qc.invalidateQueries({ queryKey: ["template-brand", templateId] });
+      qc.invalidateQueries({ queryKey: ["template", templateId] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign");
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   const variables: Variable[] = useMemo(() => {
     const v = data?.template?.variables;
@@ -216,6 +249,78 @@ function TemplateDetailPage() {
             US Letter (8.5×11″) · source{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{tpl.source_ref}</code>
           </p>
+
+          {/* Brand scoping — assign this template to a company + optional product/sub-brand */}
+          <div className="mt-5 rounded-lg border bg-card p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Scope
+              </div>
+              {(assignedCompanyId || assignedProductId) && (
+                <button
+                  type="button"
+                  disabled={assigning}
+                  onClick={() => handleAssign(null, null)}
+                  className="text-[11px] text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Select
+                value={assignedCompanyId ?? "__none"}
+                onValueChange={(v) => handleAssign(v === "__none" ? null : v, null)}
+                disabled={assigning}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Company (workspace-wide)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">No company (workspace-wide)</SelectItem>
+                  {(companies ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={assignedProductId ?? "__none"}
+                onValueChange={(v) =>
+                  handleAssign(assignedCompanyId, v === "__none" ? null : v)
+                }
+                disabled={assigning || !assignedCompanyId || productOptions.length === 0}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue
+                    placeholder={
+                      !assignedCompanyId
+                        ? "Pick a company first"
+                        : productOptions.length === 0
+                          ? "No products"
+                          : "Product / sub-brand (optional)"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">All products (company-wide)</SelectItem>
+                  {productOptions.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {brand?.source && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Brand kit autofills from{" "}
+                <strong>
+                  {[brand.source.productName, brand.source.companyName]
+                    .filter(Boolean)
+                    .join(" / ") || "this scope"}
+                </strong>
+                . Fields, colors, and logo carry into every render.
+              </p>
+            )}
+          </div>
 
           {/* Stat tiles */}
           <div className="mt-5 grid grid-cols-4 gap-2">
