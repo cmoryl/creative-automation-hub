@@ -67,6 +67,29 @@ export const getDashboardStatus = createServerFn({ method: "GET" })
       };
     });
 
+    // 24h hourly buckets for sparkline (oldest -> newest)
+    const buckets: { hour: string; completed: number; failed: number; total: number }[] = [];
+    const startHour = new Date();
+    startHour.setMinutes(0, 0, 0);
+    for (let i = 23; i >= 0; i--) {
+      const start = new Date(startHour.getTime() - i * 60 * 60 * 1000);
+      const end = new Date(start.getTime() + 60 * 60 * 1000);
+      const inHour = jobs.filter((j) => {
+        const t = new Date(j.created_at).getTime();
+        return t >= start.getTime() && t < end.getTime();
+      });
+      buckets.push({
+        hour: start.toISOString(),
+        completed: inHour.filter((j) => j.status === "completed").length,
+        failed: inHour.filter((j) => j.status === "failed").length,
+        total: inHour.length,
+      });
+    }
+    const last24 = jobs.filter((j) => new Date(j.created_at).getTime() >= Date.now() - 24 * 60 * 60 * 1000);
+    const last24Total = last24.length;
+    const last24Completed = last24.filter((j) => j.status === "completed").length;
+    const last24SuccessRate = last24Total > 0 ? (last24Completed / last24Total) * 100 : null;
+
     return {
       generatedAt: new Date().toISOString(),
       agents: agents.map((a) => ({
@@ -84,6 +107,12 @@ export const getDashboardStatus = createServerFn({ method: "GET" })
         outputs: outputsRes.data?.length ?? 0,
         templates: templates.length,
       },
+      last24: {
+        total: last24Total,
+        completed: last24Completed,
+        successRate: last24SuccessRate,
+        buckets,
+      },
       engines: engineStats,
       integrations: (integrationsRes.data ?? []).map((i) => ({
         provider: i.provider,
@@ -92,3 +121,4 @@ export const getDashboardStatus = createServerFn({ method: "GET" })
       recentJobs: recentJobsRes.data ?? [],
     };
   });
+
