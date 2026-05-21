@@ -50,12 +50,13 @@ async function reportProgress(jobId, stage, percent, message) {
   }
 }
 
-async function complete(jobId, status, outputs = [], error) {
+async function complete(jobId, status, outputs = [], error, extras = {}) {
   await api("/api/public/agent/complete", {
     method: "POST",
-    body: JSON.stringify({ jobId, status, outputs, error }),
+    body: JSON.stringify({ jobId, status, outputs, error, ...extras }),
   });
 }
+
 
 function pickEngine(name) {
   switch (name) {
