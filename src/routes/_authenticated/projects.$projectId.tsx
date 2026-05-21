@@ -38,6 +38,7 @@ type JobRow = {
   status: string;
   error: string | null;
   brief: unknown;
+  variables: Record<string, unknown> | null;
   created_at: string;
   completed_at: string | null;
   outputs: Output[] | null;
