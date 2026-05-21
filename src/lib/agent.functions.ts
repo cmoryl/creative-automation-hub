@@ -116,7 +116,7 @@ export const listAllJobs = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("jobs")
       .select(
-        "id, engine, status, error, created_at, completed_at, project_id, projects(name)",
+        "id, engine, status, error, error_stage, error_detail, created_at, completed_at, project_id, projects(name)",
       )
       .order("created_at", { ascending: false })
       .limit(200);
