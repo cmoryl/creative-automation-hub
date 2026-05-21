@@ -114,12 +114,29 @@ function ProjectDetail() {
 
   const buildBrief = () => (briefFromChat ? { source: "chat", text: briefFromChat } : {});
 
+  // Seed editable variables from the most recent job that had any.
+  const seedVars = useMemo<Record<string, string>>(() => {
+    const src = jobs.find((j) => j.variables && Object.keys(j.variables).length > 0);
+    if (!src?.variables) return {};
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(src.variables)) {
+      out[k] = v == null ? "" : String(v);
+    }
+    return out;
+  }, [jobs]);
+  const [editVars, setEditVars] = useState<Record<string, string>>({});
+  const [varsDirty, setVarsDirty] = useState(false);
+  useEffect(() => {
+    if (!varsDirty) setEditVars(seedVars);
+  }, [seedVars, varsDirty]);
+  const [showVars, setShowVars] = useState(true);
+
   const queueRender = async (engine: "illustrator" | "indesign" | "figma" | "canva" | "claude" | "mock") => {
     try {
       const pre = await preflightFn({ data: { projectId, engine } });
       pre.warnings.forEach((w) => toast.warning(w));
       if (!pre.ok) { pre.blockers.forEach((b) => toast.error(b)); return; }
-      await createJobFn({ data: { projectId, engine, brief: buildBrief(), variables: {} } });
+      await createJobFn({ data: { projectId, engine, brief: buildBrief(), variables: editVars } });
       toast.success(`Queued ${engine} render${briefFromChat ? " with brief from chat" : ""}`);
       qc.invalidateQueries({ queryKey: ["jobs", projectId] });
     } catch (e) {
@@ -134,7 +151,7 @@ function ProjectDetail() {
       checks.forEach((c) => c.warnings.forEach((w) => toast.warning(w)));
       const blockers = checks.flatMap((c) => c.blockers);
       if (blockers.length) { blockers.forEach((b) => toast.error(b)); return; }
-      const res = await hybridFn({ data: { projectId, engines, brief: buildBrief(), variables: {} } });
+      const res = await hybridFn({ data: { projectId, engines, brief: buildBrief(), variables: editVars } });
       toast.success(`Queued ${res.jobs.length} hybrid jobs`);
       qc.invalidateQueries({ queryKey: ["jobs", projectId] });
     } catch (e) {
