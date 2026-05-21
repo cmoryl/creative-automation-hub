@@ -72,3 +72,35 @@ export const renderFigmaNode = createServerFn({ method: "POST" })
       };
     }
   });
+
+// ---- Legacy/back-compat exports (token storage + template import) ----
+
+export const saveFigmaToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ token: z.string().min(10).max(500) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: ws } = await supabase
+      .from("workspace_members").select("workspace_id").eq("user_id", userId).limit(1).maybeSingle();
+    if (!ws?.workspace_id) return { ok: false as const, error: "no workspace" };
+    await supabase.from("integrations").upsert({
+      workspace_id: ws.workspace_id,
+      provider: "figma",
+      metadata: { pat: data.token },
+    }, { onConflict: "workspace_id,provider" });
+    return { ok: true as const };
+  });
+
+export const importFigmaTemplate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      fileUrl: z.string().url().max(500).optional(),
+      kind: z.string().max(50).optional(),
+      id: z.string().max(200).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    // Stub: real implementation would clone the Figma frame as a template row.
+    return { ok: false as const, error: "Figma import not yet implemented. Use renderFigmaNode for render-only.", input: data };
+  });
