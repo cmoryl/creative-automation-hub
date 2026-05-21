@@ -106,43 +106,95 @@ var doc = app.open(new File("${escapeForJsx(templatePath)}"));
 
 var matched = [];
 var unmatchedFrames = [];
+var errors = [];
+
+function jsonEscape(s) {
+  return String(s == null ? "" : s)
+    .replace(/\\\\/g, "\\\\\\\\")
+    .replace(/"/g, '\\\\"')
+    .replace(/\\r?\\n/g, "\\\\n")
+    .replace(/\\t/g, "\\\\t");
+}
 
 // doc.textFrames and doc.pathItems return EVERY item in the document
-// regardless of layer / group nesting — which is how real .ai files are
+// regardless of layer/group nesting — which is how real .ai files are
 // organised. Walking layer.textFrames + sublayers only would miss anything
-// inside a group.
+// inside a group. Each item is wrapped in try/catch so one bad frame can't
+// kill the whole render.
 for (var i = 0; i < doc.textFrames.length; i++) {
-  var tf = doc.textFrames[i];
-  var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
-  var v = lookupVar(tf.name, contents);
-  if (v && v.kind === "text") {
-    tf.contents = v.value;
-    matched.push({ kind: "text", name: tf.name, key: normKey(tf.name) || normKey(contents) });
-  } else {
-    unmatchedFrames.push({ name: tf.name, contents: contents.substring(0, 60) });
+  try {
+    var tf = doc.textFrames[i];
+    var contents = (tf.contents || "").replace(/^\\s+|\\s+$/g, "");
+    var name = "";
+    try { name = tf.name || ""; } catch (eName) { name = ""; }
+    var v = lookupVar(name, contents);
+    if (v && v.kind === "text") {
+      tf.contents = v.value;
+      matched.push({ kind: "text", name: name, key: normKey(name) || normKey(contents) });
+    } else {
+      unmatchedFrames.push({ name: name, contents: contents.substring(0, 60) });
+    }
+  } catch (eFrame) {
+    errors.push("textFrame[" + i + "]: " + eFrame);
   }
 }
 
 for (var p = 0; p < doc.pathItems.length; p++) {
-  var pi = doc.pathItems[p];
-  var pv = lookupVar(pi.name, null);
-  if (pv && pv.kind === "color") {
-    var c = new RGBColor();
-    c.red = pv.r;
-    c.green = pv.g;
-    c.blue = pv.b;
-    if (pi.filled) {
-      pi.fillColor = c;
-      matched.push({ kind: "color", name: pi.name, key: normKey(pi.name) });
+  try {
+    var pi = doc.pathItems[p];
+    var pname = "";
+    try { pname = pi.name || ""; } catch (ePN) { pname = ""; }
+    if (!pname) continue;
+    var pv = lookupVar(pname, null);
+    if (pv && pv.kind === "color" && pi.filled) {
+      var c = new RGBColor();
+      c.red = pv.r; c.green = pv.g; c.blue = pv.b;
+      try {
+        pi.fillColor = c;
+        matched.push({ kind: "color", name: pname, key: normKey(pname) });
+      } catch (eColor) {
+        errors.push("path[" + p + "] " + pname + ": " + eColor);
+      }
     }
+  } catch (ePath) {
+    errors.push("pathItem[" + p + "]: " + ePath);
   }
 }
 
-// Write a sidecar JSON so the Node wrapper can surface what matched vs not.
-var report = new File("${escapeForJsx(path.join(outDir, "substitution-report.json"))}");
-report.open("w");
-report.write('{"matched":' + matched.toSource() + ',"unmatched":' + unmatchedFrames.toSource() + ',"vars":' + (function(){ var keys=[]; for (var k in normVars) keys.push(k); return '["' + keys.join('","') + '"]'; })() + '}');
-report.close();
+// Write a sidecar JSON the Node wrapper reads. Build it by hand so we don't
+// depend on toSource() (which isn't valid JSON anyway).
+function objToJson(o, keys) {
+  var parts = [];
+  for (var k = 0; k < keys.length; k++) {
+    parts.push('"' + keys[k] + '":"' + jsonEscape(o[keys[k]]) + '"');
+  }
+  return "{" + parts.join(",") + "}";
+}
+function arrToJson(arr, keys) {
+  var out = [];
+  for (var i = 0; i < arr.length; i++) out.push(objToJson(arr[i], keys));
+  return "[" + out.join(",") + "]";
+}
+var varKeyList = [];
+for (var vk2 in normVars) varKeyList.push('"' + jsonEscape(vk2) + '"');
+var errList = [];
+for (var ei = 0; ei < errors.length; ei++) errList.push('"' + jsonEscape(errors[ei]) + '"');
+
+try {
+  var report = new File("${escapeForJsx(path.join(outDir, "substitution-report.json"))}");
+  report.encoding = "UTF-8";
+  report.open("w");
+  report.write(
+    '{"matched":' + arrToJson(matched, ["kind","name","key"]) +
+    ',"unmatched":' + arrToJson(unmatchedFrames, ["name","contents"]) +
+    ',"vars":[' + varKeyList.join(",") + ']' +
+    ',"errors":[' + errList.join(",") + ']}'
+  );
+  report.close();
+} catch (eReport) {
+  $.writeln("substitution-report write failed: " + eReport);
+}
+
 
 // --- Per-artboard PNG export -------------------------------------------------
 var pngOpts = new ExportOptionsPNG24();
