@@ -39,6 +39,7 @@ import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public
 import { Route as ApiPublicAgentCompleteRouteImport } from './routes/api/public/agent/complete'
 import { Route as ApiPublicAgentClaimRouteImport } from './routes/api/public/agent/claim'
 import { Route as ApiPublicV1JobsJobIdRouteImport } from './routes/api/public/v1/jobs.$jobId'
+import { Route as ApiPublicOauthCanvaCallbackRouteImport } from './routes/api/public/oauth/canva/callback'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -198,6 +199,12 @@ const ApiPublicV1JobsJobIdRoute = ApiPublicV1JobsJobIdRouteImport.update({
   path: '/$jobId',
   getParentRoute: () => ApiPublicV1JobsRoute,
 } as any)
+const ApiPublicOauthCanvaCallbackRoute =
+  ApiPublicOauthCanvaCallbackRouteImport.update({
+    id: '/api/public/oauth/canva/callback',
+    path: '/api/public/oauth/canva/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRoutesByTo {
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRoutesById {
@@ -292,6 +301,7 @@ export interface FileRoutesById {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
 export interface FileRouteTypes {
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   id:
     | '__root__'
@@ -388,6 +400,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesById: FileRoutesById
 }
@@ -402,6 +415,7 @@ export interface RootRouteChildren {
   ApiPublicAgentProgressRoute: typeof ApiPublicAgentProgressRoute
   ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
+  ApiPublicOauthCanvaCallbackRoute: typeof ApiPublicOauthCanvaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -616,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1JobsJobIdRouteImport
       parentRoute: typeof ApiPublicV1JobsRoute
     }
+    '/api/public/oauth/canva/callback': {
+      id: '/api/public/oauth/canva/callback'
+      path: '/api/public/oauth/canva/callback'
+      fullPath: '/api/public/oauth/canva/callback'
+      preLoaderRoute: typeof ApiPublicOauthCanvaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -702,6 +723,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentProgressRoute: ApiPublicAgentProgressRoute,
   ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
+  ApiPublicOauthCanvaCallbackRoute: ApiPublicOauthCanvaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

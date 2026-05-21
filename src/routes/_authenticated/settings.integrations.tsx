@@ -14,6 +14,7 @@ import {
   saveCanvaCredentials,
   disconnectIntegration,
 } from "@/lib/integrations.functions";
+import { startCanvaOAuth } from "@/lib/canva.functions";
 import { saveFigmaToken } from "@/lib/figma.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
@@ -136,6 +137,7 @@ function FigmaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
 function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () => void }) {
   const save = useServerFn(saveCanvaCredentials);
   const disconnect = useServerFn(disconnectIntegration);
+  const startOAuth = useServerFn(startCanvaOAuth);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
 
@@ -151,6 +153,13 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
   const delMut = useMutation({
     mutationFn: async () => disconnect({ data: { provider: "canva" } }),
     onSuccess: () => { toast.success("Canva disconnected"); onChange(); },
+  });
+  const authMut = useMutation({
+    mutationFn: async () => (startOAuth as any)(),
+    onSuccess: (res: any) => {
+      if (res?.authorizeUrl) window.location.href = res.authorizeUrl;
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to start Canva authorization"),
   });
 
   const redirectUri = typeof window !== "undefined"
@@ -192,13 +201,32 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
           <div className="mb-1 font-medium">Redirect URI (add this in your Canva app)</div>
           <code className="break-all">{redirectUri}</code>
         </div>
-        <div className="flex gap-2">
+        {connected?.metadata?.status === "connected" && (
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
+            <div className="font-medium text-emerald-400">✓ Canva account authorized</div>
+            {connected.metadata.connected_at && (
+              <div className="mt-0.5 text-muted-foreground">
+                Connected {new Date(connected.metadata.connected_at).toLocaleString()}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
           <Button
             disabled={!clientId.trim() || !clientSecret.trim() || saveMut.isPending}
             onClick={() => saveMut.mutate()}
           >
             <Plug className="h-4 w-4" /> {connected ? "Replace credentials" : "Save credentials"}
           </Button>
+          {connected && (
+            <Button
+              variant="secondary"
+              disabled={authMut.isPending}
+              onClick={() => authMut.mutate()}
+            >
+              {connected.metadata?.status === "connected" ? "Re-authorize Canva" : "Authorize Canva account"}
+            </Button>
+          )}
           {connected && (
             <Button variant="outline" onClick={() => delMut.mutate()}>Disconnect</Button>
           )}
