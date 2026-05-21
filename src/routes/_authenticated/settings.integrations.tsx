@@ -201,13 +201,32 @@ function CanvaCard({ connected, onChange }: { connected?: Integ; onChange: () =>
           <div className="mb-1 font-medium">Redirect URI (add this in your Canva app)</div>
           <code className="break-all">{redirectUri}</code>
         </div>
-        <div className="flex gap-2">
+        {connected?.metadata?.status === "connected" && (
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
+            <div className="font-medium text-emerald-400">✓ Canva account authorized</div>
+            {connected.metadata.connected_at && (
+              <div className="mt-0.5 text-muted-foreground">
+                Connected {new Date(connected.metadata.connected_at).toLocaleString()}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
           <Button
             disabled={!clientId.trim() || !clientSecret.trim() || saveMut.isPending}
             onClick={() => saveMut.mutate()}
           >
             <Plug className="h-4 w-4" /> {connected ? "Replace credentials" : "Save credentials"}
           </Button>
+          {connected && (
+            <Button
+              variant="secondary"
+              disabled={authMut.isPending}
+              onClick={() => authMut.mutate()}
+            >
+              {connected.metadata?.status === "connected" ? "Re-authorize Canva" : "Authorize Canva account"}
+            </Button>
+          )}
           {connected && (
             <Button variant="outline" onClick={() => delMut.mutate()}>Disconnect</Button>
           )}
