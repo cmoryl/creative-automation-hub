@@ -31,6 +31,7 @@ import { Route as AuthenticatedSettingsApiRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsAgentRouteImport } from './routes/_authenticated/settings.agent'
 import { Route as AuthenticatedProjectsProjectIdRouteImport } from './routes/_authenticated/projects.$projectId'
 import { Route as AuthenticatedBatchesBatchIdRouteImport } from './routes/_authenticated/batches.$batchId'
+import { Route as ApiPublicWebhooksCanvaRouteImport } from './routes/api/public/webhooks/canva'
 import { Route as ApiPublicV1JobsRouteImport } from './routes/api/public/v1/jobs'
 import { Route as ApiPublicAgentUploadUrlRouteImport } from './routes/api/public/agent/upload-url'
 import { Route as ApiPublicAgentProgressRouteImport } from './routes/api/public/agent/progress'
@@ -159,6 +160,11 @@ const AuthenticatedBatchesBatchIdRoute =
     path: '/batches/$batchId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const ApiPublicWebhooksCanvaRoute = ApiPublicWebhooksCanvaRouteImport.update({
+  id: '/api/public/webhooks/canva',
+  path: '/api/public/webhooks/canva',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1JobsRoute = ApiPublicV1JobsRouteImport.update({
   id: '/api/public/v1/jobs',
   path: '/api/public/v1/jobs',
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/api/public/agent/progress': typeof ApiPublicAgentProgressRoute
   '/api/public/agent/upload-url': typeof ApiPublicAgentUploadUrlRoute
   '/api/public/v1/jobs': typeof ApiPublicV1JobsRouteWithChildren
+  '/api/public/webhooks/canva': typeof ApiPublicWebhooksCanvaRoute
   '/api/public/oauth/canva/callback': typeof ApiPublicOauthCanvaCallbackRoute
   '/api/public/v1/jobs/$jobId': typeof ApiPublicV1JobsJobIdRoute
 }
@@ -335,6 +344,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/webhooks/canva'
     | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesByTo: FileRoutesByTo
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/webhooks/canva'
     | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   id:
@@ -400,6 +411,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/progress'
     | '/api/public/agent/upload-url'
     | '/api/public/v1/jobs'
+    | '/api/public/webhooks/canva'
     | '/api/public/oauth/canva/callback'
     | '/api/public/v1/jobs/$jobId'
   fileRoutesById: FileRoutesById
@@ -415,6 +427,7 @@ export interface RootRouteChildren {
   ApiPublicAgentProgressRoute: typeof ApiPublicAgentProgressRoute
   ApiPublicAgentUploadUrlRoute: typeof ApiPublicAgentUploadUrlRoute
   ApiPublicV1JobsRoute: typeof ApiPublicV1JobsRouteWithChildren
+  ApiPublicWebhooksCanvaRoute: typeof ApiPublicWebhooksCanvaRoute
   ApiPublicOauthCanvaCallbackRoute: typeof ApiPublicOauthCanvaCallbackRoute
 }
 
@@ -574,6 +587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBatchesBatchIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/webhooks/canva': {
+      id: '/api/public/webhooks/canva'
+      path: '/api/public/webhooks/canva'
+      fullPath: '/api/public/webhooks/canva'
+      preLoaderRoute: typeof ApiPublicWebhooksCanvaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/jobs': {
       id: '/api/public/v1/jobs'
       path: '/api/public/v1/jobs'
@@ -723,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentProgressRoute: ApiPublicAgentProgressRoute,
   ApiPublicAgentUploadUrlRoute: ApiPublicAgentUploadUrlRoute,
   ApiPublicV1JobsRoute: ApiPublicV1JobsRouteWithChildren,
+  ApiPublicWebhooksCanvaRoute: ApiPublicWebhooksCanvaRoute,
   ApiPublicOauthCanvaCallbackRoute: ApiPublicOauthCanvaCallbackRoute,
 }
 export const routeTree = rootRouteImport
