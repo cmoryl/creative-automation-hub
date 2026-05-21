@@ -101,16 +101,28 @@ export const listCanvaBrandTemplates = createServerFn({ method: "POST" })
     const wsId = await getWorkspaceId(context.supabase, context.userId);
     const q = new URLSearchParams();
     if (data.continuation) q.set("continuation", data.continuation);
-    const res = await canvaFetch<any>(wsId, `/brand-templates${q.toString() ? `?${q}` : ""}`);
-    return {
-      items: (res.items ?? []).map((it: any) => ({
-        id: it.id,
-        title: it.title,
-        thumbnail: it.thumbnail?.url ?? null,
-        view_url: it.view_url ?? null,
-      })),
-      continuation: res.continuation ?? null,
-    };
+    try {
+      const res = await canvaFetch<any>(wsId, `/brand-templates${q.toString() ? `?${q}` : ""}`);
+      return {
+        items: (res.items ?? []).map((it: any) => ({
+          id: it.id,
+          title: it.title,
+          thumbnail: it.thumbnail?.url ?? null,
+          view_url: it.view_url ?? null,
+        })),
+        continuation: res.continuation ?? null,
+        needs_reauth: false as const,
+        rate_limited_ms: 0,
+      };
+    } catch (err: any) {
+      if (err?.name === "CanvaReauthRequiredError") {
+        return { items: [], continuation: null, needs_reauth: true as const, rate_limited_ms: 0 };
+      }
+      if (err?.name === "CanvaRateLimitedError") {
+        return { items: [], continuation: null, needs_reauth: false as const, rate_limited_ms: err.retryAfterMs ?? 60000 };
+      }
+      throw err;
+    }
   });
 
 export const listCanvaDesigns = createServerFn({ method: "POST" })
@@ -126,16 +138,28 @@ export const listCanvaDesigns = createServerFn({ method: "POST" })
     const q = new URLSearchParams();
     if (data.query) q.set("query", data.query);
     if (data.continuation) q.set("continuation", data.continuation);
-    const res = await canvaFetch<any>(wsId, `/designs${q.toString() ? `?${q}` : ""}`);
-    return {
-      items: (res.items ?? []).map((it: any) => ({
-        id: it.id,
-        title: it.title,
-        thumbnail: it.thumbnail?.url ?? null,
-        urls: it.urls ?? null,
-      })),
-      continuation: res.continuation ?? null,
-    };
+    try {
+      const res = await canvaFetch<any>(wsId, `/designs${q.toString() ? `?${q}` : ""}`);
+      return {
+        items: (res.items ?? []).map((it: any) => ({
+          id: it.id,
+          title: it.title,
+          thumbnail: it.thumbnail?.url ?? null,
+          urls: it.urls ?? null,
+        })),
+        continuation: res.continuation ?? null,
+        needs_reauth: false as const,
+        rate_limited_ms: 0,
+      };
+    } catch (err: any) {
+      if (err?.name === "CanvaReauthRequiredError") {
+        return { items: [], continuation: null, needs_reauth: true as const, rate_limited_ms: 0 };
+      }
+      if (err?.name === "CanvaRateLimitedError") {
+        return { items: [], continuation: null, needs_reauth: false as const, rate_limited_ms: err.retryAfterMs ?? 60000 };
+      }
+      throw err;
+    }
   });
 
 // ---------- Import as template ----------
