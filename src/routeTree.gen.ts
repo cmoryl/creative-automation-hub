@@ -16,6 +16,7 @@ import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOutputsRouteImport } from './routes/_authenticated/outputs'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
+import { Route as AuthenticatedGuidesRouteImport } from './routes/_authenticated/guides'
 import { Route as AuthenticatedExamplesRouteImport } from './routes/_authenticated/examples'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBrandsRouteImport } from './routes/_authenticated/brands'
@@ -71,6 +72,11 @@ const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
 const AuthenticatedJobsRoute = AuthenticatedJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedGuidesRoute = AuthenticatedGuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedExamplesRoute = AuthenticatedExamplesRouteImport.update({
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/brands': typeof AuthenticatedBrandsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
+  '/guides': typeof AuthenticatedGuidesRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/brands': typeof AuthenticatedBrandsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/examples': typeof AuthenticatedExamplesRoute
+  '/guides': typeof AuthenticatedGuidesRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/library': typeof AuthenticatedLibraryRoute
   '/outputs': typeof AuthenticatedOutputsRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/_authenticated/brands': typeof AuthenticatedBrandsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/examples': typeof AuthenticatedExamplesRoute
+  '/_authenticated/guides': typeof AuthenticatedGuidesRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/_authenticated/outputs': typeof AuthenticatedOutputsRoute
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/brands'
     | '/dashboard'
     | '/examples'
+    | '/guides'
     | '/jobs'
     | '/library'
     | '/outputs'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/brands'
     | '/dashboard'
     | '/examples'
+    | '/guides'
     | '/jobs'
     | '/library'
     | '/outputs'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/_authenticated/brands'
     | '/_authenticated/dashboard'
     | '/_authenticated/examples'
+    | '/_authenticated/guides'
     | '/_authenticated/jobs'
     | '/_authenticated/library'
     | '/_authenticated/outputs'
@@ -441,6 +453,13 @@ declare module '@tanstack/react-router' {
       path: '/jobs'
       fullPath: '/jobs'
       preLoaderRoute: typeof AuthenticatedJobsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/guides': {
+      id: '/_authenticated/guides'
+      path: '/guides'
+      fullPath: '/guides'
+      preLoaderRoute: typeof AuthenticatedGuidesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/examples': {
@@ -619,6 +638,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBrandsRoute: typeof AuthenticatedBrandsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedExamplesRoute: typeof AuthenticatedExamplesRoute
+  AuthenticatedGuidesRoute: typeof AuthenticatedGuidesRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
   AuthenticatedOutputsRoute: typeof AuthenticatedOutputsRoute
@@ -639,6 +659,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBrandsRoute: AuthenticatedBrandsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedExamplesRoute: AuthenticatedExamplesRoute,
+  AuthenticatedGuidesRoute: AuthenticatedGuidesRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
   AuthenticatedOutputsRoute: AuthenticatedOutputsRoute,
