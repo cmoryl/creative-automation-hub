@@ -64,6 +64,13 @@ function TemplatesBatchPage() {
     `Multi-template batch ${new Date().toLocaleDateString()}`,
   );
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleAt, setScheduleAt] = useState(() => {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setSeconds(0, 0);
+    return d.toISOString().slice(0, 16);
+  });
+
 
   // Fetch full variable lists for each selected template
   const tplQueries = useQuery({
