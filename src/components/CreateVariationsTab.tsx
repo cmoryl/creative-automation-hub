@@ -43,11 +43,54 @@ type Variable = {
   multiline?: boolean;
   placeholder?: string;
   layer?: string;
+  page?: number; // 1-based page/artboard index this field belongs to
+};
+
+type TemplatePage = {
+  name?: string;
+  width?: number;
+  height?: number;
+  unit?: string;
+  kind?: "artboard" | "page" | string;
+  artboard_index?: number;
+  page_index?: number;
 };
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 type InputMode = "form" | "batch" | "csv";
 type Section = { id: string; title: string; fieldNames: string[] };
+
+/**
+ * Infer which page a field belongs to for multi-page templates (InDesign
+ * newsletter, magazine, pitch deck). Used to group form inputs under each
+ * page header so the editor mirrors the actual document structure.
+ * Order of resolution:
+ *   1. Explicit `v.page` on the variable
+ *   2. Page name prefix match (e.g. "cover_image" → page named "Cover")
+ *   3. Conventional numeric patterns (story_2_*, feature_3_*, slide_4_*, page_5_*)
+ *   4. Common cover/lead/intro keywords → page 1
+ *   5. Fallback → page 1
+ */
+export function inferFieldPage(v: Variable, pages: TemplatePage[]): number {
+  if (typeof v.page === "number" && v.page > 0) return v.page;
+  const n = v.name.toLowerCase();
+  // 2. Match by page name prefix
+  for (let i = 0; i < pages.length; i++) {
+    const slug = (pages[i]?.name ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    if (slug && (n.startsWith(slug + "_") || n === slug)) return i + 1;
+  }
+  // 3. Numeric patterns: story_2, feature_3, slide_4, page_5, p2_, panel_3
+  const num = n.match(/(?:story|feature|slide|page|panel|p)_?(\d+)/);
+  if (num) {
+    const idx = parseInt(num[1], 10);
+    if (idx >= 1 && idx <= pages.length) return idx;
+  }
+  // 4. Cover/intro/lead keywords → page 1
+  if (/^(cover|masthead|issue|magazine_title|company|tagline|brand|hero|lead|intro|front)/.test(n)) return 1;
+  // 5. Back cover keywords → last page
+  if (/^(back|closing|footer_note|ask)/.test(n)) return pages.length;
+  return 1;
+}
 
 const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva" | "claude"; label: string }[] = [
   { id: "illustrator", label: "Illustrator" },
@@ -125,6 +168,7 @@ export function CreateVariationsTab({
   templateId,
   templateName,
   variables,
+  pages = [],
   defaultEngines,
   autoOpenSingleResult = false,
   brandPrefill,
@@ -136,6 +180,7 @@ export function CreateVariationsTab({
   templateId: string;
   templateName: string;
   variables: Variable[];
+  pages?: TemplatePage[];
   defaultEngines?: string[];
   autoOpenSingleResult?: boolean;
   brandPrefill?: Record<string, string>;
@@ -618,17 +663,74 @@ export function CreateVariationsTab({
 
         <div className="flex-1 overflow-y-auto p-4">
           {mode === "form" && (
-            <div className="space-y-3">
-              {variables.map((v) => (
-                <div key={v.name} className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {v.label ?? v.name}
-                  </label>
-                  {renderField(v)}
+            <div className="space-y-4">
+              {pages.length > 1 ? (
+                (() => {
+                  // Group fields by inferred page; render each page as a titled section
+                  const buckets = new Map<number, Variable[]>();
+                  for (const v of variables) {
+                    const p = inferFieldPage(v, pages);
+                    if (!buckets.has(p)) buckets.set(p, []);
+                    buckets.get(p)!.push(v);
+                  }
+                  return pages.map((pg, idx) => {
+                    const pageNum = idx + 1;
+                    const fields = buckets.get(pageNum) ?? [];
+                    if (fields.length === 0) return null;
+                    const pageErrCount = fields.filter((f) => errors[f.name]).length;
+                    const dims = pg.width && pg.height ? `${pg.width}×${pg.height}${pg.unit ?? ""}` : null;
+                    return (
+                      <details
+                        key={pageNum}
+                        open={pageNum === 1 || pageErrCount > 0}
+                        className="rounded-lg border bg-card/40 [&[open]>summary]:border-b"
+                      >
+                        <summary className="flex cursor-pointer select-none items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 font-mono text-[10px] font-semibold text-primary">
+                              {String(pageNum).padStart(2, "0")}
+                            </span>
+                            <span className="font-medium">{pg.name ?? `Page ${pageNum}`}</span>
+                            {dims && (
+                              <Badge variant="outline" className="font-mono text-[10px]">{dims}</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {pageErrCount > 0 && (
+                              <Badge variant="destructive" className="text-[10px]">
+                                {pageErrCount} error{pageErrCount === 1 ? "" : "s"}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-[10px]">
+                              {fields.length} field{fields.length === 1 ? "" : "s"}
+                            </Badge>
+                          </div>
+                        </summary>
+                        <div className="space-y-3 p-3">
+                          {fields.map((v) => (
+                            <div key={v.name} className="space-y-1">
+                              <label className="text-xs font-medium">{v.label ?? v.name}</label>
+                              {renderField(v)}
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    );
+                  });
+                })()
+              ) : (
+                <div className="space-y-3">
+                  {variables.map((v) => (
+                    <div key={v.name} className="space-y-1">
+                      <label className="text-xs font-medium">{v.label ?? v.name}</label>
+                      {renderField(v)}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
+
 
           {mode === "batch" && (
             <div className="space-y-3">
