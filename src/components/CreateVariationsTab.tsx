@@ -663,17 +663,74 @@ export function CreateVariationsTab({
 
         <div className="flex-1 overflow-y-auto p-4">
           {mode === "form" && (
-            <div className="space-y-3">
-              {variables.map((v) => (
-                <div key={v.name} className="space-y-1">
-                  <label className="text-xs font-medium">
-                    {v.label ?? v.name}
-                  </label>
-                  {renderField(v)}
+            <div className="space-y-4">
+              {pages.length > 1 ? (
+                (() => {
+                  // Group fields by inferred page; render each page as a titled section
+                  const buckets = new Map<number, Variable[]>();
+                  for (const v of variables) {
+                    const p = inferFieldPage(v, pages);
+                    if (!buckets.has(p)) buckets.set(p, []);
+                    buckets.get(p)!.push(v);
+                  }
+                  return pages.map((pg, idx) => {
+                    const pageNum = idx + 1;
+                    const fields = buckets.get(pageNum) ?? [];
+                    if (fields.length === 0) return null;
+                    const pageErrCount = fields.filter((f) => errors[f.name]).length;
+                    const dims = pg.width && pg.height ? `${pg.width}×${pg.height}${pg.unit ?? ""}` : null;
+                    return (
+                      <details
+                        key={pageNum}
+                        open={pageNum === 1 || pageErrCount > 0}
+                        className="rounded-lg border bg-card/40 [&[open]>summary]:border-b"
+                      >
+                        <summary className="flex cursor-pointer select-none items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 font-mono text-[10px] font-semibold text-primary">
+                              {String(pageNum).padStart(2, "0")}
+                            </span>
+                            <span className="font-medium">{pg.name ?? `Page ${pageNum}`}</span>
+                            {dims && (
+                              <Badge variant="outline" className="font-mono text-[10px]">{dims}</Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {pageErrCount > 0 && (
+                              <Badge variant="destructive" className="text-[10px]">
+                                {pageErrCount} error{pageErrCount === 1 ? "" : "s"}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className="text-[10px]">
+                              {fields.length} field{fields.length === 1 ? "" : "s"}
+                            </Badge>
+                          </div>
+                        </summary>
+                        <div className="space-y-3 p-3">
+                          {fields.map((v) => (
+                            <div key={v.name} className="space-y-1">
+                              <label className="text-xs font-medium">{v.label ?? v.name}</label>
+                              {renderField(v)}
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    );
+                  });
+                })()
+              ) : (
+                <div className="space-y-3">
+                  {variables.map((v) => (
+                    <div key={v.name} className="space-y-1">
+                      <label className="text-xs font-medium">{v.label ?? v.name}</label>
+                      {renderField(v)}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
+
 
           {mode === "batch" && (
             <div className="space-y-3">
