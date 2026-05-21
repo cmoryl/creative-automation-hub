@@ -11,6 +11,7 @@ on:
       - "tests/smoke-agent-endpoints.mjs"
       - "tests/smoke-complete-failure.mjs"
       - "tests/smoke-preflight-readiness.mjs"
+      - "tests/smoke-smart-retry.mjs"
       - ".github/workflows/smoke-agent.yml"
 
 jobs:
@@ -51,3 +52,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node tests/smoke-preflight-readiness.mjs
+
+      - name: Smart-retry smoke test
+        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+        env:
+          LOVABLE_API_BASE: ${{ secrets.LOVABLE_API_BASE }}
+          LOVABLE_AGENT_TOKEN: ${{ secrets.LOVABLE_AGENT_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOVABLE_TEST_PROJECT_ID: ${{ secrets.LOVABLE_TEST_PROJECT_ID }}
+        run: node tests/smoke-smart-retry.mjs
