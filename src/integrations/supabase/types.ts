@@ -49,6 +49,51 @@ export type Database = {
           },
         ]
       }
+      agent_status: {
+        Row: {
+          agent_id: string
+          agent_version: string | null
+          apps: Json
+          current_job_id: string | null
+          disk_free_mb: number | null
+          fonts_count: number
+          fonts_sample: Json
+          host: string | null
+          platform: string | null
+          reported_at: string
+          templates_seen: number
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          agent_version?: string | null
+          apps?: Json
+          current_job_id?: string | null
+          disk_free_mb?: number | null
+          fonts_count?: number
+          fonts_sample?: Json
+          host?: string | null
+          platform?: string | null
+          reported_at?: string
+          templates_seen?: number
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          agent_version?: string | null
+          apps?: Json
+          current_job_id?: string | null
+          disk_free_mb?: number | null
+          fonts_count?: number
+          fonts_sample?: Json
+          host?: string | null
+          platform?: string | null
+          reported_at?: string
+          templates_seen?: number
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       audit_events: {
         Row: {
           action: string
@@ -236,6 +281,8 @@ export type Database = {
           created_at: string
           engine: string
           error: string | null
+          error_detail: Json | null
+          error_stage: string | null
           id: string
           project_id: string
           row_label: string | null
@@ -256,6 +303,8 @@ export type Database = {
           created_at?: string
           engine?: string
           error?: string | null
+          error_detail?: Json | null
+          error_stage?: string | null
           id?: string
           project_id: string
           row_label?: string | null
@@ -276,6 +325,8 @@ export type Database = {
           created_at?: string
           engine?: string
           error?: string | null
+          error_detail?: Json | null
+          error_stage?: string | null
           id?: string
           project_id?: string
           row_label?: string | null
@@ -565,6 +616,36 @@ export type Database = {
           },
         ]
       }
+      template_agent_availability: {
+        Row: {
+          agent_id: string
+          checked_at: string
+          file_present: boolean
+          fonts_missing: Json
+          links_missing: Json
+          template_id: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          checked_at?: string
+          file_present?: boolean
+          fonts_missing?: Json
+          links_missing?: Json
+          template_id: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          checked_at?: string
+          file_present?: boolean
+          fonts_missing?: Json
+          links_missing?: Json
+          template_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       templates: {
         Row: {
           company_id: string | null
@@ -575,6 +656,7 @@ export type Database = {
           pages: Json
           preview_url: string | null
           product_id: string | null
+          requirements: Json
           source_ref: string | null
           variables: Json
           workspace_id: string
@@ -588,6 +670,7 @@ export type Database = {
           pages?: Json
           preview_url?: string | null
           product_id?: string | null
+          requirements?: Json
           source_ref?: string | null
           variables?: Json
           workspace_id: string
@@ -601,6 +684,7 @@ export type Database = {
           pages?: Json
           preview_url?: string | null
           product_id?: string | null
+          requirements?: Json
           source_ref?: string | null
           variables?: Json
           workspace_id?: string
