@@ -6,6 +6,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { run as runIllustrator } from "./engines/illustrator/run.mjs";
 import { run as runInDesign } from "./engines/indesign/run.mjs";
+import { postStatus, postTemplateInventory } from "./status.mjs";
 
 const TOKEN = process.env.LOVABLE_AGENT_TOKEN;
 const BASE = (process.env.LOVABLE_API_BASE || "").replace(/\/$/, "");
@@ -72,6 +73,19 @@ async function main() {
   setInterval(() => {
     heartbeat().catch((e) => console.warn("heartbeat:", e.message));
   }, Math.min(POLL_MS, 10000));
+
+  // Rich status + template inventory snapshot. Runs at startup and every 5 min.
+  const refreshStatus = async (currentJobId = null) => {
+    await postStatus(api, currentJobId);
+    try {
+      const res = await api("/api/public/agent/templates");
+      if (res?.templates) await postTemplateInventory(api, res.templates);
+    } catch (e) {
+      console.warn("template inventory refresh failed:", e.message);
+    }
+  };
+  refreshStatus().catch(() => {});
+  setInterval(() => refreshStatus().catch(() => {}), 5 * 60 * 1000);
 
   while (true) {
     try {

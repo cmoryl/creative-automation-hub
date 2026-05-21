@@ -53,6 +53,20 @@ proprietary daemon — just `node agent.mjs`.
 6. Progress pings (`opening` → `rendering` → `uploading` → `done`) stream
    into the activity log on the web app via Postgres realtime.
 
+## Status monitor & template inventory (v1.1)
+
+On startup and every 5 minutes the agent posts:
+
+- `POST /api/public/agent/status` — host, platform, agent version, installed
+  Adobe apps, installed font count + sample, free disk in MB. Surfaces in
+  Settings → Local Agent and powers the Preflight panel.
+- `GET /api/public/agent/templates` → `POST /api/public/agent/templates/inventory`
+  — for every `bridge://templates/<file>` template the workspace owns, reports
+  whether the source file is on disk and which required fonts (from
+  `templates.requirements.fonts`) are missing.
+
+Override the version string with `LOVABLE_AGENT_VERSION=1.1.0`.
+
 ## Variable mapping
 
 The ExtendScript matches template variables against:

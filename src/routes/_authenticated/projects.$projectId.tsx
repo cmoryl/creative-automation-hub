@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ProjectChecklist } from "@/components/ProjectChecklist";
+import { PreflightPanel } from "@/components/PreflightPanel";
 import { CanvaJobRunner } from "@/components/canva/CanvaJobRunner";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
@@ -271,6 +272,12 @@ function ProjectDetail() {
       <div ref={scrollRef} className="flex-1 overflow-auto px-8 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
           <ProjectChecklist messages={messages} jobs={jobs} />
+          <PreflightPanel
+            projectId={projectId}
+            engine="illustrator"
+            variables={editVars}
+            compact
+          />
 
           {Object.keys(editVars).length > 0 && (
             <section className="rounded-lg border bg-card p-4">
