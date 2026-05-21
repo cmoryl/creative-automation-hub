@@ -105,6 +105,7 @@ export function getFieldLimit(v: Variable): number {
   if (/legal|disclaimer|footnote/.test(n)) return 320;
   if (v.multiline) return 600;
   return 140;
+}
 
 export function validateAll(
   variables: Variable[],
