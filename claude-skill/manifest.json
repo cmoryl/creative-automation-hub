@@ -15,7 +15,7 @@
         "required": ["projectId", "engine"],
         "properties": {
           "projectId": { "type": "string", "format": "uuid" },
-          "engine": { "type": "string", "enum": ["illustrator", "indesign", "figma", "canva", "claude", "hybrid", "mock"] },
+          "engine": { "type": "string", "enum": ["illustrator", "indesign", "figma", "canva", "claude", "express", "hybrid", "mock"] },
           "templateId": { "type": "string", "format": "uuid" },
           "brief": { "type": "object" },
           "variables": { "type": "object" }

@@ -67,7 +67,8 @@ export async function dispatchBatchCore(
       for (const engine of group.engines) {
         const needsBridge = engine === "illustrator" || engine === "indesign";
         const isClaude = engine === "claude";
-        const willMock = !needsBridge && !isClaude;
+        const isExpress = engine === "express";
+        const willMock = !needsBridge && !isClaude && !isExpress;
 
         const { data: job, error: jobErr } = await supabase
           .from("jobs")
@@ -77,7 +78,7 @@ export async function dispatchBatchCore(
             template_id: tpl.id,
             engine,
             row_label: row.label,
-            status: willMock || isClaude ? "completed" : "queued",
+            status: willMock || isClaude ? "completed" : isExpress ? "queued" : "queued",
             brief: {
               summary: data.briefSummary ?? "",
               row: row.label,

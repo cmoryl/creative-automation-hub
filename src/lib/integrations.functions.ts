@@ -58,7 +58,7 @@ export const disconnectIntegration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z.object({
-      provider: z.enum(["figma", "canva", "illustrator", "indesign"]),
+      provider: z.enum(["figma", "canva", "illustrator", "indesign", "express"]),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
