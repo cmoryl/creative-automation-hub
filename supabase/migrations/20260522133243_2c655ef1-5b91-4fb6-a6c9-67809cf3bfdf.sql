@@ -1,0 +1,2 @@
+ALTER TABLE public.batch_schedules DROP CONSTRAINT batch_schedules_status_check;
+ALTER TABLE public.batch_schedules ADD CONSTRAINT batch_schedules_status_check CHECK (status = ANY (ARRAY['pending'::text, 'running'::text, 'dispatched'::text, 'failed'::text, 'cancelled'::text]));
