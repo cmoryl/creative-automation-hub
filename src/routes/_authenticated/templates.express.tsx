@@ -213,9 +213,40 @@ function ExpressRunner() {
             </CardContent>
           </Card>
 
+          {activeJob && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+                <div className="flex items-center gap-2">
+                  {activeJob.status === "completed" ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  ) : activeJob.status === "failed" ? (
+                    <XCircle className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  )}
+                  <CardTitle className="text-base">
+                    {activeJob.status === "completed"
+                      ? "Render complete"
+                      : activeJob.status === "failed"
+                      ? "Render failed"
+                      : "Rendering with Firefly…"}
+                  </CardTitle>
+                </div>
+                <Badge variant="outline" className="capitalize">{activeJob.progress?.stage ?? activeJob.status}</Badge>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Progress value={activeJob.progress?.percent ?? 0} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{activeJob.progress?.message ?? "Waiting for Adobe…"}</span>
+                  <span>{Math.round(activeJob.progress?.percent ?? 0)}%</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {outputs.length > 0 && (
             <Card>
-              <CardHeader><CardTitle>Results</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Results ({outputs.length})</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {outputs.map((o) => (
