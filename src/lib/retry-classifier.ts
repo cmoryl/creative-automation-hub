@@ -41,6 +41,20 @@ export type CompleteErrorDetail = {
   missing_fonts?: string[];
   missing_links?: string[];
   files?: Array<{ name: string; exists?: boolean }>;
+  reason_hints?: string[];
+};
+
+// Map agent-side reason_hints to classifier verdicts. Lets the agent pre-tag
+// well-known failure modes so we still classify correctly even when the raw
+// ExtendScript log is truncated or noisy.
+const HINT_VERDICTS: Record<string, FailureClassification> = {
+  permission_denied:    { transient: false, reason: "permission_denied",   backoff_ms: 0 },
+  missing_pdf_preset:   { transient: false, reason: "missing_pdf_preset",  backoff_ms: 0 },
+  color_profile:        { transient: false, reason: "color_profile",       backoff_ms: 0 },
+  locked_layer:         { transient: false, reason: "locked_layer",        backoff_ms: 0 },
+  file_locked:          { transient: true,  reason: "file_locked",         backoff_ms: 45_000 },
+  app_busy:             { transient: true,  reason: "app_busy",            backoff_ms: 60_000 },
+  app_crash:            { transient: true,  reason: "app_crash",           backoff_ms: 90_000 },
 };
 
 export function classifyFailure(
@@ -60,6 +74,17 @@ export function classifyFailure(
   }
   if (errorStage === "fonts") return { transient: false, reason: "missing_font", backoff_ms: 0 };
   if (errorStage === "links") return { transient: false, reason: "missing_link", backoff_ms: 0 };
+
+  // Agent-supplied hints: permanent first (so they beat a transient log line),
+  // then transient.
+  for (const h of detail?.reason_hints ?? []) {
+    const v = HINT_VERDICTS[h];
+    if (v && !v.transient) return v;
+  }
+  for (const h of detail?.reason_hints ?? []) {
+    const v = HINT_VERDICTS[h];
+    if (v && v.transient) return v;
+  }
 
   const haystack = [errorText, detail?.message, detail?.extendscript_log, detail?.stack]
     .filter(Boolean)
