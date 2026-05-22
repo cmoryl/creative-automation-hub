@@ -117,6 +117,7 @@ export async function fireflyGenerateImages(
   workspaceId: string,
   prompt: string,
   opts: FireflyOptions = {},
+  onProgress?: (p: AdobePollProgress) => void | Promise<void>,
 ): Promise<{ outputs: { url: string; seed?: number }[]; raw: any }> {
   const body: any = {
     prompt,
@@ -142,7 +143,7 @@ export async function fireflyGenerateImages(
     throw e;
   });
 
-  const result = await pollAdobeJob(workspaceId, start, { timeoutMs: 180_000 });
+  const result = await pollAdobeJob(workspaceId, start, { timeoutMs: 180_000, onProgress });
   const outs = (result?.result?.outputs ?? result?.outputs ?? []).map((o: any) => ({
     url: o?.image?.url ?? o?.url ?? o?.presignedUrl,
     seed: o?.seed,
