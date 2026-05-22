@@ -415,3 +415,87 @@ function BridgeCard({
     </Card>
   );
 }
+
+function ExpressCard({ connected, onChange }: { connected?: Integ; onChange: () => void }) {
+  const save = useServerFn(saveExpressCredentials);
+  const test = useServerFn(testExpressConnection);
+  const disconnect = useServerFn(disconnectIntegration);
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [orgId, setOrgId] = useState("");
+
+  const saveMut = useMutation({
+    mutationFn: async () => save({ data: { clientId: clientId.trim(), clientSecret: clientSecret.trim(), orgId: orgId.trim() || undefined } }),
+    onSuccess: () => { toast.success("Adobe credentials saved"); setClientId(""); setClientSecret(""); setOrgId(""); onChange(); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed to save Adobe credentials"),
+  });
+  const testMut = useMutation({
+    mutationFn: async () => (test as any)(),
+    onSuccess: (r: any) => { if (r?.ok) { toast.success("Adobe Firefly Services reached"); onChange(); } else { toast.error(r?.error ?? "Verification failed"); } },
+    onError: (e: any) => toast.error(e?.message ?? "Verification failed"),
+  });
+  const delMut = useMutation({
+    mutationFn: async () => disconnect({ data: { provider: "express" } }),
+    onSuccess: () => { toast.success("Adobe Express disconnected"); onChange(); },
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>Adobe Express &amp; Firefly Services</CardTitle>
+          <CardDescription>
+            Server-to-server OAuth credentials from an Adobe Developer Console project with Firefly Services + Photoshop API entitlements.
+            {connected?.metadata?.client_id && ` Client ${String(connected.metadata.client_id).slice(0, 8)}…`}
+          </CardDescription>
+        </div>
+        <StatusBadge connected={connected} />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="adobe-client-id">Client ID</Label>
+          <Input id="adobe-client-id" placeholder={connected?.metadata?.client_id ?? "1a2b3c…"} value={clientId} onChange={(e) => setClientId(e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="adobe-client-secret">Client Secret</Label>
+          <Input id="adobe-client-secret" type="password" placeholder="p8e-…" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="adobe-org-id">Organization ID (optional)</Label>
+          <Input id="adobe-org-id" placeholder={connected?.metadata?.org_id ?? "abc123@AdobeOrg"} value={orgId} onChange={(e) => setOrgId(e.target.value)} />
+        </div>
+        {connected?.metadata?.status === "connected" && (
+          <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
+            <div className="font-medium text-emerald-400">✓ Firefly Services reachable</div>
+            {connected.metadata.verified_at && (
+              <div className="mt-0.5 text-muted-foreground">Verified {new Date(connected.metadata.verified_at).toLocaleString()}</div>
+            )}
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={!clientId.trim() || !clientSecret.trim() || saveMut.isPending} onClick={() => saveMut.mutate()}>
+            <Plug className="h-4 w-4" /> {connected ? "Replace credentials" : "Save credentials"}
+          </Button>
+          {connected && (
+            <Button variant="secondary" disabled={testMut.isPending} onClick={() => testMut.mutate()}>
+              {testMut.isPending ? "Testing…" : "Test connection"}
+            </Button>
+          )}
+          {connected && (
+            <Button variant="outline" onClick={() => delMut.mutate()}>Disconnect</Button>
+          )}
+          <Button asChild variant="ghost" className="ml-auto" size="sm">
+            <Link to="/templates/express">Open Express runner →</Link>
+          </Button>
+          <a
+            href="https://developer.adobe.com/firefly-services/docs/firefly-api/guides/get-started/"
+            target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1 self-center text-xs text-muted-foreground hover:underline"
+          >
+            Firefly Services docs <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
