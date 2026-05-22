@@ -78,7 +78,7 @@ export async function dispatchBatchCore(
             template_id: tpl.id,
             engine,
             row_label: row.label,
-            status: willMock || isClaude ? "completed" : "queued",
+            status: willMock || isClaude ? "completed" : isExpress ? "queued" : "queued",
             brief: {
               summary: data.briefSummary ?? "",
               row: row.label,
