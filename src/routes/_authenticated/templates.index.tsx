@@ -401,6 +401,7 @@ const ENGINE_VISUAL: Record<
   figma: { gradient: "from-purple-500/30 via-indigo-500/20 to-blue-500/30", accent: "bg-purple-400", label: "Fig", pattern: "frame" },
   canva: { gradient: "from-cyan-500/30 via-sky-500/20 to-blue-500/30", accent: "bg-cyan-400", label: "Cv", pattern: "card" },
   claude: { gradient: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30", accent: "bg-emerald-400", label: "Cl", pattern: "chat" },
+  express: { gradient: "from-rose-500/30 via-red-500/20 to-orange-500/30", accent: "bg-rose-400", label: "Ax", pattern: "card" },
 };
 
 function TemplatePreviewVisual({ engine, name }: { engine: string; name: string }) {
