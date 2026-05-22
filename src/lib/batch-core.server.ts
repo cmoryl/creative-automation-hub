@@ -1,6 +1,13 @@
 // Shared batch dispatch core, callable from a user-scoped server fn or from
 // the admin-scoped scheduled-runner route.
 import { generateClaudeCopy } from "./claude.functions";
+import { fireflyGenerateImages, ExpressNotConfiguredError } from "./express.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+function interpolateExpress(s: string, vars: Record<string, string>) {
+  return s.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_, k) => vars[k] ?? "");
+}
+
 
 export type BatchDispatchInput = {
   batchLabel: string;
@@ -152,6 +159,93 @@ export async function dispatchBatchCore(
               .update({
                 status: "failed",
                 error: e.message ?? "Claude generation failed",
+              })
+              .eq("id", job.id);
+          }
+        }
+
+        if (isExpress) {
+          // Resolve a prompt: explicit row variable wins, else template source_ref
+          // when it looks like a Firefly prompt (express://...), else brief + row label.
+          const explicitPrompt =
+            row.values["prompt"] ??
+            row.values["firefly_prompt"] ??
+            (typeof tpl.source_ref === "string" && tpl.source_ref.startsWith("express://")
+              ? tpl.source_ref.replace(/^express:\/\//, "")
+              : null);
+          const promptTemplate =
+            explicitPrompt ??
+            [data.briefSummary ?? "", row.label].filter(Boolean).join(" — ");
+          const prompt = interpolateExpress(promptTemplate, row.values);
+
+          try {
+            await supabase
+              .from("jobs")
+              .update({ status: "running" })
+              .eq("id", job.id);
+
+            const { outputs } = await fireflyGenerateImages(tpl.workspace_id, prompt, {
+              numVariations: 1,
+            });
+
+            for (let i = 0; i < outputs.length; i++) {
+              const o = outputs[i];
+              try {
+                const dl = await fetch(o.url);
+                const bytes = new Uint8Array(await dl.arrayBuffer());
+                const path = `express/${job.id}/${i}.png`;
+                await supabaseAdmin.storage
+                  .from("job-outputs")
+                  .upload(path, bytes, { contentType: "image/png", upsert: true });
+                const pub = supabaseAdmin.storage.from("job-outputs").getPublicUrl(path).data
+                  .publicUrl;
+                await supabase.from("outputs").insert({
+                  job_id: job.id,
+                  kind: "png",
+                  url: pub,
+                  metadata: {
+                    engine: "express",
+                    row_label: row.label,
+                    batch_id: batchId,
+                    variables: row.values,
+                    firefly_seed: o.seed,
+                    prompt,
+                  },
+                });
+              } catch (uploadErr: any) {
+                // Fall back to remote URL if the download/upload fails
+                await supabase.from("outputs").insert({
+                  job_id: job.id,
+                  kind: "png",
+                  url: o.url,
+                  metadata: {
+                    engine: "express",
+                    row_label: row.label,
+                    batch_id: batchId,
+                    variables: row.values,
+                    firefly_seed: o.seed,
+                    prompt,
+                    upload_error: String(uploadErr?.message ?? uploadErr),
+                  },
+                });
+              }
+            }
+
+            await supabase
+              .from("jobs")
+              .update({ status: "completed", completed_at: new Date().toISOString() })
+              .eq("id", job.id);
+          } catch (e: any) {
+            const msg =
+              e instanceof ExpressNotConfiguredError
+                ? e.message
+                : `Adobe Express run failed: ${e?.message ?? String(e)}`;
+            await supabase
+              .from("jobs")
+              .update({
+                status: "failed",
+                error: msg,
+                completed_at: new Date().toISOString(),
               })
               .eq("id", job.id);
           }

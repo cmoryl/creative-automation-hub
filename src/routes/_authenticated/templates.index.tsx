@@ -54,9 +54,10 @@ const engineColor: Record<string, string> = {
   figma: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   illustrator: "bg-orange-500/10 text-orange-700 dark:text-orange-300",
   indesign: "bg-pink-500/10 text-pink-700 dark:text-pink-300",
+  express: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
 };
 
-const ENGINES = ["all", "illustrator", "indesign", "figma", "canva", "claude"] as const;
+const ENGINES = ["all", "illustrator", "indesign", "figma", "canva", "claude", "express"] as const;
 type EngineFilter = (typeof ENGINES)[number];
 
 function TemplatesPage() {
@@ -185,6 +186,9 @@ function TemplatesPage() {
           </Button>
           <Button asChild variant="outline">
             <Link to="/templates/canva">Browse Canva</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/templates/express">Adobe Express</Link>
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -397,6 +401,7 @@ const ENGINE_VISUAL: Record<
   figma: { gradient: "from-purple-500/30 via-indigo-500/20 to-blue-500/30", accent: "bg-purple-400", label: "Fig", pattern: "frame" },
   canva: { gradient: "from-cyan-500/30 via-sky-500/20 to-blue-500/30", accent: "bg-cyan-400", label: "Cv", pattern: "card" },
   claude: { gradient: "from-emerald-500/30 via-teal-500/20 to-cyan-500/30", accent: "bg-emerald-400", label: "Cl", pattern: "chat" },
+  express: { gradient: "from-rose-500/30 via-red-500/20 to-orange-500/30", accent: "bg-rose-400", label: "Ax", pattern: "card" },
 };
 
 function TemplatePreviewVisual({ engine, name }: { engine: string; name: string }) {
