@@ -155,6 +155,21 @@ const REASON_SUGGESTIONS: Record<string, string[]> = {
   upstream_5xx: [
     "Upstream service returned a 5xx. Auto-retrying; check the storage provider's status page if it persists.",
   ],
+  permission_denied: [
+    "The agent doesn't have permission to read/write the template or output folder. Check folder permissions on the agent host.",
+  ],
+  missing_pdf_preset: [
+    "The PDF export preset referenced by the template isn't installed in Illustrator/InDesign on the render host. Install the preset, or edit the template to use a stock preset (e.g. \"[High Quality Print]\").",
+  ],
+  color_profile: [
+    "A color profile (ICC) referenced by the document isn't available on the render host. Install the profile, or remove the assignment from the template.",
+  ],
+  locked_layer: [
+    "A layer the script tried to edit is locked in the template. Unlock the layer in Illustrator/InDesign and re-save the template.",
+  ],
+  app_crash: [
+    "Illustrator/InDesign crashed mid-render. The agent will retry once — if it keeps crashing, restart the app or reboot the render host.",
+  ],
   unknown: [
     "Unknown failure — review the raw ExtendScript log below and copy diagnostics if you need to share.",
   ],
