@@ -91,8 +91,22 @@ function pickEngine(name) {
 }
 
 async function main() {
-  const me = await ping();
-  console.log(`Paired as "${me.agent}" — engines [${ENGINES.join(", ")}] — polling every ${POLL_MS}ms`);
+  let me;
+  try {
+    me = await ping();
+  } catch (e) {
+    console.error("");
+    console.error("✗ Could not pair this agent with the platform.");
+    console.error(`  ${e.message}`);
+    console.error("");
+    console.error("  Common fixes:");
+    console.error("    • Wrong token  → re-create one in Settings → Local Bridge Agent and update LOVABLE_AGENT_TOKEN.");
+    console.error("    • Wrong URL    → LOVABLE_API_BASE should be your published app URL with no trailing slash.");
+    console.error("    • Firewall/VPN → confirm this machine can reach the URL in a browser.");
+    console.error("");
+    process.exit(1);
+  }
+  console.log(`✓ Paired as "${me.agent}" — engines [${ENGINES.join(", ")}] — polling every ${POLL_MS}ms`);
 
   // Heartbeat loop runs independently of job polling.
   setInterval(() => {
