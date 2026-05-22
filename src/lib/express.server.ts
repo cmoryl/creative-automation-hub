@@ -117,6 +117,7 @@ export async function fireflyGenerateImages(
   workspaceId: string,
   prompt: string,
   opts: FireflyOptions = {},
+  onProgress?: (p: AdobePollProgress) => void | Promise<void>,
 ): Promise<{ outputs: { url: string; seed?: number }[]; raw: any }> {
   const body: any = {
     prompt,
@@ -142,7 +143,7 @@ export async function fireflyGenerateImages(
     throw e;
   });
 
-  const result = await pollAdobeJob(workspaceId, start, { timeoutMs: 180_000 });
+  const result = await pollAdobeJob(workspaceId, start, { timeoutMs: 180_000, onProgress });
   const outs = (result?.result?.outputs ?? result?.outputs ?? []).map((o: any) => ({
     url: o?.image?.url ?? o?.url ?? o?.presignedUrl,
     seed: o?.seed,
@@ -181,18 +182,36 @@ function hexToFontColor(hex: string) {
 }
 
 // ---------- Polling helper for Firefly / Photoshop async jobs ----------
+export type AdobePollProgress = {
+  stage: "starting" | "polling" | "succeeded" | "failed";
+  percent: number;
+  message: string;
+  attempts: number;
+  status?: string;
+};
+
 export async function pollAdobeJob(
   workspaceId: string,
   start: any,
-  { timeoutMs = 180_000, intervalMs = 2_500 }: { timeoutMs?: number; intervalMs?: number } = {},
+  {
+    timeoutMs = 180_000,
+    intervalMs = 2_500,
+    onProgress,
+  }: { timeoutMs?: number; intervalMs?: number; onProgress?: (p: AdobePollProgress) => void | Promise<void> } = {},
 ): Promise<any> {
   // If response already contains results, return as-is.
-  if (start?.outputs || start?.result?.outputs) return start;
+  if (start?.outputs || start?.result?.outputs) {
+    await onProgress?.({ stage: "succeeded", percent: 100, message: "Completed", attempts: 0, status: "ok" });
+    return start;
+  }
   const statusUrl: string | undefined =
     start?._links?.self?.href ?? start?.statusUrl ?? start?.jobUrl ?? start?.href;
   if (!statusUrl) return start;
+  await onProgress?.({ stage: "starting", percent: 5, message: "Adobe job queued", attempts: 0 });
   const deadline = Date.now() + timeoutMs;
+  let attempts = 0;
   while (Date.now() < deadline) {
+    attempts++;
     const token = await getAdobeAccessToken(workspaceId);
     const row = await loadIntegration(workspaceId);
     const r = await fetch(statusUrl, {
@@ -200,11 +219,20 @@ export async function pollAdobeJob(
     });
     const j: any = await r.json().catch(() => ({}));
     const status = j?.status ?? j?.jobStatus;
-    if (status === "succeeded" || status === "SUCCEEDED" || status === "ok") return j;
-    if (status === "failed" || status === "FAILED" || j?.error)
+    if (status === "succeeded" || status === "SUCCEEDED" || status === "ok") {
+      await onProgress?.({ stage: "succeeded", percent: 95, message: "Render complete, downloading…", attempts, status });
+      return j;
+    }
+    if (status === "failed" || status === "FAILED" || j?.error) {
+      await onProgress?.({ stage: "failed", percent: 100, message: j?.error?.message ?? "Adobe job failed", attempts, status });
       throw new Error(`Adobe job failed: ${JSON.stringify(j).slice(0, 400)}`);
+    }
+    // Progress curve: ramp from 10 → 85 over ~30 polls.
+    const pct = Math.min(85, 10 + attempts * 2.5);
+    await onProgress?.({ stage: "polling", percent: pct, message: `Rendering (${status ?? "in progress"})`, attempts, status });
     await new Promise((res) => setTimeout(res, intervalMs));
   }
+  await onProgress?.({ stage: "failed", percent: 100, message: "Adobe job timed out", attempts });
   throw new Error("Adobe job timed out");
 }
 

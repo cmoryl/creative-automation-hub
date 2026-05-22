@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Sparkles, Image as ImageIcon, FileImage } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Image as ImageIcon, FileImage, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { runExpressJob, listExpressCapabilities } from "@/lib/express.functions";
 import { listIntegrations } from "@/lib/integrations.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +37,14 @@ function ExpressRunner() {
   const [n, setN] = useState(2);
   const [outputs, setOutputs] = useState<{ id: string; url: string }[]>([]);
 
+  // Live job tracking
+  const [activeJob, setActiveJob] = useState<{
+    id: string;
+    status: string;
+    progress: { stage: string; percent: number; message: string } | null;
+    startedAt: number;
+  } | null>(null);
+
   const { data: projects = [] } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["projects-for-express"],
     queryFn: async () => {
@@ -43,12 +53,98 @@ function ExpressRunner() {
     },
   });
 
+  // Realtime: stream Express job updates for the selected project + outputs.
+  useEffect(() => {
+    if (!projectId) return;
+    const ch = supabase
+      .channel(`express-jobs-${projectId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "jobs", filter: `project_id=eq.${projectId}` },
+        (payload: any) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (!row || row.engine !== "express") return;
+          setActiveJob((cur) => {
+            const createdAt = new Date(row.created_at).getTime();
+            if (!cur || createdAt >= cur.startedAt - 1000) {
+              const progress = row.brief?.progress
+                ? {
+                    stage: String(row.brief.progress.stage ?? "running"),
+                    percent: Number(row.brief.progress.percent ?? 0),
+                    message: String(row.brief.progress.message ?? ""),
+                  }
+                : cur?.progress ?? null;
+              return {
+                id: row.id,
+                status: row.status,
+                progress,
+                startedAt: cur?.startedAt ?? createdAt,
+              };
+            }
+            return cur;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "outputs" },
+        (payload: any) => {
+          const row = payload.new as any;
+          setActiveJob((cur) => {
+            if (cur && row.job_id === cur.id) {
+              setOutputs((prev) =>
+                prev.find((o) => o.id === row.id) ? prev : [...prev, { id: row.id, url: row.url }],
+              );
+            }
+            return cur;
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [projectId]);
+
   const runMut = useMutation({
-    mutationFn: async () => (run as any)({
-      data: { projectId, mode: "firefly", prompt, variables: {}, size: { width, height }, contentClass, numVariations: n },
-    }),
-    onSuccess: (r: any) => { setOutputs(r?.outputs ?? []); toast.success(`Generated ${r?.outputs?.length ?? 0} image(s)`); },
-    onError: (e: any) => toast.error(e?.message ?? "Generation failed"),
+    mutationFn: async () => {
+      setOutputs([]);
+      setActiveJob({
+        id: "",
+        status: "running",
+        progress: { stage: "starting", percent: 1, message: "Submitting to Adobe…" },
+        startedAt: Date.now(),
+      });
+      return (run as any)({
+        data: { projectId, mode: "firefly", prompt, variables: {}, size: { width, height }, contentClass, numVariations: n },
+      });
+    },
+    onSuccess: (r: any) => {
+      setOutputs((prev) => {
+        const merged = [...prev];
+        for (const o of r?.outputs ?? []) if (!merged.find((m) => m.id === o.id)) merged.push(o);
+        return merged;
+      });
+      setActiveJob((cur) =>
+        cur
+          ? {
+              ...cur,
+              id: r?.jobId ?? cur.id,
+              status: "completed",
+              progress: { stage: "completed", percent: 100, message: `Generated ${r?.outputs?.length ?? 0} image(s)` },
+            }
+          : cur,
+      );
+      toast.success(`Generated ${r?.outputs?.length ?? 0} image(s)`);
+    },
+    onError: (e: any) => {
+      setActiveJob((cur) =>
+        cur
+          ? { ...cur, status: "failed", progress: { stage: "failed", percent: 100, message: e?.message ?? "Generation failed" } }
+          : cur,
+      );
+      toast.error(e?.message ?? "Generation failed");
+    },
   });
 
   if (!connected) {
@@ -117,9 +213,40 @@ function ExpressRunner() {
             </CardContent>
           </Card>
 
+          {activeJob && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+                <div className="flex items-center gap-2">
+                  {activeJob.status === "completed" ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  ) : activeJob.status === "failed" ? (
+                    <XCircle className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  )}
+                  <CardTitle className="text-base">
+                    {activeJob.status === "completed"
+                      ? "Render complete"
+                      : activeJob.status === "failed"
+                      ? "Render failed"
+                      : "Rendering with Firefly…"}
+                  </CardTitle>
+                </div>
+                <Badge variant="outline" className="capitalize">{activeJob.progress?.stage ?? activeJob.status}</Badge>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Progress value={activeJob.progress?.percent ?? 0} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{activeJob.progress?.message ?? "Waiting for Adobe…"}</span>
+                  <span>{Math.round(activeJob.progress?.percent ?? 0)}%</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {outputs.length > 0 && (
             <Card>
-              <CardHeader><CardTitle>Results</CardTitle></CardHeader>
+              <CardHeader><CardTitle>Results ({outputs.length})</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {outputs.map((o) => (
