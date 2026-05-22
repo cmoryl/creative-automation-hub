@@ -54,9 +54,10 @@ const engineColor: Record<string, string> = {
   figma: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
   illustrator: "bg-orange-500/10 text-orange-700 dark:text-orange-300",
   indesign: "bg-pink-500/10 text-pink-700 dark:text-pink-300",
+  express: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
 };
 
-const ENGINES = ["all", "illustrator", "indesign", "figma", "canva", "claude"] as const;
+const ENGINES = ["all", "illustrator", "indesign", "figma", "canva", "claude", "express"] as const;
 type EngineFilter = (typeof ENGINES)[number];
 
 function TemplatesPage() {
