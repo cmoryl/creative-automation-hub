@@ -65,27 +65,11 @@ function AgentSettings() {
         </div>
 
         {newToken && (
-          <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
-            <p className="text-sm font-medium">Copy this once — it won't be shown again.</p>
-            <pre className="mt-2 overflow-auto rounded bg-background p-2 text-xs">{newToken.token}</pre>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-2"
-              onClick={() => {
-                navigator.clipboard.writeText(newToken.token);
-                toast.success("Copied");
-              }}
-            >
-              <Copy className="h-3 w-3" /> Copy token
-            </Button>
-            <pre className="mt-3 overflow-auto rounded bg-background p-2 text-xs">
-{`# In the bridge-agent folder:
-LOVABLE_AGENT_TOKEN=${newToken.token} \\
-LOVABLE_API_BASE=${apiBase} \\
-node agent.mjs`}
-            </pre>
-          </div>
+          <NewTokenPanel
+            token={newToken.token}
+            apiBase={apiBase}
+            agentsOnline={data.filter((a) => a.online).length}
+          />
         )}
       </div>
 
@@ -99,6 +83,72 @@ node agent.mjs`}
               <AgentStatusCard key={a.id} agent={a} onRemove={remove} />
             ))}
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function NewTokenPanel({
+  token,
+  apiBase,
+  agentsOnline,
+}: {
+  token: string;
+  apiBase: string;
+  agentsOnline: number;
+}) {
+  const [startedAt] = useState(() => Date.now());
+  const [baselineOnline] = useState(agentsOnline);
+  const heard = agentsOnline > baselineOnline;
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+
+  return (
+    <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
+      <p className="text-sm font-medium">Copy this once — it won't be shown again.</p>
+      <pre className="mt-2 overflow-auto rounded bg-background p-2 text-xs">{token}</pre>
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-2"
+        onClick={() => {
+          navigator.clipboard.writeText(token);
+          toast.success("Copied");
+        }}
+      >
+        <Copy className="h-3 w-3" /> Copy token
+      </Button>
+      <pre className="mt-3 overflow-auto rounded bg-background p-2 text-xs">
+{`# macOS / Linux:
+LOVABLE_AGENT_TOKEN=${token} \\
+LOVABLE_API_BASE=${apiBase} \\
+LOVABLE_AGENT_TEMPLATES="$HOME/LovableTemplates" \\
+./install-macos.sh
+
+# Windows (PowerShell):
+$env:LOVABLE_AGENT_TOKEN     = "${token}"
+$env:LOVABLE_API_BASE        = "${apiBase}"
+$env:LOVABLE_AGENT_TEMPLATES = "$env:USERPROFILE\\LovableTemplates"
+powershell -ExecutionPolicy Bypass -File .\\install-windows.ps1`}
+      </pre>
+      <div
+        className={`mt-3 flex items-center gap-2 rounded px-3 py-2 text-xs ${
+          heard
+            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+            : "bg-background text-muted-foreground"
+        }`}
+      >
+        {heard ? (
+          <>
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+            Agent is online. You're all set — paired agents appear below.
+          </>
+        ) : (
+          <>
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+            Waiting for first heartbeat from the agent… ({elapsed}s)
+            <span className="ml-auto opacity-70">refreshing every 15s</span>
+          </>
         )}
       </div>
     </div>

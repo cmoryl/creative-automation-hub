@@ -41,6 +41,20 @@ export type CompleteErrorDetail = {
   missing_fonts?: string[];
   missing_links?: string[];
   files?: Array<{ name: string; exists?: boolean }>;
+  reason_hints?: string[];
+};
+
+// Map agent-side reason_hints to classifier verdicts. Lets the agent pre-tag
+// well-known failure modes so we still classify correctly even when the raw
+// ExtendScript log is truncated or noisy.
+const HINT_VERDICTS: Record<string, FailureClassification> = {
+  permission_denied:    { transient: false, reason: "permission_denied",   backoff_ms: 0 },
+  missing_pdf_preset:   { transient: false, reason: "missing_pdf_preset",  backoff_ms: 0 },
+  color_profile:        { transient: false, reason: "color_profile",       backoff_ms: 0 },
+  locked_layer:         { transient: false, reason: "locked_layer",        backoff_ms: 0 },
+  file_locked:          { transient: true,  reason: "file_locked",         backoff_ms: 45_000 },
+  app_busy:             { transient: true,  reason: "app_busy",            backoff_ms: 60_000 },
+  app_crash:            { transient: true,  reason: "app_crash",           backoff_ms: 90_000 },
 };
 
 export function classifyFailure(
@@ -60,6 +74,17 @@ export function classifyFailure(
   }
   if (errorStage === "fonts") return { transient: false, reason: "missing_font", backoff_ms: 0 };
   if (errorStage === "links") return { transient: false, reason: "missing_link", backoff_ms: 0 };
+
+  // Agent-supplied hints: permanent first (so they beat a transient log line),
+  // then transient.
+  for (const h of detail?.reason_hints ?? []) {
+    const v = HINT_VERDICTS[h];
+    if (v && !v.transient) return v;
+  }
+  for (const h of detail?.reason_hints ?? []) {
+    const v = HINT_VERDICTS[h];
+    if (v && v.transient) return v;
+  }
 
   const haystack = [errorText, detail?.message, detail?.extendscript_log, detail?.stack]
     .filter(Boolean)
@@ -129,6 +154,21 @@ const REASON_SUGGESTIONS: Record<string, string[]> = {
   ],
   upstream_5xx: [
     "Upstream service returned a 5xx. Auto-retrying; check the storage provider's status page if it persists.",
+  ],
+  permission_denied: [
+    "The agent doesn't have permission to read/write the template or output folder. Check folder permissions on the agent host.",
+  ],
+  missing_pdf_preset: [
+    "The PDF export preset referenced by the template isn't installed in Illustrator/InDesign on the render host. Install the preset, or edit the template to use a stock preset (e.g. \"[High Quality Print]\").",
+  ],
+  color_profile: [
+    "A color profile (ICC) referenced by the document isn't available on the render host. Install the profile, or remove the assignment from the template.",
+  ],
+  locked_layer: [
+    "A layer the script tried to edit is locked in the template. Unlock the layer in Illustrator/InDesign and re-save the template.",
+  ],
+  app_crash: [
+    "Illustrator/InDesign crashed mid-render. The agent will retry once — if it keeps crashing, restart the app or reboot the render host.",
   ],
   unknown: [
     "Unknown failure — review the raw ExtendScript log below and copy diagnostics if you need to share.",
