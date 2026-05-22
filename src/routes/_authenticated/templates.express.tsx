@@ -37,6 +37,14 @@ function ExpressRunner() {
   const [n, setN] = useState(2);
   const [outputs, setOutputs] = useState<{ id: string; url: string }[]>([]);
 
+  // Live job tracking
+  const [activeJob, setActiveJob] = useState<{
+    id: string;
+    status: string;
+    progress: { stage: string; percent: number; message: string } | null;
+    startedAt: number;
+  } | null>(null);
+
   const { data: projects = [] } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["projects-for-express"],
     queryFn: async () => {
@@ -45,12 +53,98 @@ function ExpressRunner() {
     },
   });
 
+  // Realtime: stream Express job updates for the selected project + outputs.
+  useEffect(() => {
+    if (!projectId) return;
+    const ch = supabase
+      .channel(`express-jobs-${projectId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "jobs", filter: `project_id=eq.${projectId}` },
+        (payload: any) => {
+          const row = (payload.new ?? payload.old) as any;
+          if (!row || row.engine !== "express") return;
+          setActiveJob((cur) => {
+            const createdAt = new Date(row.created_at).getTime();
+            if (!cur || createdAt >= cur.startedAt - 1000) {
+              const progress = row.brief?.progress
+                ? {
+                    stage: String(row.brief.progress.stage ?? "running"),
+                    percent: Number(row.brief.progress.percent ?? 0),
+                    message: String(row.brief.progress.message ?? ""),
+                  }
+                : cur?.progress ?? null;
+              return {
+                id: row.id,
+                status: row.status,
+                progress,
+                startedAt: cur?.startedAt ?? createdAt,
+              };
+            }
+            return cur;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "outputs" },
+        (payload: any) => {
+          const row = payload.new as any;
+          setActiveJob((cur) => {
+            if (cur && row.job_id === cur.id) {
+              setOutputs((prev) =>
+                prev.find((o) => o.id === row.id) ? prev : [...prev, { id: row.id, url: row.url }],
+              );
+            }
+            return cur;
+          });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [projectId]);
+
   const runMut = useMutation({
-    mutationFn: async () => (run as any)({
-      data: { projectId, mode: "firefly", prompt, variables: {}, size: { width, height }, contentClass, numVariations: n },
-    }),
-    onSuccess: (r: any) => { setOutputs(r?.outputs ?? []); toast.success(`Generated ${r?.outputs?.length ?? 0} image(s)`); },
-    onError: (e: any) => toast.error(e?.message ?? "Generation failed"),
+    mutationFn: async () => {
+      setOutputs([]);
+      setActiveJob({
+        id: "",
+        status: "running",
+        progress: { stage: "starting", percent: 1, message: "Submitting to Adobe…" },
+        startedAt: Date.now(),
+      });
+      return (run as any)({
+        data: { projectId, mode: "firefly", prompt, variables: {}, size: { width, height }, contentClass, numVariations: n },
+      });
+    },
+    onSuccess: (r: any) => {
+      setOutputs((prev) => {
+        const merged = [...prev];
+        for (const o of r?.outputs ?? []) if (!merged.find((m) => m.id === o.id)) merged.push(o);
+        return merged;
+      });
+      setActiveJob((cur) =>
+        cur
+          ? {
+              ...cur,
+              id: r?.jobId ?? cur.id,
+              status: "completed",
+              progress: { stage: "completed", percent: 100, message: `Generated ${r?.outputs?.length ?? 0} image(s)` },
+            }
+          : cur,
+      );
+      toast.success(`Generated ${r?.outputs?.length ?? 0} image(s)`);
+    },
+    onError: (e: any) => {
+      setActiveJob((cur) =>
+        cur
+          ? { ...cur, status: "failed", progress: { stage: "failed", percent: 100, message: e?.message ?? "Generation failed" } }
+          : cur,
+      );
+      toast.error(e?.message ?? "Generation failed");
+    },
   });
 
   if (!connected) {
