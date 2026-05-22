@@ -28,7 +28,7 @@ export const getDashboardStatus = createServerFn({ method: "GET" })
     const now = Date.now();
     const isLive = (ts: string | null) => !!ts && now - new Date(ts).getTime() < 5 * 60 * 1000;
 
-    const engines = ["illustrator", "indesign", "figma", "canva", "claude"] as const;
+    const engines = ["illustrator", "indesign", "figma", "canva", "claude", "express"] as const;
     const engineStats = engines.map((engine) => {
       const engineJobs = jobs.filter((j) => j.engine === engine);
       const completed = engineJobs.filter((j) => j.status === "completed").length;
