@@ -1,6 +1,13 @@
 // Shared batch dispatch core, callable from a user-scoped server fn or from
 // the admin-scoped scheduled-runner route.
 import { generateClaudeCopy } from "./claude.functions";
+import { fireflyGenerateImages, ExpressNotConfiguredError } from "./express.server";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+function interpolateExpress(s: string, vars: Record<string, string>) {
+  return s.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_, k) => vars[k] ?? "");
+}
+
 
 export type BatchDispatchInput = {
   batchLabel: string;
