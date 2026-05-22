@@ -126,13 +126,41 @@ export async function postStatus(api, currentJobId = null) {
 }
 
 // Given the platform-side list of templates (id + source_ref), check whether
-// each template's source file exists locally, plus best-effort font checks
-// against template.requirements.fonts (if the server sends them in future).
+// each template's source file exists locally, plus best-effort font + linked
+// asset checks against template.requirements.{fonts,links}.
+//
+// Linked-asset convention: InDesign + Illustrator users typically keep linked
+// images alongside the document, often under a sibling "Links" folder
+// (matches the Adobe "Package" default). We scan both the template dir root
+// and any same-name "Links" subfolder so users get a real readiness signal
+// for missing image links — not just fonts.
 export async function postTemplateInventory(api, templates) {
   if (!Array.isArray(templates) || templates.length === 0) return;
   const found = await scanTemplatesDir();
   const fonts = await listFonts();
-  const fontSet = new Set(fonts.map((f) => f.toLowerCase()));
+  // Loose-match font family: strip style suffix ("Inter Bold" → "inter") so
+  // "Inter-Regular.ttf" on disk satisfies a "Inter" requirement.
+  const fontSet = new Set();
+  for (const f of fonts) {
+    const lc = f.toLowerCase();
+    fontSet.add(lc);
+    fontSet.add(lc.replace(/[-_ ](regular|bold|italic|light|medium|semibold|thin|black|heavy|book|oblique)+$/i, "").trim());
+  }
+  const fontHas = (family) => {
+    if (!family) return true;
+    const lc = String(family).toLowerCase().trim();
+    return fontSet.has(lc) || fontSet.has(lc.replace(/\s+/g, "-")) || fontSet.has(lc.replace(/\s+/g, ""));
+  };
+
+  // Cache directory listings of "Links" folders so we don't re-stat per template.
+  const linksDirCache = new Map();
+  const linksFor = async (dirAbs) => {
+    if (linksDirCache.has(dirAbs)) return linksDirCache.get(dirAbs);
+    const entries = await fs.readdir(dirAbs).catch(() => []);
+    const set = new Set(entries.map((e) => e.toLowerCase()));
+    linksDirCache.set(dirAbs, set);
+    return set;
+  };
 
   const items = [];
   for (const t of templates) {
@@ -140,16 +168,27 @@ export async function postTemplateInventory(api, templates) {
     if (!m) continue;
     const filename = m[1];
     const file_present = found.has(filename);
+
     const required = Array.isArray(t.requirements?.fonts) ? t.requirements.fonts : [];
-    const fonts_missing = required
-      .map((f) => f.family)
-      .filter((fam) => fam && !fontSet.has(String(fam).toLowerCase()));
-    items.push({
-      template_id: t.id,
-      file_present,
-      fonts_missing,
-      links_missing: [],
-    });
+    const fonts_missing = required.map((f) => f.family).filter((fam) => fam && !fontHas(fam));
+
+    // Resolve linked-asset requirements against TEMPLATES_DIR and TEMPLATES_DIR/Links.
+    const requiredLinks = Array.isArray(t.requirements?.links) ? t.requirements.links : [];
+    const links_missing = [];
+    if (requiredLinks.length > 0) {
+      const rootLinks = await linksFor(TEMPLATES_DIR);
+      const sideLinks = await linksFor(path.join(TEMPLATES_DIR, "Links"));
+      for (const link of requiredLinks) {
+        const name = typeof link === "string" ? link : link?.name;
+        if (!name) continue;
+        const lc = String(name).toLowerCase();
+        const base = lc.split("/").pop();
+        const ok = rootLinks.has(base) || sideLinks.has(base);
+        if (!ok) links_missing.push(name);
+      }
+    }
+
+    items.push({ template_id: t.id, file_present, fonts_missing, links_missing });
   }
   if (items.length === 0) return;
   try {
