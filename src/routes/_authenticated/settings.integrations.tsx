@@ -22,6 +22,7 @@ import {
   ensureCanvaWebhookSecret,
 } from "@/lib/canva.functions";
 import { saveFigmaToken } from "@/lib/figma.functions";
+import { saveExpressCredentials, testExpressConnection } from "@/lib/express.functions";
 
 export const Route = createFileRoute("/_authenticated/settings/integrations")({
   component: IntegrationsPage,
@@ -51,6 +52,7 @@ function IntegrationsPage() {
 
       <FigmaCard connected={byProvider["figma"]} onChange={refresh} />
       <CanvaCard connected={byProvider["canva"]} onChange={refresh} />
+      <ExpressCard connected={byProvider["express"]} onChange={refresh} />
       <BridgeCard
         provider="illustrator"
         title="Adobe Illustrator"
