@@ -92,12 +92,13 @@ export function inferFieldPage(v: Variable, pages: TemplatePage[]): number {
   return 1;
 }
 
-const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva" | "claude"; label: string }[] = [
+const ENGINES: { id: "illustrator" | "indesign" | "figma" | "canva" | "claude" | "express"; label: string }[] = [
   { id: "illustrator", label: "Illustrator" },
   { id: "indesign", label: "InDesign" },
   { id: "figma", label: "Figma" },
   { id: "canva", label: "Canva" },
   { id: "claude", label: "Claude" },
+  { id: "express", label: "Adobe Express" },
 ];
 
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
