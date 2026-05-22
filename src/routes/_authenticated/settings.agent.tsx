@@ -65,27 +65,11 @@ function AgentSettings() {
         </div>
 
         {newToken && (
-          <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
-            <p className="text-sm font-medium">Copy this once — it won't be shown again.</p>
-            <pre className="mt-2 overflow-auto rounded bg-background p-2 text-xs">{newToken.token}</pre>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-2"
-              onClick={() => {
-                navigator.clipboard.writeText(newToken.token);
-                toast.success("Copied");
-              }}
-            >
-              <Copy className="h-3 w-3" /> Copy token
-            </Button>
-            <pre className="mt-3 overflow-auto rounded bg-background p-2 text-xs">
-{`# In the bridge-agent folder:
-LOVABLE_AGENT_TOKEN=${newToken.token} \\
-LOVABLE_API_BASE=${apiBase} \\
-node agent.mjs`}
-            </pre>
-          </div>
+          <NewTokenPanel
+            token={newToken.token}
+            apiBase={apiBase}
+            agentsOnline={data.filter((a) => a.online).length}
+          />
         )}
       </div>
 
