@@ -27,8 +27,32 @@ const headers = {
 };
 
 async function api(path, init = {}) {
-  const r = await fetch(`${BASE}${path}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
-  if (!r.ok) throw new Error(`${path} ${r.status} ${await r.text().catch(() => "")}`);
+  let r;
+  try {
+    r = await fetch(`${BASE}${path}`, { ...init, headers: { ...headers, ...(init.headers || {}) } });
+  } catch (e) {
+    const msg = String(e?.message ?? e);
+    // Common first-run failures: typo'd base URL, no internet, captive portal.
+    throw new Error(
+      `Network error calling ${BASE}${path}: ${msg}\n` +
+      `  → Check LOVABLE_API_BASE ("${BASE}") is reachable from this machine.`,
+    );
+  }
+  if (!r.ok) {
+    const body = await r.text().catch(() => "");
+    // Surface structured {reason, message} from the server so users see a
+    // human remedy instead of a bare HTTP code.
+    let detail = body;
+    try {
+      const j = JSON.parse(body);
+      if (j && (j.reason || j.message)) {
+        detail = `${j.reason ?? r.status} — ${j.message ?? body}`;
+      }
+    } catch { /* not json, keep raw */ }
+    const err = new Error(`${path} ${r.status}: ${detail}`);
+    err.status = r.status;
+    throw err;
+  }
   return r.status === 204 ? null : r.json();
 }
 
