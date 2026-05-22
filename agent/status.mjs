@@ -202,26 +202,36 @@ export async function postTemplateInventory(api, templates) {
 }
 
 // Quick local helper used by engine adapters when a render fails — surfaces
-// missing fonts from an ExtendScript log so the /complete payload is rich.
+// missing fonts, missing links, and a small set of well-known ExtendScript
+// failure modes from an ExtendScript log so the /complete payload carries
+// enough signal for the server-side retry classifier and the user-facing
+// error report. Returns a structured detail object the agent merges into
+// /api/public/agent/complete.
 export function parseExtendscriptErrors(log) {
   if (!log) return {};
-  const missing_fonts = Array.from(
-    new Set(
-      [...log.matchAll(/font (?:not found|missing)[: ]+([^\n,]+)/gi)].map((m) =>
-        m[1].trim(),
-      ),
-    ),
-  );
-  const missing_links = Array.from(
-    new Set(
-      [...log.matchAll(/link (?:not found|missing)[: ]+([^\n,]+)/gi)].map((m) =>
-        m[1].trim(),
-      ),
-    ),
-  );
+  const missing_fonts = Array.from(new Set(
+    [...log.matchAll(/font (?:not found|missing|unavailable)[: ]+([^\n,]+)/gi)].map((m) => m[1].trim()),
+  ));
+  const missing_links = Array.from(new Set(
+    [...log.matchAll(/(?:link|image|placed file) (?:not found|missing)[: ]+([^\n,]+)/gi)].map((m) => m[1].trim()),
+  ));
+
+  // Lightweight reason hinting — the server still re-runs the full classifier,
+  // but a strong local hint lets transient/permanent decisions stay accurate
+  // even if the raw log gets truncated en route.
+  const hints = [];
+  if (/permission denied|eacces|operation not permitted/i.test(log)) hints.push("permission_denied");
+  if (/file (?:is )?(?:open|in use) in another (?:app|process)|locked by another/i.test(log)) hints.push("file_locked");
+  if (/host application is busy|cannot communicate with .* (?:illustrator|indesign)/i.test(log)) hints.push("app_busy");
+  if (/pdf (?:export )?preset (?:not found|missing|does not exist)/i.test(log)) hints.push("missing_pdf_preset");
+  if (/color profile (?:not found|missing|mismatch)/i.test(log)) hints.push("color_profile");
+  if (/layer (?:is )?locked|cannot modify locked/i.test(log)) hints.push("locked_layer");
+  if (/(?:application )?(?:has )?(?:crashed|quit unexpectedly|stopped responding)/i.test(log)) hints.push("app_crash");
+
   return {
     missing_fonts: missing_fonts.length ? missing_fonts : undefined,
     missing_links: missing_links.length ? missing_links : undefined,
+    reason_hints: hints.length ? hints : undefined,
     extendscript_log: log.slice(0, 20000),
   };
 }
