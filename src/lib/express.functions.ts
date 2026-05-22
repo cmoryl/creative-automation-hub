@@ -112,6 +112,16 @@ export const runExpressJob = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const wsId = await getWorkspaceId(context.supabase, context.userId);
 
+    const initialBrief = {
+      express: { mode: data.mode, prompt: data.prompt ?? null },
+      progress: {
+        stage: "starting",
+        percent: 1,
+        message: "Submitting to Adobe…",
+        updated_at: new Date().toISOString(),
+      },
+    };
+
     const { data: job, error: jobErr } = await supabaseAdmin
       .from("jobs")
       .insert({
@@ -120,7 +130,7 @@ export const runExpressJob = createServerFn({ method: "POST" })
         template_id: data.templateId ?? null,
         engine: "express",
         status: "running",
-        brief: { express: { mode: data.mode, prompt: data.prompt ?? null } } as never,
+        brief: initialBrief as never,
         variables: data.variables as never,
       })
       .select("id")
@@ -128,16 +138,39 @@ export const runExpressJob = createServerFn({ method: "POST" })
     if (jobErr) throw jobErr;
     const jobId = job.id as string;
 
+    // Throttled progress writer (≥600ms between DB writes).
+    let lastWrite = 0;
+    const writeProgress = async (p: { stage: string; percent: number; message: string; status?: string }) => {
+      const now = Date.now();
+      if (p.stage !== "succeeded" && p.stage !== "failed" && now - lastWrite < 600) return;
+      lastWrite = now;
+      await supabaseAdmin
+        .from("jobs")
+        .update({
+          brief: {
+            ...initialBrief,
+            progress: { ...p, updated_at: new Date().toISOString() },
+          } as never,
+        })
+        .eq("id", jobId);
+    };
+
     try {
       let outputUrls: { url: string; kind: string; meta?: any }[] = [];
       if (data.mode === "firefly") {
         const prompt = interpolate(data.prompt ?? "", data.variables);
         if (!prompt.trim()) throw new Error("A prompt is required for Firefly text-to-image.");
-        const { outputs, raw } = await fireflyGenerateImages(wsId, prompt, {
-          size: data.size,
-          contentClass: data.contentClass,
-          numVariations: (data.numVariations as 1 | 2 | 3 | 4) ?? 1,
-        });
+        const { outputs, raw } = await fireflyGenerateImages(
+          wsId,
+          prompt,
+          {
+            size: data.size,
+            contentClass: data.contentClass,
+            numVariations: (data.numVariations as 1 | 2 | 3 | 4) ?? 1,
+          },
+          (p) => writeProgress(p),
+        );
+        await writeProgress({ stage: "uploading", percent: 90, message: `Uploading ${outputs.length} image(s)…` });
         for (let i = 0; i < outputs.length; i++) {
           const o = outputs[i];
           const dl = await fetch(o.url);
@@ -154,6 +187,7 @@ export const runExpressJob = createServerFn({ method: "POST" })
           text: e.text != null ? interpolate(e.text, data.variables) : undefined,
         }));
         const { outputs } = await psdTextReplace(wsId, { psdUrl: data.psdUrl, edits });
+        await writeProgress({ stage: "uploading", percent: 90, message: `Uploading ${outputs.length} render(s)…` });
         for (let i = 0; i < outputs.length; i++) {
           const dl = await fetch(outputs[i].url);
           if (!dl.ok) throw new Error(`Photoshop download ${i} failed (${dl.status})`);
@@ -175,7 +209,19 @@ export const runExpressJob = createServerFn({ method: "POST" })
 
       await supabaseAdmin
         .from("jobs")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+          brief: {
+            ...initialBrief,
+            progress: {
+              stage: "completed",
+              percent: 100,
+              message: `Generated ${inserted.length} output(s)`,
+              updated_at: new Date().toISOString(),
+            },
+          } as never,
+        })
         .eq("id", jobId);
 
       return { jobId, outputs: inserted };
@@ -183,7 +229,20 @@ export const runExpressJob = createServerFn({ method: "POST" })
       const msg = e instanceof ExpressNotConfiguredError ? e.message : String(e?.message ?? e);
       await supabaseAdmin
         .from("jobs")
-        .update({ status: "failed", error: msg, completed_at: new Date().toISOString() })
+        .update({
+          status: "failed",
+          error: msg,
+          completed_at: new Date().toISOString(),
+          brief: {
+            ...initialBrief,
+            progress: {
+              stage: "failed",
+              percent: 100,
+              message: msg,
+              updated_at: new Date().toISOString(),
+            },
+          } as never,
+        })
         .eq("id", jobId);
       throw e;
     }
