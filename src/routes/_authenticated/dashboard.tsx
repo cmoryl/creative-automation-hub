@@ -36,6 +36,8 @@ const engineLabels: Record<string, string> = {
   indesign: "Adobe InDesign",
   figma: "Figma",
   canva: "Canva",
+  claude: "Claude",
+  express: "Adobe Express",
 };
 
 const statusStyles: Record<string, { label: string; cls: string; icon: typeof CheckCircle2 }> = {
