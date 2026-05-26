@@ -12,7 +12,7 @@
     "typecheck:main": "tsc --noEmit -p tsconfig.main.json",
     "typecheck:all": "npm run typecheck && npm run typecheck:main",
     "electron": "electron .",
-    "electron:dev": "npm run build:main && electron .",
+    "electron:dev": "npm run build:main && concurrently -k -n VITE,ELECTRON -c cyan,yellow \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
     "dist": "npm run build && electron-builder --mac",
     "dist:dmg": "npm run build && electron-builder --mac dmg",
     "dist:zip": "npm run build && electron-builder --mac zip"
@@ -41,26 +41,46 @@
       "protocols": [
         {
           "name": "Creative Automation Platform",
-          "schemes": ["creativeos"]
+          "schemes": [
+            "creativeos"
+          ]
         }
       ],
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ]
     },
     "dmg": {
       "title": "${productName} ${version}",
-      "window": { "width": 540, "height": 380 },
+      "window": {
+        "width": 540,
+        "height": 380
+      },
       "contents": [
-        { "x": 130, "y": 190, "type": "file" },
-        { "x": 410, "y": 190, "type": "link", "path": "/Applications" }
+        {
+          "x": 130,
+          "y": 190,
+          "type": "file"
+        },
+        {
+          "x": 410,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
       ]
     },
     "files": [
@@ -102,6 +122,8 @@
     "@electron/notarize": "^2.2.1",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
-    "electron-updater": "^6.8.3"
+    "concurrently": "^9.2.1",
+    "electron-updater": "^6.8.3",
+    "wait-on": "^9.0.10"
   }
 }
