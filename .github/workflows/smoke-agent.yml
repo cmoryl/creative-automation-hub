@@ -1,0 +1,64 @@
+name: Agent endpoints smoke test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *" # daily 06:00 UTC
+  push:
+    branches: [main]
+    paths:
+      - "src/routes/api/public/agent/**"
+      - "tests/smoke-agent-endpoints.mjs"
+      - "tests/smoke-complete-failure.mjs"
+      - "tests/smoke-preflight-readiness.mjs"
+      - "tests/smoke-smart-retry.mjs"
+      - ".github/workflows/smoke-agent.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: bun install --frozen-lockfile
+
+      - name: Endpoint smoke test (read-only)
+        env:
+          LOVABLE_API_BASE: ${{ secrets.LOVABLE_API_BASE }}
+          LOVABLE_AGENT_TOKEN: ${{ secrets.LOVABLE_AGENT_TOKEN }}
+        run: node tests/smoke-agent-endpoints.mjs
+
+      - name: /complete failure-path smoke test
+        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+        env:
+          LOVABLE_API_BASE: ${{ secrets.LOVABLE_API_BASE }}
+          LOVABLE_AGENT_TOKEN: ${{ secrets.LOVABLE_AGENT_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOVABLE_TEST_PROJECT_ID: ${{ secrets.LOVABLE_TEST_PROJECT_ID }}
+        run: node tests/smoke-complete-failure.mjs
+
+      - name: Preflight readiness smoke test
+        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+        env:
+          LOVABLE_API_BASE: ${{ secrets.LOVABLE_API_BASE }}
+          LOVABLE_AGENT_TOKEN: ${{ secrets.LOVABLE_AGENT_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node tests/smoke-preflight-readiness.mjs
+
+      - name: Smart-retry smoke test
+        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+        env:
+          LOVABLE_API_BASE: ${{ secrets.LOVABLE_API_BASE }}
+          LOVABLE_AGENT_TOKEN: ${{ secrets.LOVABLE_AGENT_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOVABLE_TEST_PROJECT_ID: ${{ secrets.LOVABLE_TEST_PROJECT_ID }}
+        run: node tests/smoke-smart-retry.mjs

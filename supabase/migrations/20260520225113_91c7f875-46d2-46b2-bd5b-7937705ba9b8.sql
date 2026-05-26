@@ -1,0 +1,2 @@
+ALTER TABLE public.templates ADD COLUMN IF NOT EXISTS pages jsonb NOT NULL DEFAULT '[]'::jsonb;
+COMMENT ON COLUMN public.templates.pages IS 'Optional array of page/artboard descriptors for multi-page templates: [{name,width,height,unit,kind,preview_url?,artboard_index?}]';

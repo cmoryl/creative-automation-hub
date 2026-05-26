@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.jobs_set_workspace() FROM PUBLIC, anon, authenticated;
