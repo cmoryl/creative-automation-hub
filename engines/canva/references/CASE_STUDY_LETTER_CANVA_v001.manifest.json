@@ -1,0 +1,124 @@
+{
+  "id": "CASE_STUDY_LETTER_CANVA_v001",
+  "name": "Case Study Letter (Canva)",
+  "engine": "canva",
+  "category": "case_study",
+  "industry": "life_sciences",
+  "vertical_label": "Life Sciences",
+  "status": "production",
+  "dimensions": "816 × 1056 px (Letter)",
+  "canva_design_id": "DAHJkmrg_LI",
+  "canva_url": "https://www.canva.com/d/PrEEG-9w0hTc1Oh",
+  "brand_kit_id": "kADrF5pCgKA",
+  "brand_kit_name": "Life Sciences",
+  "required_objects": [
+    "TEXT_TITLE",
+    "TEXT_CHALLENGE",
+    "TEXT_SOLUTION",
+    "TEXT_RESULTS"
+  ],
+  "editable_objects": {
+    "TEXT_TITLE": {
+      "type": "text",
+      "required": true,
+      "element_id": "PBSbktGL2clJlMfk-LBgt643rjf4jWDxY",
+      "note": "Hero headline — company name or case study title",
+      "max_chars": 100
+    },
+    "TEXT_CHALLENGE_HEADER": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LByNzWfVdwVXNXMJ",
+      "note": "Left column section label — defaults to 'Challenge Header'",
+      "max_chars": 40
+    },
+    "TEXT_CHALLENGE": {
+      "type": "text",
+      "required": true,
+      "element_id": "PBSbktGL2clJlMfk-LBmlDSbyr4R2PSfH",
+      "note": "Challenge body text — bullet points or paragraph",
+      "max_chars": 400
+    },
+    "TEXT_SOLUTION_HEADER": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBQWSTMsKWsDX2Gm",
+      "note": "Left column section label — defaults to 'Solution Header'",
+      "max_chars": 40
+    },
+    "TEXT_SOLUTION": {
+      "type": "text",
+      "required": true,
+      "element_id": "PBSbktGL2clJlMfk-LB2xCQB99tR2pjW3",
+      "note": "Solution body text — bullet points or paragraph",
+      "max_chars": 400
+    },
+    "TEXT_RESULTS_HEADER": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBx7vn89gpfvBz3X",
+      "note": "Right panel section label — defaults to 'Results Header'",
+      "max_chars": 40
+    },
+    "TEXT_RESULTS": {
+      "type": "text",
+      "required": true,
+      "element_id": "PBSbktGL2clJlMfk-LBtLnWnjvVnKdmJs",
+      "note": "Results body — metrics and outcomes",
+      "max_chars": 400
+    },
+    "TEXT_TESTIMONIAL": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBlNdD9lX5G8SLMk",
+      "note": "Pull quote text in the testimonial panel",
+      "max_chars": 250
+    },
+    "TEXT_TESTIMONIAL_ATTRIBUTION": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBMF315DRmFw18dn",
+      "note": "Name, Title, Company — each on its own line",
+      "max_chars": 100
+    },
+    "TEXT_TAGLINE": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LB1KPH8m1gltQNyH",
+      "note": "Footer tagline — 'Lab to Launch. Practitioner to Patient.'",
+      "max_chars": 80
+    },
+    "TEXT_WEBSITE": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBMrCvG99w95fsMh",
+      "note": "Footer website URL",
+      "max_chars": 80
+    },
+    "TEXT_EMAIL": {
+      "type": "text",
+      "required": false,
+      "element_id": "PBSbktGL2clJlMfk-LBfJCk2zcJlxrx9Y",
+      "note": "Footer email address",
+      "max_chars": 80
+    },
+    "IMAGE_HERO": {
+      "type": "image",
+      "required": false,
+      "element_id": "",
+      "note": "Hero background image — open the design in Canva, right-click the image layer, copy element ID, and paste it here via the job runner"
+    }
+  },
+  "health_score": 100,
+  "fonts": [
+    {
+      "family": "Poppins",
+      "weights": [
+        "regular",
+        "bold",
+        "italic"
+      ]
+    }
+  ],
+  "linked_assets": []
+}

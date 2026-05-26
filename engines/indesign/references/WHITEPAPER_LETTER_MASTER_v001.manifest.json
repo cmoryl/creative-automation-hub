@@ -1,0 +1,112 @@
+{
+  "id": "WHITEPAPER_LETTER_MASTER_v001",
+  "name": "Whitepaper / Report \u2014 Letter",
+  "engine": "indesign",
+  "version": "1.0.0",
+  "status": "scaffolded",
+  "category": "whitepaper",
+  "vertical_label": "General",
+  "industry": "general",
+  "document_format": "Letter (8.5\u00d711)",
+  "dimensions": "8.5 \u00d7 11 in \u00b7 multi-page",
+  "source_template": "templates/WHITEPAPER_LETTER_MASTER_v001.indd",
+  "editable_objects": {
+    "DOC_TITLE": {
+      "type": "text",
+      "required": true,
+      "note": "Document headline",
+      "max_chars": 100
+    },
+    "DOC_SUBTITLE": {
+      "type": "text",
+      "required": false,
+      "note": "Subheadline or tagline",
+      "max_chars": 150
+    },
+    "DOC_AUTHOR": {
+      "type": "text",
+      "required": false,
+      "note": "Author name or company",
+      "max_chars": 100
+    },
+    "DOC_DATE": {
+      "type": "text",
+      "required": false,
+      "note": "Publication date",
+      "max_chars": 40
+    },
+    "SECTION_EXECUTIVE_SUMMARY": {
+      "type": "text",
+      "required": true,
+      "note": "2\u20133 sentence summary",
+      "max_chars": 600
+    },
+    "SECTION_BODY": {
+      "type": "text",
+      "required": true,
+      "note": "Main body copy",
+      "max_chars": 2500
+    },
+    "SECTION_CONCLUSION": {
+      "type": "text",
+      "required": false,
+      "note": "Closing paragraph",
+      "max_chars": 500
+    },
+    "SECTION_CTA": {
+      "type": "text",
+      "required": false,
+      "note": "Call-to-action text",
+      "max_chars": 160
+    },
+    "STAT_01": {
+      "type": "text",
+      "required": false,
+      "note": "Key stat (e.g. 3\u00d7 faster)",
+      "max_chars": 40
+    },
+    "STAT_02": {
+      "type": "text",
+      "required": false,
+      "note": "Key stat",
+      "max_chars": 40
+    },
+    "STAT_03": {
+      "type": "text",
+      "required": false,
+      "note": "Key stat",
+      "max_chars": 40
+    },
+    "IMAGE_HERO": {
+      "type": "image",
+      "required": false,
+      "note": "Hero/cover image"
+    },
+    "IMAGE_FIGURE_01": {
+      "type": "image",
+      "required": false,
+      "note": "Inline figure or chart"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Adobe Garamond Pro",
+      "weights": [
+        "Regular",
+        "Italic",
+        "Bold"
+      ]
+    },
+    {
+      "family": "Neue Haas Grotesk",
+      "weights": [
+        "Regular",
+        "Medium",
+        "Bold"
+      ]
+    }
+  ],
+  "linked_assets": [],
+  "exports": ["PDF_PRINT", "PDF_WEB", "IDML", "JPEG_PREVIEW"],
+  "health_notes": "Template file not yet present \u2014 drop WHITEPAPER_LETTER_MASTER_v001.indd into engines/indesign/templates/ to activate."
+}

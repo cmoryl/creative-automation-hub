@@ -1,0 +1,23 @@
+{
+  "name": "creative-automation-platform",
+  "version": "3.0.0-alpha",
+  "private": true,
+  "description": "AI-native creative automation platform for Claude, Illustrator, InDesign, Canva, and hybrid workflows.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace apps/desktop run dev",
+    "build": "npm --workspace apps/desktop run build",
+    "build:renderer": "npm --workspace apps/desktop run build:renderer",
+    "build:main": "npm --workspace apps/desktop run build:main",
+    "electron": "npm --workspace apps/desktop run electron",
+    "electron:dev": "npm --workspace apps/desktop run electron:dev",
+    "dist": "npm --workspace apps/desktop run dist",
+    "dist:dmg": "npm --workspace apps/desktop run dist:dmg",
+    "dist:zip": "npm --workspace apps/desktop run dist:zip",
+    "typecheck": "npm --workspace apps/desktop run typecheck:all",
+    "lint:structure": "node scripts/validate-structure.js"
+  }
+}

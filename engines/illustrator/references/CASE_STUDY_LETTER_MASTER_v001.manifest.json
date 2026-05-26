@@ -1,0 +1,109 @@
+{
+  "id": "CASE_STUDY_LETTER_MASTER_v001",
+  "template_name": "Case Study Letter — Life Sciences",
+  "engine": "illustrator",
+  "document_format": "LETTER",
+  "dimensions": "8.5 x 11 in (612 x 792 pt)",
+  "category": "case_study",
+  "industry": "life_sciences",
+  "vertical_label": "Life Sciences",
+  "status": "production",
+  "source_template": "templates/CASE_STUDY_LETTER_MASTER_v001.ai",
+  "preview": "templates/previews/CASE_STUDY_LETTER_MASTER_v001.svg",
+  "frame_aliases": {
+    "TEXT_CHALLENGE": "TEXT_CHALLENGE_BODY",
+    "TEXT_SOLUTION": "TEXT_SOLUTION_BODY",
+    "TEXT_RESULTS": "TEXT_RESULTS_BODY",
+    "TEXT_TESTIMONIAL": "TEXT_TESTIMONIAL_QUOTE"
+  },
+  "editable_objects": {
+    "TEXT_TITLE": {
+      "type": "text",
+      "required": true,
+      "note": "Hero headline",
+      "max_chars": 100
+    },
+    "TEXT_OVERVIEW": {
+      "type": "text",
+      "required": false,
+      "note": "Short intro paragraph",
+      "max_chars": 350
+    },
+    "TEXT_CHALLENGE": {
+      "type": "text",
+      "required": true,
+      "note": "Challenge section body",
+      "max_chars": 400
+    },
+    "TEXT_SOLUTION": {
+      "type": "text",
+      "required": true,
+      "note": "Solution section body",
+      "max_chars": 400
+    },
+    "TEXT_RESULTS": {
+      "type": "text",
+      "required": true,
+      "note": "Results section body",
+      "max_chars": 400
+    },
+    "TEXT_STAT_01": {
+      "type": "text",
+      "required": false,
+      "note": "Pull stat, e.g. '68% faster'",
+      "max_chars": 40
+    },
+    "TEXT_STAT_02": {
+      "type": "text",
+      "required": false,
+      "note": "Pull stat, e.g. '95% consistent'",
+      "max_chars": 40
+    },
+    "TEXT_TESTIMONIAL": {
+      "type": "text",
+      "required": false,
+      "note": "Quote with attribution",
+      "max_chars": 250
+    },
+    "IMAGE_HERO": {
+      "type": "image",
+      "required": false,
+      "note": "Top hero image zone"
+    }
+  },
+  "locked_layers": [
+    "00_GUIDES_LOCKED",
+    "06_LOGOS",
+    "09_EXPORT_SAFE"
+  ],
+  "linked_assets": [
+    "templates/links/footerblueswoosh.svg",
+    "templates/links/quotebar.svg",
+    "templates/links/resultbottombar.svg",
+    "templates/links/resultsfullbar.svg",
+    "templates/links/resultstopbar.svg",
+    "templates/links/resultstopbar.png",
+    "templates/links/whiteswooshline.svg",
+    "templates/links/whiteswooshline.png",
+    "templates/links/shutterstock_1193506045.jpg"
+  ],
+  "fonts": [
+    {
+      "family": "Poppins",
+      "weights": [
+        "Regular",
+        "Medium",
+        "SemiBold",
+        "SemiBoldItalic",
+        "Bold"
+      ],
+      "path": "templates/fonts/"
+    }
+  ],
+  "exports": [
+    "AI_SOURCE",
+    "PDF_PRINT",
+    "PDF_WEB",
+    "PNG_PREVIEW"
+  ]
+}

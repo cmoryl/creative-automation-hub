@@ -1,0 +1,49 @@
+{
+  "id": "ADOBE_BUSINESS_COVER_RED_GREY_v001",
+  "template_name": "Business Cover Page \u2014 Red & Grey",
+  "engine": "adobe_express",
+  "category": "case_study",
+  "industry": "general",
+  "vertical_label": "General",
+  "status": "registered",
+  "dimensions": "Document",
+  "adobe_template_urn": "urn:aaid:sc:VA6C2:f1006c84-63f3-54bb-b0ed-ecb68a084788",
+  "editor_url": "https://adobesparkpost.app.link/KYfv9pSCJ0b?mode=assistant&referrer=claude&intent=search_design",
+  "preview_url": "https://design-assets.adobeprojectm.com/content/download/express/public/urn:aaid:sc:VA6C2:f1006c84-63f3-54bb-b0ed-ecb68a084788/component?assetType=TEMPLATE&etag=6e69d06b5a8344178a5c17d00d48846d&revision=d02aff3a-6334-44e9-aea9-a605d52bfaee&component_id=00267eb0-e855-4fde-88ae-efb33ff9ed66",
+  "is_premium": false,
+  "category": "cover",
+  "health_score": 100,
+  "editable_objects": {
+    "TEXT_TITLE": {
+      "type": "text",
+      "required": true,
+      "note": "Report or document title — e.g. 'Q3 Creative Automation Report'",
+      "max_chars": 80
+    },
+    "TEXT_SUBTITLE": {
+      "type": "text",
+      "required": false,
+      "note": "Report subtitle or descriptor line — e.g. 'Annual Performance Overview'",
+      "max_chars": 120
+    },
+    "TEXT_CLIENT": {
+      "type": "text",
+      "required": false,
+      "note": "Client or company name featured on the cover",
+      "max_chars": 80
+    },
+    "TEXT_TAGLINE": {
+      "type": "text",
+      "required": false,
+      "note": "Brand tagline or one-line value proposition",
+      "max_chars": 100
+    },
+    "TEXT_DATE": {
+      "type": "text",
+      "required": false,
+      "note": "Publication date, quarter, or year — e.g. 'Q3 2025'",
+      "max_chars": 40
+    }
+  },
+  "linked_assets": []
+}

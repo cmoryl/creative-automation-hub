@@ -1,0 +1,127 @@
+{
+  "id": "CASE_STUDY_LETTER_BAXTER_v001",
+  "template_name": "Case Study Letter — Baxter / Life Sciences",
+  "engine": "illustrator",
+  "document_format": "LETTER",
+  "dimensions": "8.5 × 11 in (Letter)",
+  "category": "case_study",
+  "industry": "life_sciences",
+  "vertical_label": "Life Sciences",
+  "status": "production",
+  "source_template": "templates/CASE_STUDY_LETTER_BAXTER_v001.ai",
+  "preview": "templates/previews/CASE_STUDY_LETTER_BAXTER_v001.png",
+  "design_notes": "Two-column layout. Hero headline + subtitle at top. Stats impact bar (4 stats + labels). Left column: single combined Challenge + Solution narrative frame (TEXT_CHALLENGE_BODY). Right column: services bullet list (TEXT_SERVICES_BODY). Section header between hero and stats bar (TEXT_SECTION_HEADER). Poppins typeface throughout. Footer brand elements are locked.",
+  "frame_names_verified": true,
+  "editable_objects": {
+    "TEXT_TITLE": {
+      "type": "text",
+      "required": true,
+      "note": "Hero headline — primary value proposition, e.g. 'Globally Scaling HCP Engagement for Baxter'",
+      "max_chars": 80
+    },
+    "TEXT_SUBTITLE": {
+      "type": "text",
+      "required": false,
+      "note": "Supporting subheadline below hero — one sentence describing the campaign outcome",
+      "max_chars": 180
+    },
+    "TEXT_SECTION_HEADER": {
+      "type": "text",
+      "required": false,
+      "note": "Impact stats section header, e.g. 'One Team, Big Impact'",
+      "max_chars": 40
+    },
+    "TEXT_STAT_01": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 1 large value — number only, e.g. '20%+'",
+      "max_chars": 12
+    },
+    "TEXT_STAT_01_LABEL": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 1 descriptor below the number, e.g. 'Increase in Division Sales'",
+      "max_chars": 40
+    },
+    "TEXT_STAT_02": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 2 large value, e.g. '10,000+'",
+      "max_chars": 12
+    },
+    "TEXT_STAT_02_LABEL": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 2 descriptor, e.g. 'Registrations Generated'",
+      "max_chars": 40
+    },
+    "TEXT_STAT_03": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 3 large value, e.g. '5,500+'",
+      "max_chars": 12
+    },
+    "TEXT_STAT_03_LABEL": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 3 descriptor, e.g. 'Qualified Leads Delivered'",
+      "max_chars": 40
+    },
+    "TEXT_STAT_04": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 4 large value, e.g. '60%'",
+      "max_chars": 12
+    },
+    "TEXT_STAT_04_LABEL": {
+      "type": "text",
+      "required": false,
+      "note": "Stat 4 descriptor, e.g. 'Attendance Rate'",
+      "max_chars": 40
+    },
+    "TEXT_CHALLENGE": {
+      "type": "text",
+      "required": true,
+      "note": "Left column combined narrative — write as flowing paragraphs covering both the challenge and solution. The frame (TEXT_CHALLENGE_BODY) holds the full left-column text block.",
+      "max_chars": 700
+    },
+    "TEXT_SERVICES": {
+      "type": "text",
+      "required": false,
+      "note": "Right column services list — one service per line. Maps to TEXT_SERVICES_BODY frame.",
+      "max_chars": 350
+    },
+    "IMAGE_HERO": {
+      "type": "image",
+      "required": false,
+      "note": "Center image zone — campaign photo, speaker headshot, or product visual"
+    }
+  },
+  "frame_aliases": {
+    "TEXT_CHALLENGE": "TEXT_CHALLENGE_BODY",
+    "TEXT_SERVICES": "TEXT_SERVICES_BODY"
+  },
+  "locked_layers": [
+    "00_GUIDES_LOCKED",
+    "06_LOGOS",
+    "09_EXPORT_SAFE"
+  ],
+  "linked_assets": [],
+  "fonts": [
+    {
+      "family": "Poppins",
+      "weights": [
+        "Regular",
+        "Medium",
+        "Bold"
+      ],
+      "path": "templates/fonts/"
+    }
+  ],
+  "exports": [
+    "AI_SOURCE",
+    "PDF_PRINT",
+    "PDF_WEB",
+    "PNG_PREVIEW"
+  ]
+}

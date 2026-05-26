@@ -1,0 +1,55 @@
+{
+  "id": "ADOBE_MARKETING_POSTER_BLUE_YELLOW_v001",
+  "template_name": "Marketing Services Poster \u2014 Blue & Yellow",
+  "engine": "adobe_express",
+  "category": "case_study",
+  "industry": "general",
+  "vertical_label": "General",
+  "status": "registered",
+  "dimensions": "Poster",
+  "adobe_template_urn": "urn:aaid:sc:VA6C2:de507f5f-ac26-503a-a5b6-6c0a5b6327cc",
+  "editor_url": "https://adobesparkpost.app.link/jmyveKAJCSb?mode=assistant&referrer=claude&intent=search_design",
+  "preview_url": "https://design-assets.adobeprojectm.com/content/download/express/public/urn:aaid:sc:VA6C2:de507f5f-ac26-503a-a5b6-6c0a5b6327cc/component?assetType=TEMPLATE&etag=c03f2b8371514b7cb214163cc5296bfb&revision=e8037821-b252-493c-acef-15bb05d70bf7&component_id=791e1f21-911a-4389-86e3-8e380238d7d4",
+  "is_premium": false,
+  "category": "marketing",
+  "health_score": 100,
+  "editable_objects": {
+    "TEXT_HEADLINE": {
+      "type": "text",
+      "required": true,
+      "note": "Primary headline — bold value statement, e.g. 'Scale Your Creative Output 10×'",
+      "max_chars": 70
+    },
+    "TEXT_SUBHEADLINE": {
+      "type": "text",
+      "required": false,
+      "note": "Supporting subheadline or tagline",
+      "max_chars": 130
+    },
+    "TEXT_BODY": {
+      "type": "text",
+      "required": false,
+      "note": "Body copy — 2-3 sentences describing the service or value",
+      "max_chars": 300
+    },
+    "TEXT_STAT_01": {
+      "type": "text",
+      "required": false,
+      "note": "Key metric or proof point — e.g. '68% faster delivery'",
+      "max_chars": 50
+    },
+    "TEXT_STAT_02": {
+      "type": "text",
+      "required": false,
+      "note": "Second key metric — e.g. '$280K saved per quarter'",
+      "max_chars": 50
+    },
+    "TEXT_CTA": {
+      "type": "text",
+      "required": false,
+      "note": "Call-to-action text — e.g. 'Book a Demo' or 'Get Started Today'",
+      "max_chars": 40
+    }
+  },
+  "linked_assets": []
+}

@@ -1,0 +1,55 @@
+{
+  "id": "ADOBE_RESEARCH_POSTER_PURPLE_v001",
+  "template_name": "Research Project Poster \u2014 Purple & Blue",
+  "engine": "adobe_express",
+  "category": "case_study",
+  "industry": "general",
+  "vertical_label": "General",
+  "status": "registered",
+  "dimensions": "Poster",
+  "adobe_template_urn": "urn:aaid:sc:VA6C2:d312d15b-5312-4adc-b7ee-be7b33b52bb8",
+  "editor_url": "https://adobesparkpost.app.link/rgMmKWKq2zb?mode=assistant&referrer=claude&intent=search_design",
+  "preview_url": "https://design-assets.adobeprojectm.com/content/download/express/public/urn:aaid:sc:VA6C2:d312d15b-5312-4adc-b7ee-be7b33b52bb8/component?assetType=TEMPLATE&etag=7cce350cef9b0f6126e699277e808f7d&revision=0&component_id=5c05b90e-eade-4bce-a0b9-3be38be92467",
+  "is_premium": false,
+  "category": "research",
+  "health_score": 100,
+  "editable_objects": {
+    "TEXT_TITLE": {
+      "type": "text",
+      "required": true,
+      "note": "Project or research title — e.g. 'AI in Enterprise Content Operations'",
+      "max_chars": 100
+    },
+    "TEXT_AUTHORS": {
+      "type": "text",
+      "required": false,
+      "note": "Author names or team — e.g. 'Innovation Research · TransPerfect'",
+      "max_chars": 120
+    },
+    "TEXT_ABSTRACT": {
+      "type": "text",
+      "required": false,
+      "note": "2-3 sentence abstract or executive summary of the project",
+      "max_chars": 400
+    },
+    "TEXT_KEY_FINDINGS": {
+      "type": "text",
+      "required": false,
+      "note": "Bullet-style key findings or outcomes — one per line",
+      "max_chars": 350
+    },
+    "TEXT_INSTITUTION": {
+      "type": "text",
+      "required": false,
+      "note": "Organisation, institution, or company name",
+      "max_chars": 80
+    },
+    "TEXT_DATE": {
+      "type": "text",
+      "required": false,
+      "note": "Publication date or year",
+      "max_chars": 40
+    }
+  },
+  "linked_assets": []
+}

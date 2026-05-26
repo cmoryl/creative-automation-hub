@@ -1,0 +1,15 @@
+{
+  "name": "Creative Automation Platform v3 Foundation",
+  "version": "3.0.0-alpha",
+  "created": "2026-05-13 15:33:30",
+  "purpose": "Universal-user platform refactor scaffold",
+  "includes": [
+    "Electron",
+    "React",
+    "TypeScript",
+    "Engine abstraction",
+    "Output center",
+    "Setup wizard",
+    "Claude skill scaffold"
+  ]
+}

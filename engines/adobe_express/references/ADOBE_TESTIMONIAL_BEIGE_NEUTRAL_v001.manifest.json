@@ -1,0 +1,36 @@
+{
+  "id": "ADOBE_TESTIMONIAL_BEIGE_NEUTRAL_v001",
+  "template_name": "Testimonial Review Story — Beige & Neutral",
+  "engine": "adobe_express",
+  "category": "social",
+  "industry": "general",
+  "vertical_label": "Social Media",
+  "status": "registered",
+  "dimensions": "Instagram Story (9:16)",
+  "adobe_template_urn": "urn:aaid:sc:VA6C2:759bbb8c-68f7-4ef8-b3c6-286feb4f3737",
+  "editor_url": "https://adobesparkpost.app.link/TDC1RslusAb?mode=assistant&referrer=claude&intent=search_design",
+  "preview_url": "https://design-assets.adobeprojectm.com/content/download/express/public/urn:aaid:sc:VA6C2:759bbb8c-68f7-4ef8-b3c6-286feb4f3737/component?assetType=TEMPLATE&etag=06e2d4c176e34c58725e7284e14a4c3f&revision=0&component_id=57f6f8e2-e0ef-4442-abf3-c4db1c28d943",
+  "is_premium": false,
+  "health_score": 100,
+  "editable_objects": {
+    "TEXT_TESTIMONIAL": {
+      "type": "text",
+      "required": true,
+      "note": "Client quote / testimonial text",
+      "max_chars": 250
+    },
+    "TEXT_TESTIMONIAL_ATTRIBUTION": {
+      "type": "text",
+      "required": false,
+      "note": "Name, title, company",
+      "max_chars": 100
+    },
+    "TEXT_RESULTS": {
+      "type": "text",
+      "required": true,
+      "note": "Key result or stat",
+      "max_chars": 400
+    }
+  },
+  "linked_assets": []
+}

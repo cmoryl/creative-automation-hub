@@ -1,0 +1,36 @@
+{
+  "id": "ADOBE_TESTIMONIAL_PINK_ORANGE_v001",
+  "template_name": "Client Testimonial Story — Pink & Orange",
+  "engine": "adobe_express",
+  "category": "social",
+  "industry": "general",
+  "vertical_label": "Social Media",
+  "status": "registered",
+  "dimensions": "Instagram Story (9:16)",
+  "adobe_template_urn": "urn:aaid:sc:VA6C2:b7eb2de3-b860-5b06-b4b8-dbabec1d1f9f",
+  "editor_url": "https://adobesparkpost.app.link/YQaSTVI2MKb?mode=assistant&referrer=claude&intent=search_design",
+  "preview_url": "https://design-assets.adobeprojectm.com/content/download/express/public/urn:aaid:sc:VA6C2:b7eb2de3-b860-5b06-b4b8-dbabec1d1f9f/component?assetType=TEMPLATE&etag=66bf2f30c8374fd8b45ec6abe0cd995e&revision=ea925cc4-9f6e-4b8d-8485-5a241e074441&component_id=7fa3597a-15dc-4df3-af2a-db593de3e5c9",
+  "is_premium": false,
+  "health_score": 100,
+  "editable_objects": {
+    "TEXT_TESTIMONIAL": {
+      "type": "text",
+      "required": true,
+      "note": "Client quote / testimonial text",
+      "max_chars": 250
+    },
+    "TEXT_TESTIMONIAL_ATTRIBUTION": {
+      "type": "text",
+      "required": false,
+      "note": "Name, title, company",
+      "max_chars": 100
+    },
+    "TEXT_RESULTS": {
+      "type": "text",
+      "required": true,
+      "note": "Key result or stat",
+      "max_chars": 400
+    }
+  },
+  "linked_assets": []
+}

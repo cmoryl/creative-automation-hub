@@ -1,0 +1,15 @@
+{
+  "id": "canva",
+  "label": "Canva Engine",
+  "status": "manual-handoff",
+  "capabilities": [
+    "markdown handoff",
+    "json handoff",
+    "asset package",
+    "future api/autofill"
+  ],
+  "requires": [
+    "Canva account",
+    "approved templates"
+  ]
+}

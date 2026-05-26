@@ -1,0 +1,14 @@
+{
+  "id": "indesign",
+  "label": "InDesign Engine",
+  "status": "scaffolded",
+  "capabilities": [
+    "multi-page editorial automation",
+    "overset text detection",
+    "pdf export"
+  ],
+  "requires": [
+    "Adobe InDesign",
+    "macOS Automation permission"
+  ]
+}

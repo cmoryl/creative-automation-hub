@@ -1,0 +1,16 @@
+{
+  "id": "illustrator",
+  "label": "Illustrator Engine",
+  "status": "implemented",
+  "capabilities": [
+    "jsx automation",
+    "pdf export",
+    "png export",
+    "template preflight"
+  ],
+  "requires": [
+    "Adobe Illustrator",
+    "macOS Automation permission",
+    "automation-safe templates"
+  ]
+}

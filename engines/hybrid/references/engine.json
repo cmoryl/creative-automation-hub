@@ -1,0 +1,13 @@
+{
+  "id": "hybrid",
+  "label": "Hybrid Engine",
+  "status": "planned",
+  "capabilities": [
+    "multi-engine routing",
+    "campaign packaging",
+    "future workflow graph"
+  ],
+  "requires": [
+    "configured engines"
+  ]
+}

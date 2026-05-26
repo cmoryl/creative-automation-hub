@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 270.7 470.9">
+  <!-- Generator: Adobe Illustrator 29.8.6, SVG Export Plug-In . SVG Version: 2.1.1 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: url(#New_Gradient_Swatch);
+        filter: url(#drop-shadow-1);
+      }
+
+      .st1 {
+        fill: #fff;
+      }
+    </style>
+    <linearGradient id="New_Gradient_Swatch" data-name="New Gradient Swatch" x1="1.2" y1="235.2" x2="270.2" y2="235.2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2e4da1"/>
+      <stop offset="1" stop-color="#eb3b8a"/>
+    </linearGradient>
+    <filter id="drop-shadow-1" x="-27.7" y="-27.4" width="326.6" height="525.1" filterUnits="userSpaceOnUse">
+      <feOffset dx="0" dy="0"/>
+      <feGaussianBlur result="blur" stdDeviation="9.6"/>
+      <feFlood flood-color="#666766" flood-opacity=".2"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="GRAPH_x5F_RESULTS_PANEL">
+    <path class="st0" d="M216.5,468.6l-214.9.3c-.2,0-.4-7-.4-7.2V55.5C1.2,25.8,25.3,1.8,55,1.8l215.2-.3v405.4c0,29.7-24,61.7-53.7,61.7Z"/>
+    <path class="st1" d="M216.5,468.6l-214.9.3c-.2,0-.4-.2-.4-.4V62.3C1.2,32.6,25.3,8.6,55,8.6l215.2-.3v398.6c0,29.7-24,61.7-53.7,61.7Z"/>
+  </g>
+</svg>

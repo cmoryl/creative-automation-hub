@@ -1,0 +1,15 @@
+
+<svg width="850" height="1100" xmlns="http://www.w3.org/2000/svg">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<rect x="40" y="40" width="770" height="200" fill="#eeeeee"/>
+<text x="60" y="100" font-size="36" font-family="Arial">TEXT_TITLE</text>
+<text x="60" y="160" font-size="18" font-family="Arial">TEXT_OVERVIEW</text>
+<rect x="40" y="300" width="350" height="220" fill="#dddddd"/>
+<text x="60" y="420" font-size="24">IMAGE_HERO</text>
+<rect x="430" y="300" width="350" height="220" fill="#dddddd"/>
+<text x="450" y="420" font-size="24">IMAGE_RESULTS</text>
+<text x="60" y="620" font-size="24">TEXT_CHALLENGE</text>
+<text x="60" y="700" font-size="24">TEXT_SOLUTION</text>
+<text x="60" y="780" font-size="24">TEXT_RESULTS</text>
+<text x="60" y="900" font-size="24">TEXT_TESTIMONIAL</text>
+</svg>

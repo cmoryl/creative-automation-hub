@@ -1,0 +1,18 @@
+{
+  "id": "canva",
+  "label": "Canva Engine",
+  "status": "implemented",
+  "capabilities": [
+    "ai design generation",
+    "brand kit application",
+    "team template sharing",
+    "pdf export",
+    "png export",
+    "pptx export",
+    "direct link sharing"
+  ],
+  "requires": [
+    "Canva account",
+    "MCP connection or Canva API token"
+  ]
+}

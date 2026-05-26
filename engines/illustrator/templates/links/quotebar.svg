@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 234.7 29.6">
+  <!-- Generator: Adobe Illustrator 29.8.6, SVG Export Plug-In . SVG Version: 2.1.1 Build 1)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: none;
+        stroke: #eb3c8b;
+        stroke-width: .8px;
+      }
+
+      .st0, .st1 {
+        stroke-miterlimit: 10;
+      }
+
+      .st2 {
+        opacity: .2;
+      }
+
+      .st1 {
+        fill: #e3e6e5;
+        opacity: .8;
+        stroke: #e3e6e5;
+        stroke-width: 1.1px;
+      }
+
+      .st3 {
+        fill: #eb3c8b;
+      }
+    </style>
+  </defs>
+  <g id="GRAPH_x5F_QUOTATION_x5F_MARK">
+    <line class="st1" x1="4.1" y1="16" x2="96.6" y2="16"/>
+    <g>
+      <g>
+        <path class="st0" d="M132.1,26.1v-12.1h-5.4c.3-3.2,1.9-5.2,5.5-6.4V2.7s-2.7,0-5.7,1.6c-3.4,1.9-6.8,5.9-6.8,11.7v10.1h12.4Z"/>
+        <path class="st0" d="M115.4,26.1v-12.1h-5.4c.3-3.2,1.9-5.2,5.5-6.4V2.7s-2.7,0-5.7,1.6c-3.4,1.9-6.8,5.9-6.8,11.7v10.1h12.4Z"/>
+      </g>
+      <g class="st2">
+        <path class="st3" d="M133.3,27.4v-12.1h-5.4c.3-3.2,1.9-5.2,5.5-6.4v-5s-2.7,0-5.7,1.6c-3.4,1.9-6.8,5.9-6.8,11.7v10.1h12.4Z"/>
+        <path class="st3" d="M116.5,27.4v-12.1h-5.4c.3-3.2,1.9-5.2,5.5-6.4v-5s-2.7,0-5.7,1.6c-3.4,1.9-6.8,5.9-6.8,11.7v10.1h12.4Z"/>
+      </g>
+    </g>
+    <line class="st1" x1="139.2" y1="16" x2="231.7" y2="16"/>
+  </g>
+</svg>

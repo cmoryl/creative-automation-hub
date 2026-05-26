@@ -1,0 +1,101 @@
+{
+  "name": "@creative-automation/desktop",
+  "version": "3.0.0-alpha",
+  "private": true,
+  "main": "dist/main/main.js",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build:renderer": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:renderer && npm run build:main",
+    "typecheck": "tsc --noEmit",
+    "typecheck:main": "tsc --noEmit -p tsconfig.main.json",
+    "typecheck:all": "npm run typecheck && npm run typecheck:main",
+    "electron": "electron .",
+    "electron:dev": "npm run build:main && electron .",
+    "dist": "npm run build && electron-builder --mac",
+    "dist:dmg": "npm run build && electron-builder --mac dmg",
+    "dist:zip": "npm run build && electron-builder --mac zip"
+  },
+  "build": {
+    "appId": "com.gasalley.creativeautomationplatform",
+    "productName": "Creative Automation Platform",
+    "asar": true,
+    "asarUnpack": [
+      "dist/main/**/*"
+    ],
+    "icon": "build/icon.icns",
+    "afterSign": "scripts/notarize.cjs",
+    "publish": {
+      "provider": "github",
+      "owner": "gasalley",
+      "repo": "CreativeAutomationPlatform",
+      "releaseType": "release"
+    },
+    "mac": {
+      "category": "public.app-category.graphics-design",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["arm64", "x64"]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "${productName} ${version}",
+      "window": { "width": 540, "height": 380 },
+      "contents": [
+        { "x": 130, "y": 190, "type": "file" },
+        { "x": 410, "y": 190, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../../engines",
+        "to": "engines"
+      },
+      {
+        "from": "../../workspace-seed",
+        "to": "workspace-seed"
+      },
+      {
+        "from": "../../claude-skill",
+        "to": "claude-skill"
+      },
+      {
+        "from": "../../docs",
+        "to": "docs"
+      }
+    ]
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "framer-motion": "^11.3.0",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^2.2.1",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "electron-updater": "^6.8.3"
+  }
+}

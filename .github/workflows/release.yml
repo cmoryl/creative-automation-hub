@@ -1,0 +1,78 @@
+name: Release
+
+# Triggers on any tag matching v* (e.g. v3.1.0)
+# To ship a release: git tag v3.1.0 && git push origin v3.1.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-mac:
+    name: Build & publish macOS DMG
+    runs-on: macos-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── Node ────────────────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── Dependencies ────────────────────────────────────────────────────────
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install desktop dependencies
+        run: npm ci
+        working-directory: apps/desktop
+
+      # ── Code-signing certificate ────────────────────────────────────────────
+      # Secret CERTIFICATE_P12 = base64-encoded Developer ID Application .p12
+      # Secret CERTIFICATE_PASSWORD = the .p12 export password
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$CERTIFICATE_P12" | base64 --decode > /tmp/certificate.p12
+          security create-keychain -p ci-keychain-pass build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci-keychain-pass build.keychain
+          security import /tmp/certificate.p12 \
+            -k build.keychain \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k ci-keychain-pass build.keychain
+          rm /tmp/certificate.p12
+
+      # ── Build, sign, notarize, publish ──────────────────────────────────────
+      - name: Build and publish DMG
+        env:
+          # GitHub token — auto-provided, used to create/update the Release
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Apple notarization
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Bundled Canva app credentials (built into the binary)
+          CANVA_CLIENT_ID: ${{ secrets.CANVA_CLIENT_ID }}
+          CANVA_CLIENT_SECRET: ${{ secrets.CANVA_CLIENT_SECRET }}
+        run: npm run dist
+        working-directory: apps/desktop
+
+      # ── Upload artifacts (optional — also attached to GitHub Release) ────────
+      - name: Upload DMGs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg-${{ github.ref_name }}
+          path: apps/desktop/dist/*.dmg
+          if-no-files-found: warn
