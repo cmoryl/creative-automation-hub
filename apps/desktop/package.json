@@ -38,6 +38,12 @@
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
+      "protocols": [
+        {
+          "name": "Creative Automation Platform",
+          "schemes": ["creativeos"]
+        }
+      ],
       "target": [
         {
           "target": "dmg",

@@ -55,12 +55,27 @@ function createWindow() {
   else win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 }
 
+// Register custom URL scheme so "creativeos://" opens / focuses the app
+if (process.defaultApp) {
+  if (process.argv.length >= 2) app.setAsDefaultProtocolClient('creativeos', process.execPath, [path.resolve(process.argv[1])]);
+} else {
+  app.setAsDefaultProtocolClient('creativeos');
+}
+
 app.whenReady().then(() => {
   createWindow();
   setupAutoUpdater();
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+
+// macOS: URL scheme open event (app already running)
+app.on('open-url', (event, _url) => {
+  event.preventDefault();
+  const win = getMainWindow();
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+  else createWindow();
+});
 
 // ── Auto-updater ──────────────────────────────────────────────────────────────
 

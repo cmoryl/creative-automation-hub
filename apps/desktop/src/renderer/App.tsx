@@ -1336,12 +1336,20 @@ function Dot({ color }: { color?: string }) {
 }
 
 function ElectronStatus() {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<'idle' | 'launching' | 'copied'>('idle');
   const isElectron = !(window as any).creativePlatform?.__isDevStub;
-  const CMD = 'cd ~/CreativeAutomationPlatform && npm --workspace apps/desktop run electron';
 
-  function copyCommand() {
-    navigator.clipboard.writeText(CMD).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  function launch() {
+    // Try the custom URL scheme first — works when the app is installed
+    setState('launching');
+    window.location.href = 'creativeos://';
+    // After a moment, if we're still here the app wasn't installed — fall back to copying the dev command
+    setTimeout(() => {
+      setState('copied');
+      const CMD = 'cd ~/CreativeAutomationPlatform && npm --workspace apps/desktop run electron:dev';
+      navigator.clipboard.writeText(CMD).catch(() => {});
+      setTimeout(() => setState('idle'), 3000);
+    }, 1200);
   }
 
   if (isElectron) {
@@ -1351,17 +1359,16 @@ function ElectronStatus() {
       </div>
     );
   }
+
   return (
-    <Tooltip text={CMD} position="right">
-      <button
-        className="electron-connect-btn"
-        onClick={copyCommand}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--line)', width: '100%', background: 'none', border: 0, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: copied ? 'var(--green)' : 'var(--muted)' }}
-      >
-        <Dot color={copied ? 'green' : 'red'} />
-        {copied ? 'Copied!' : 'Launch Electron app'}
-      </button>
-    </Tooltip>
+    <button
+      className="electron-connect-btn"
+      onClick={launch}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--line)', width: '100%', background: 'none', border: 0, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: state === 'copied' ? 'var(--yellow)' : state === 'launching' ? 'var(--green)' : 'var(--muted)' }}
+    >
+      <Dot color={state === 'launching' ? 'green' : state === 'copied' ? 'yellow' : 'red'} />
+      {state === 'launching' ? 'Opening app…' : state === 'copied' ? 'Not installed — cmd copied' : 'Launch Electron app'}
+    </button>
   );
 }
 
